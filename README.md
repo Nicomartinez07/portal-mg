@@ -29,13 +29,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-codeo en ingles o español?
-
-empiezo haciendo funciones sueltas o integrando todo lo q tengo y desde ahi empiezo?
-
-Tengo ahi medio desarrollado el esquema de la base de datos, sigo por ahi?
-
-Tengo la idea de documentar en el readme bastante, esta bien o no tanto?
-
-

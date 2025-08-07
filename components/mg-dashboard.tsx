@@ -34,10 +34,7 @@ import {
 const navigationItems = [
   { name: "Inicio", icon: Home, href: "/" },
   { name: "Garantías", icon: Shield, href: "/garantias" },
-  { name: "Listado", icon: List, href: "/garantias" },
   { name: "Ordenes", icon: ShoppingCart, href: "/ordenes" },
-  { name: "Listado", icon: List, href: "/ordenes" },
-  { name: "Configuración", icon: Settings, href: "/configuracion" },
   { name: "General", icon: Settings, href: "/general" },
   { name: "Empresas", icon: Building2, href: "/empresas" },
   { name: "Certificados", icon: Award, href: "/certificados" },
