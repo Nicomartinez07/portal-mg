@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  apellido  String
+  email     String
+  telefono  String
+  direccion String
+  provincia String
+  localidad String
+  ordenes   Orden[]
+}
+
+model Empresa {
+  id          Int          @id @default(autoincrement())
+  nombre      String
+  direccion   String
+  provincia   String
+  localidad   String?
+  telefono1   String?
+  telefono2   String?
+  email       String?
+  tipoEmpresa String
+  usuarios    Usuario[]
+  repuestos   Repuesto[]
+  garantias   Garantia[]
+  ordenes     Orden[]
+}
+
+model Usuario {
+  id        Int          @id @default(autoincrement())
+  nombre    String
+  email     String       @unique
+  contraseña String
+  empresaId Int
+  empresa   Empresa      @relation(fields: [empresaId], references: [id])
+  roles     UsuarioRol[]
+  notificaciones Boolean  @default(false)
+  garantias Garantia[]
+  ordenes   Orden[]
+}
+
+model Rol {
+  id       Int           @id @default(autoincrement())
+  nombre   String        @unique
+  usuarios UsuarioRol[]
+}
+
+model UsuarioRol {
+  usuarioId Int
+  rolId     Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  rol       Rol     @relation(fields: [rolId], references: [id])
+  @@id([usuarioId, rolId])
+}
+
+model Vehiculo {
+  id               Int        @id @default(autoincrement())
+  fecha            DateTime
+  vin              String     @unique
+  marca            String
+  modelo           String
+  nroMotor         String?
+  tipo             String?
+  año              Int?
+  nroCertificado   String     @unique
+  venta            DateTime?
+  fechaImportacion DateTime?
+  patente          String
+  garantia         Garantia?
+  ordenes          Orden[]
+}
+
+model ContactoRepuesto {
+  id         Int        @id @default(autoincrement())
+  nombreEncargado String
+  direccion  String?
+  provincia  String?
+  localidad  String?
+  telefono1  String?
+  telefono2  String?
+  email      String?
+  repuestos  Repuesto[]
+}
+
+model Repuesto {
+  id           Int              @id @default(autoincrement())
+  fechaDeCarga DateTime?
+  empresaId    Int
+  empresa      Empresa          @relation(fields: [empresaId], references: [id])
+  codigo       String           @unique
+  descripcion  String
+  modelo       String?
+  stock        Int?
+  precioVenta  Float?
+  contactoId   Int
+  contacto     ContactoRepuesto @relation(fields: [contactoId], references: [id])
+}
+
+model Garantia {
+  id              Int      @id @default(autoincrement())
+  fechaActivacion DateTime
+  vehiculoVin     String   @unique
+  vehiculo        Vehiculo @relation(fields: [vehiculoVin], references: [vin])
+  empresaId       Int
+  empresa         Empresa  @relation(fields: [empresaId], references: [id])
+  usuarioId       Int
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+}
+
+model Orden {
+  id                        Int      @id @default(autoincrement())
+  fechaCreacion             DateTime
+  clienteId                 Int
+  cliente                   Cliente  @relation(fields: [clienteId], references: [id])
+  vehiculoVin               String
+  vehiculo                  Vehiculo @relation(fields: [vehiculoVin], references: [vin])
+  empresaId                 Int
+  empresa                   Empresa  @relation(fields: [empresaId], references: [id])
+  usuarioId                 Int
+  usuario                   Usuario  @relation(fields: [usuarioId], references: [id])
+  estado                    String
+  estadoInterno              String?
+  kilometrajeReal            Int
+  diagnostico               String?
+  observacionesAdicionales  String?
+  tareas                    String
+  cantHoras                 Int
+  repuestos                 String
+  DescripRepuesto           String?
+  fotoPatenteUrl             String?
+  fotoChapaVinUrl            String?
+  fotoCuentaKilometrosUrl    String?
+  fotoPiezasAdicionalesUrl   String?
+  fotoFirmadaClienteUrl      String?
+  fotoORUrl                  String?
+}
