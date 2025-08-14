@@ -101,4 +101,4 @@ Es posible crear nuevos escenarios para pruebas, con el servidor de desarrollo e
 ```bash
 bun run create:test:e2e
 ```
-
+prueba
