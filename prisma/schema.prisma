@@ -6,140 +6,139 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
-
-model Cliente {
+model Customer {
   id        Int      @id @default(autoincrement())
-  nombre    String
-  apellido  String
+  firstName String
+  lastName  String
   email     String
-  telefono  String
-  direccion String
-  provincia String
-  localidad String
-  ordenes   Orden[]
+  phone     String
+  address   String
+  state     String
+  city      String
+  orders    Order[]
 }
 
-model Empresa {
+model Company {
   id          Int          @id @default(autoincrement())
-  nombre      String
-  direccion   String
-  provincia   String
-  localidad   String?
-  telefono1   String?
-  telefono2   String?
+  name        String
+  address     String
+  state       String
+  city        String?
+  phone1      String?
+  phone2      String?
   email       String?
-  tipoEmpresa String
-  usuarios    Usuario[]
-  repuestos   Repuesto[]
-  garantias   Garantia[]
-  ordenes     Orden[]
+  companyType String
+  users       User[]
+  parts       Part[]
+  warranties  Warranty[]
+  orders      Order[]
 }
 
-model Usuario {
+model User {
   id        Int          @id @default(autoincrement())
-  nombre    String
+  username      String
   email     String       @unique
-  contraseña String
-  empresaId Int
-  empresa   Empresa      @relation(fields: [empresaId], references: [id])
-  roles     UsuarioRol[]
-  notificaciones Boolean  @default(false)
-  garantias Garantia[]
-  ordenes   Orden[]
+  password  String
+  companyId Int
+  company   Company      @relation(fields: [companyId], references: [id])
+  roles     UserRole[]
+  notifications Boolean  @default(false)
+  warranties Warranty[]
+  orders    Order[]
 }
 
-model Rol {
+model Role {
   id       Int           @id @default(autoincrement())
-  nombre   String        @unique
-  usuarios UsuarioRol[]
+  name     String        @unique
+  users    UserRole[]
 }
 
-model UsuarioRol {
-  usuarioId Int
-  rolId     Int
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-  rol       Rol     @relation(fields: [rolId], references: [id])
-  @@id([usuarioId, rolId])
+model UserRole {
+  userId Int
+  roleId Int
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+  @@id([userId, roleId])
 }
 
-model Vehiculo {
+model Vehicle {
   id               Int        @id @default(autoincrement())
-  fecha            DateTime
+  date             DateTime
   vin              String     @unique
-  marca            String
-  modelo           String
-  nroMotor         String?
-  tipo             String?
-  año              Int?
-  nroCertificado   String     @unique
-  venta            DateTime?
-  fechaImportacion DateTime?
-  patente          String
-  garantia         Garantia?
-  ordenes          Orden[]
+  brand            String
+  model            String
+  engineNumber     String?
+  type             String?
+  year             Int?
+  certificateNumber String     @unique
+  saleDate         DateTime?
+  importDate       DateTime?
+  licensePlate     String
+  warranty         Warranty?
+  orders           Order[]
 }
 
-model ContactoRepuesto {
+model PartContact {
   id         Int        @id @default(autoincrement())
-  nombreEncargado String
-  direccion  String?
-  provincia  String?
-  localidad  String?
-  telefono1  String?
-  telefono2  String?
+  contactName String
+  address    String?
+  state      String?
+  city       String?
+  phone1     String?
+  phone2     String?
   email      String?
-  repuestos  Repuesto[]
+  parts      Part[]
 }
 
-model Repuesto {
+model Part {
   id           Int              @id @default(autoincrement())
-  fechaDeCarga DateTime?
-  empresaId    Int
-  empresa      Empresa          @relation(fields: [empresaId], references: [id])
-  codigo       String           @unique
-  descripcion  String
-  modelo       String?
+  loadDate     DateTime?
+  companyId    Int
+  company      Company          @relation(fields: [companyId], references: [id])
+  code         String           @unique
+  description  String
+  model        String?
   stock        Int?
-  precioVenta  Float?
-  contactoId   Int
-  contacto     ContactoRepuesto @relation(fields: [contactoId], references: [id])
+  salePrice    Float?
+  contactId    Int
+  contact      PartContact      @relation(fields: [contactId], references: [id])
 }
 
-model Garantia {
+model Warranty {
   id              Int      @id @default(autoincrement())
-  fechaActivacion DateTime
-  vehiculoVin     String   @unique
-  vehiculo        Vehiculo @relation(fields: [vehiculoVin], references: [vin])
-  empresaId       Int
-  empresa         Empresa  @relation(fields: [empresaId], references: [id])
-  usuarioId       Int
-  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+  activationDate  DateTime
+  vehicleVin      String   @unique
+  vehicle         Vehicle  @relation(fields: [vehicleVin], references: [vin])
+  companyId       Int
+  company         Company  @relation(fields: [companyId], references: [id])
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
 }
 
-model Orden {
+model Order {
   id                        Int      @id @default(autoincrement())
-  fechaCreacion             DateTime
-  clienteId                 Int
-  cliente                   Cliente  @relation(fields: [clienteId], references: [id])
-  vehiculoVin               String
-  vehiculo                  Vehiculo @relation(fields: [vehiculoVin], references: [vin])
-  empresaId                 Int
-  empresa                   Empresa  @relation(fields: [empresaId], references: [id])
-  usuarioId                 Int
-  usuario                   Usuario  @relation(fields: [usuarioId], references: [id])
-  estado                    String
-  estadoInterno              String?
-  kilometrajeReal            Int
-  diagnostico               String?
-  observacionesAdicionales  String?
-  tareas                    String
-  cantHoras                 Int
-  repuestos                 String
-  DescripRepuesto           String?
-  fotoPatenteUrl             String?
-  fotoChapaVinUrl            String?
-  fotoCuentaKilometrosUrl    String?
-  fotoPiezasAdicionalesUrl   String?
-  fotoFirmadaClienteUrl      String?
-  fotoORUrl                  String?
+  creationDate              DateTime
+  customerId                Int
+  customer                  Customer  @relation(fields: [customerId], references: [id])
+  vehicleVin                String
+  vehicle                   Vehicle @relation(fields: [vehicleVin], references: [vin])
+  companyId                 Int
+  company                   Company  @relation(fields: [companyId], references: [id])
+  userId                    Int
+  user                      User  @relation(fields: [userId], references: [id])
+  status                    String
+  internalStatus            String?
+  actualMileage             Int
+  diagnosis                 String?
+  additionalObservations    String?
+  tasks                     String
+  hoursCount                Int
+  parts                     String
+  partsDescription          String?
+  licensePlatePhotoUrl      String?
+  vinPlatePhotoUrl          String?
+  odometerPhotoUrl          String?
+  additionalPartsPhotoUrl   String?
+  customerSignedPhotoUrl    String?
+  orderReceiptPhotoUrl      String?
 }

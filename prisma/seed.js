@@ -2,193 +2,226 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🧹 Limpiando base de datos...");
+  console.log("🧹 Cleaning database...");
 
-  // Borrar tablas en orden correcto por FK
-  await prisma.usuarioRol.deleteMany();
-  await prisma.orden.deleteMany();
-  await prisma.garantia.deleteMany();
-  await prisma.repuesto.deleteMany();
-  await prisma.contactoRepuesto.deleteMany();
-  await prisma.usuario.deleteMany();
-  await prisma.rol.deleteMany();
-  await prisma.vehiculo.deleteMany();
-  await prisma.empresa.deleteMany();
-  await prisma.cliente.deleteMany();
+  // Delete tables in correct order due to FK constraints
+  await prisma.userRole.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.warranty.deleteMany();
+  await prisma.part.deleteMany();
+  await prisma.partContact.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.vehicle.deleteMany();
+  await prisma.company.deleteMany();
+  await prisma.customer.deleteMany();
 
-  console.log("✅ Base de datos limpia");
+  console.log("✅ Database cleaned");
 
   // --------------------------------------
   // Roles
   // --------------------------------------
-  console.log("🛠 Insertando roles...");
-  const rolesData = ["ADMINISTRADOR", "IMPORTADORA", "CONCESIONARIO", "TALLER"];
+  console.log("🛠 Inserting roles...");
+  const rolesData = ["ADMIN", "IMPORTER", "DEALER", "WORKSHOP"];
   const roles = {};
-  for (const nombre of rolesData) {
-    const rol = await prisma.rol.create({ data: { nombre } });
-    roles[nombre] = rol;
+  for (const name of rolesData) {
+    const role = await prisma.role.create({ data: { name } });
+    roles[name] = role;
   }
-  console.log("✅ Roles insertados");
+  console.log("✅ Roles inserted");
 
   // --------------------------------------
-  // Empresas
+  // Companies
   // --------------------------------------
-  console.log("🏢 Insertando empresas...");
-  const empresasData = [
-    { nombre: "Importadora Sur", direccion: "Av. Siempre Viva 123", provincia: "Buenos Aires", localidad: "La Plata", telefono1: "123456789", telefono2: "987654321", email: "contacto@importadora.com", tipoEmpresa: "Importadora" },
-    { nombre: "Concesionario Norte", direccion: "Calle Falsa 456", provincia: "Córdoba", localidad: "Córdoba", telefono1: "1122334455", telefono2: "5544332211", email: "ventas@concesionariocn.com", tipoEmpresa: "Concesionario" },
-    { nombre: "Taller Central", direccion: "Av. Central 789", provincia: "Buenos Aires", localidad: "La Plata", telefono1: "2233445566", telefono2: "6655443322", email: "contacto@tallercentral.com", tipoEmpresa: "Taller" },
-    { nombre: "Concesionario Oeste", direccion: "Calle Oeste 101", provincia: "Mendoza", localidad: "Mendoza", telefono1: "3344556677", telefono2: "7766554433", email: "ventas@concesionariooeste.com", tipoEmpresa: "Concesionario" },
-    { nombre: "Importadora Este", direccion: "Av. Este 202", provincia: "Santa Fe", localidad: "Rosario", telefono1: "4455667788", telefono2: "8877665544", email: "contacto@importadoraeste.com", tipoEmpresa: "Importadora" }
+  console.log("🏢 Inserting companies...");
+  const companiesData = [
+    { name: "Southern Importer", address: "123 Evergreen Ave", state: "Buenos Aires", city: "La Plata", phone1: "123456789", phone2: "987654321", email: "contact@importer.com", companyType: "Importer" },
+    { name: "Northern Dealership", address: "456 Fake St", state: "Córdoba", city: "Córdoba", phone1: "1122334455", phone2: "5544332211", email: "sales@dealership.com", companyType: "Dealer" },
+    { name: "Central Workshop", address: "789 Central Ave", state: "Buenos Aires", city: "La Plata", phone1: "2233445566", phone2: "6655443322", email: "contact@centralworkshop.com", companyType: "Workshop" },
+    { name: "Western Dealership", address: "101 West St", state: "Mendoza", city: "Mendoza", phone1: "3344556677", phone2: "7766554433", email: "sales@westerndealer.com", companyType: "Dealer" },
+    { name: "Eastern Importer", address: "202 East Ave", state: "Santa Fe", city: "Rosario", phone1: "4455667788", phone2: "8877665544", email: "contact@easternimporter.com", companyType: "Importer" }
   ];
-  const empresas = [];
-  for (const e of empresasData) {
-    const empresa = await prisma.empresa.create({ data: e });
-    empresas.push(empresa);
+  const companies = [];
+  for (const c of companiesData) {
+    const company = await prisma.company.create({ data: c });
+    companies.push(company);
   }
-  console.log("✅ Empresas insertadas");
+  console.log("✅ Companies inserted");
 
   // --------------------------------------
-  // Usuarios
+  // Users
   // --------------------------------------
-  console.log("👤 Insertando usuarios...");
-  const usuariosData = [
-    { nombre: "Administrador", email: "admin@empresa.com", notificaciones: true, contraseña: "Admin", empresaId: empresas[0].id },
-    { nombre: "Juan Pérez", email: "juan@rio.com", notificaciones: true, contraseña: "usuario", empresaId: empresas[1].id },
-    { nombre: "María López", email: "maria@lopez.com", notificaciones: false, contraseña: "usuario", empresaId: empresas[2].id },
-    { nombre: "Carlos Ruiz", email: "carlos@norte.com", notificaciones: false, contraseña: "usuario", empresaId: empresas[3].id },
-    { nombre: "Laura Fernández", email: "laura@progreso.com", notificaciones: true, contraseña: "usuario", empresaId: empresas[4].id }
+  console.log("👤 Inserting users...");
+ const bcrypt = require('bcrypt');
+  const SALT_ROUNDS = 10; // Número de rondas para el salt (10-12 es un buen balance)
+
+  const usersData = [
+    { 
+      username: "Admin", 
+      email: "admin@company.com", 
+      notifications: true, 
+      password: await bcrypt.hash("Admin123!", SALT_ROUNDS), // Contraseña más segura
+      companyId: companies[0].id 
+    },
+    { 
+      username: "John Smith", 
+      email: "john@smith.com", 
+      notifications: true, 
+      password: await bcrypt.hash("John123!", SALT_ROUNDS),
+      companyId: companies[1].id 
+    },
+    { 
+      username: "Mary Johnson", 
+      email: "mary@johnson.com", 
+      notifications: false, 
+      password: await bcrypt.hash("Mary123!", SALT_ROUNDS),
+      companyId: companies[2].id 
+    },
+    { 
+      username: "Carlos Brown", 
+      email: "carlos@brown.com", 
+      notifications: false, 
+      password: await bcrypt.hash("Carlos123!", SALT_ROUNDS),
+      companyId: companies[3].id 
+    },
+    { 
+      username: "Laura Wilson", 
+      email: "laura@wilson.com", 
+      notifications: true, 
+      password: await bcrypt.hash("Laura123!", SALT_ROUNDS),
+      companyId: companies[4].id 
+    }
   ];
 
-  const usuarios = [];
-  for (const u of usuariosData) {
-    const usuario = await prisma.usuario.create({ data: u });
-    usuarios.push(usuario);
+  const users = [];
+  for (const u of usersData) {
+    const user = await prisma.user.create({ data: u });
+    users.push(user);
   }
-  console.log("✅ Usuarios insertados");
+  console.log("✅ Users inserted");
 
   // --------------------------------------
-  // Asignar roles a usuarios
+  // Assign roles to users
   // --------------------------------------
-  console.log("🔗 Asignando roles a usuarios...");
-  const asignaciones = [
-    { usuario: usuarios[0], rol: roles["ADMINISTRADOR"] },
-    { usuario: usuarios[1], rol: roles["CONCESIONARIO"] },
-    { usuario: usuarios[2], rol: roles["TALLER"] },
-    { usuario: usuarios[3], rol: roles["CONCESIONARIO"] },
-    { usuario: usuarios[4], rol: roles["TALLER"] }
+  console.log("🔗 Assigning roles to users...");
+  const assignments = [
+    { user: users[0], role: roles["ADMIN"] },
+    { user: users[1], role: roles["DEALER"] },
+    { user: users[2], role: roles["WORKSHOP"] },
+    { user: users[3], role: roles["DEALER"] },
+    { user: users[4], role: roles["WORKSHOP"] }
   ];
 
-  for (const a of asignaciones) {
-    await prisma.usuarioRol.create({
+  for (const a of assignments) {
+    await prisma.userRole.create({
       data: {
-        usuarioId: a.usuario.id,
-        rolId: a.rol.id
+        userId: a.user.id,
+        roleId: a.role.id
       }
     });
   }
-  console.log("✅ Roles asignados a los usuarios");
+  console.log("✅ Roles assigned to users");
 
   // --------------------------------------
-  // Clientes
+  // Customers
   // --------------------------------------
-  console.log("🧑‍🤝‍🧑 Insertando clientes...");
-  const clientesData = [
-    { nombre: "Pedro", apellido: "Gómez", email: "pedro@gmail.com", telefono: "111222333", direccion: "Calle A 123", provincia: "Buenos Aires", localidad: "La Plata" },
-    { nombre: "Ana", apellido: "Martínez", email: "ana@gmail.com", telefono: "444555666", direccion: "Calle B 456", provincia: "Córdoba", localidad: "Córdoba" },
-    { nombre: "Luis", apellido: "Rodríguez", email: "luis@gmail.com", telefono: "777888999", direccion: "Calle C 789", provincia: "Mendoza", localidad: "Mendoza" }
+  console.log("🧑‍🤝‍🧑 Inserting customers...");
+  const customersData = [
+    { firstName: "Peter", lastName: "Gomez", email: "peter@gmail.com", phone: "111222333", address: "123 A St", state: "Buenos Aires", city: "La Plata" },
+    { firstName: "Anna", lastName: "Martinez", email: "anna@gmail.com", phone: "444555666", address: "456 B St", state: "Córdoba", city: "Córdoba" },
+    { firstName: "Louis", lastName: "Rodriguez", email: "louis@gmail.com", phone: "777888999", address: "789 C St", state: "Mendoza", city: "Mendoza" }
   ];
-  const clientes = [];
-  for (const c of clientesData) {
-    const cliente = await prisma.cliente.create({ data: c });
-    clientes.push(cliente);
+  const customers = [];
+  for (const c of customersData) {
+    const customer = await prisma.customer.create({ data: c });
+    customers.push(customer);
   }
-  console.log("✅ Clientes insertados");
+  console.log("✅ Customers inserted");
 
   // --------------------------------------
-  // Vehículos
+  // Vehicles
   // --------------------------------------
-  console.log("🚗 Insertando vehículos...");
-  const vehiculosData = [];
+  console.log("🚗 Inserting vehicles...");
+  const vehiclesData = [];
   for (let i = 1; i <= 10; i++) {
-    vehiculosData.push({
-      fecha: new Date(),
+    vehiclesData.push({
+      date: new Date(),
       vin: `VIN000${i}`,
-      marca: `Marca${i}`,
-      modelo: `Modelo${i}`,
-      nroMotor: `Motor${i}`,
-      tipo: "Sedán",
-      año: 2020 + i % 3,
-      nroCertificado: `CERT00${i}`,
-      venta: new Date(),
-      fechaImportacion: new Date(),
-      patente: `ABC${i}XYZ`
+      brand: `Brand${i}`,
+      model: `Model${i}`,
+      engineNumber: `Engine${i}`,
+      type: "Sedan",
+      year: 2020 + i % 3,
+      certificateNumber: `CERT00${i}`,
+      saleDate: new Date(),
+      importDate: new Date(),
+      licensePlate: `ABC${i}XYZ`
     });
   }
-  const vehiculos = [];
-  for (const v of vehiculosData) {
-    const vehiculo = await prisma.vehiculo.create({ data: v });
-    vehiculos.push(vehiculo);
+  const vehicles = [];
+  for (const v of vehiclesData) {
+    const vehicle = await prisma.vehicle.create({ data: v });
+    vehicles.push(vehicle);
   }
-  console.log("✅ Vehículos insertados");
+  console.log("✅ Vehicles inserted");
 
   // --------------------------------------
-  // Órdenes
+  // Orders
   // --------------------------------------
-  console.log("📄 Insertando órdenes...");
-  const ordenesData = [
+  console.log("📄 Inserting orders...");
+  const ordersData = [
     {
-      fechaCreacion: new Date(),
-      clienteId: clientes[0].id,
-      vehiculoVin: vehiculos[0].vin,
-      empresaId: empresas[1].id,
-      usuarioId: usuarios[1].id,
-      estado: "En proceso",
-      estadoInterno: "Pendiente",
-      kilometrajeReal: 1000,
-      diagnostico: "Chequeo general",
-      observacionesAdicionales: "Ninguna",
-      tareas: "Cambio de aceite",
-      cantHoras: 2,
-      repuestos: "Filtro de aceite",
-      DescripRepuesto: "Filtro modelo X"
+      creationDate: new Date(),
+      customerId: customers[0].id,
+      vehicleVin: vehicles[0].vin,
+      companyId: companies[1].id,
+      userId: users[1].id,
+      status: "In progress",
+      internalStatus: "Pending",
+      actualMileage: 1000,
+      diagnosis: "General check",
+      additionalObservations: "None",
+      tasks: "Oil change",
+      hoursCount: 2,
+      parts: "Oil filter",
+      partsDescription: "Filter model X"
     },
     {
-      fechaCreacion: new Date(),
-      clienteId: clientes[1].id,
-      vehiculoVin: vehiculos[1].vin,
-      empresaId: empresas[3].id,
-      usuarioId: usuarios[3].id,
-      estado: "Completada",
-      estadoInterno: "Listo",
-      kilometrajeReal: 5000,
-      diagnostico: "Revisión frenos",
-      observacionesAdicionales: "Todo OK",
-      tareas: "Revisión y cambio pastillas",
-      cantHoras: 3,
-      repuestos: "Pastillas de freno",
-      DescripRepuesto: "Pastillas marca Y"
+      creationDate: new Date(),
+      customerId: customers[1].id,
+      vehicleVin: vehicles[1].vin,
+      companyId: companies[3].id,
+      userId: users[3].id,
+      status: "Completed",
+      internalStatus: "Ready",
+      actualMileage: 5000,
+      diagnosis: "Brake inspection",
+      additionalObservations: "All OK",
+      tasks: "Brake pad inspection and replacement",
+      hoursCount: 3,
+      parts: "Brake pads",
+      partsDescription: "Brand Y pads"
     }
   ];
-  for (const o of ordenesData) {
-    await prisma.orden.create({ data: o });
+  for (const o of ordersData) {
+    await prisma.order.create({ data: o });
   }
-  console.log("✅ Órdenes insertadas");
+  console.log("✅ Orders inserted");
 
   // --------------------------------------
-  // Garantías
+  // Warranties
   // --------------------------------------
-  console.log("🛡 Insertando garantías...");
-  const garantiasData = [
-    { fechaActivacion: new Date(), vehiculoVin: vehiculos[0].vin, empresaId: empresas[1].id, usuarioId: usuarios[1].id },
-    { fechaActivacion: new Date(), vehiculoVin: vehiculos[1].vin, empresaId: empresas[3].id, usuarioId: usuarios[3].id }
+  console.log("🛡 Inserting warranties...");
+  const warrantiesData = [
+    { activationDate: new Date(), vehicleVin: vehicles[0].vin, companyId: companies[1].id, userId: users[1].id },
+    { activationDate: new Date(), vehicleVin: vehicles[1].vin, companyId: companies[3].id, userId: users[3].id }
   ];
-  for (const g of garantiasData) {
-    await prisma.garantia.create({ data: g });
+  for (const w of warrantiesData) {
+    await prisma.warranty.create({ data: w });
   }
-  console.log("✅ Garantías insertadas");
+  console.log("✅ Warranties inserted");
 
-  console.log("🎉 Seed completado!");
+  console.log("🎉 Seed completed!");
 }
 
 main()

@@ -7,18 +7,16 @@ async function main() {
 
   // El orden importa por las relaciones (de dependientes a padres)
   // Tablas dependientes
-  await prisma.usuarioRol.deleteMany(); 
-  await prisma.orden.deleteMany();    
-  await prisma.garantia.deleteMany();   
-  await prisma.repuesto.deleteMany();   
-  // Tablas intermedias 
-  await prisma.contactoRepuesto.deleteMany();
-  // Tablas “padre”
-  await prisma.usuario.deleteMany();
-  await prisma.rol.deleteMany();
-  await prisma.vehiculo.deleteMany();
-  await prisma.empresa.deleteMany();
-  await prisma.cliente.deleteMany();
+  await prisma.userRole.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.warranty.deleteMany();
+  await prisma.part.deleteMany();
+  await prisma.partContact.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.vehicle.deleteMany();
+  await prisma.company.deleteMany();
+  await prisma.customer.deleteMany();
 
   console.log("✅ Todos los registros han sido eliminados.");
 }

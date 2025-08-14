@@ -36,7 +36,7 @@ bun run dev
 Para migrar la base de datos hay que correr el comando 
 
 ```bash
-npm prisma migrate dev
+npx prisma migrate dev
 ```
 
 
@@ -64,6 +64,11 @@ node prisma/clean.js
 
 
 ```
+
+
+
+
+
 
 
 A DESARROLLAR:
