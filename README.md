@@ -73,12 +73,6 @@ Para ejecutar los pruebas unitarias, correr el siguiente comando
 bun run tests
 ```
 
-Para ejecutar pruebas e2e, correr el siguiente comando
-
-```bash
-bun run tests:e2e
-```
-
 ### Creación de nuevas pruebas
 
 Las pruebas unitarias comprenden una tarea de cada desarrollador y es responsabilidad de quien construye, crear, ejecutar y resolver las pruebas al interior de sus carpetas. Para dar algunas indicaciones claras
@@ -95,3 +89,11 @@ Es posible crear nuevos escenarios para pruebas, con el servidor de desarrollo e
 bun run create:test:e2e
 ```
 
+
+
+To do:
+- Tests
+- Fijarme que onda con el apartado, servicios realizados, y el apartado reclamos
+- Salir de la app
+- Mostrar info del admin al tocar usuario en el headeer
+- Ir comentando funcionalidades explicando que hacen o como funcionan
