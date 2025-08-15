@@ -94,6 +94,5 @@ bun run create:test:e2e
 To do:
 - Tests
 - Fijarme que onda con el apartado, servicios realizados, y el apartado reclamos
-- Salir de la app
 - Mostrar info del admin al tocar usuario en el headeer
 - Ir comentando funcionalidades explicando que hacen o como funcionan
