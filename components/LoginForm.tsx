@@ -71,7 +71,7 @@ const LoginForm = () => {
           </div>
 
           <div className="text-center text-gray-300">
-            <p>Si no tienes cuenta <Link href="/register" className="text-blue-500 hover:underline">Registrate</Link></p>
+            <p>Si no tienes cuenta o olvidaste tu contraseña contacta a Soporte tecnico.</p>
           </div>
         </form>
       </div>

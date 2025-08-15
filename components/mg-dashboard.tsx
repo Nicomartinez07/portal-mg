@@ -162,6 +162,14 @@ export function MGDashboard({
           {/* Header */}
           <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
             <SidebarTrigger className="text-slate-700" />
+            {/* Buscador */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar vehiculo por VIN"
+                className="w-70 rounded-md border border-gray-300 bg-gray-50 px-3 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
             <div className="flex-1" />
             <div className="flex items-center gap-2 text-gray-600">
               <User className="w-5 h-5" />

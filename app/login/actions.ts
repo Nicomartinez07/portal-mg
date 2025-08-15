@@ -56,7 +56,7 @@ export async function loginUser(_: any, formData: FormData): Promise<LoginRespon
     const result = {
       success: true,
       token,
-      user: { id: user.id, username: user.username, role: user.roles },
+      user: { id: String(user.id), username: user.username, role: user.roles },
     };
 
     console.log("[loginUser] Resultado final:", result);

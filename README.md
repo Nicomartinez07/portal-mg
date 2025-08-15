@@ -36,7 +36,7 @@ bun run dev
 Para migrar la base de datos hay que correr el comando 
 
 ```bash
-npx prisma migrate dev
+npm prisma migrate dev
 ```
 
 
@@ -61,14 +61,7 @@ npx prisma db seed
 Para eliminar datos de prisma correr siguiente comando:
 ```bash
 node prisma/clean.js
-
-
 ```
-
-
-
-
-
 
 
 A DESARROLLAR:
@@ -101,4 +94,4 @@ Es posible crear nuevos escenarios para pruebas, con el servidor de desarrollo e
 ```bash
 bun run create:test:e2e
 ```
-prueba
+
