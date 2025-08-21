@@ -15,7 +15,7 @@ const LoginForm = () => {
   useEffect(() => {
     console.log("[LoginForm] State cambiado:", state);
     if (state?.success) {
-      router.push('/garantias');
+      router.push('/');
       console.log("[LoginForm] Login exitoso, redirigido...");
     }
   }, [state, router]);

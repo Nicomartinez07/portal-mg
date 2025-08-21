@@ -35,6 +35,7 @@ import {
 
 import { Menu, Transition } from "@headlessui/react";
 
+//Configuracion de las rutas de navegacion
 const navigationItems = [
   { name: "Inicio", icon: Home, href: "/" },
   { name: "Garantías", icon: Shield, href: "/garantias" },
@@ -49,9 +50,11 @@ const navigationItems = [
 
 const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
 
+// Componente para la barra lateral
 function AppSidebar() {
   const router = useRouter();
 
+  // Función de logout centralizada
   const handleLogout = async () => {
     await fetch("/api/logout");
     router.push("/login");
@@ -119,7 +122,7 @@ function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              onClick={handleLogout}
+              onClick={handleLogout} // Usa la función centralizada
               className="text-white hover:bg-slate-600 rounded-none h-12 justify-start"
             >
               <button className="flex items-center gap-3">
@@ -134,6 +137,7 @@ function AppSidebar() {
   );
 }
 
+// Componente principal del dashboard
 interface MGDashboardProps {
   children?: React.ReactNode;
   defaultOpen?: boolean;
@@ -141,22 +145,37 @@ interface MGDashboardProps {
 
 export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) {
   const [vin, setVin] = useState("");
-  const [username, setUsername] = useState("Usuario");
+  const [username, setUsername] = useState("Cargando..."); // Estado inicial para evitar "undefined"
+
   const router = useRouter();
+  
+  // Función de logout centralizada
+  const handleLogout = async () => {
+    await fetch("/api/logout");
+    router.push("/login");
+  };
 
   // Traer username del backend
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("/api/me");
-        if (res.ok) {
-          const data = await res.json();
-          setUsername(data.username);
+        const res = await fetch("/api/me", {
+          method: "GET",
+          credentials: "include", // Necesario para enviar la cookie
+        });
+
+        if (!res.ok) {
+          throw new Error("No autorizado");
         }
+
+        const data = await res.json();
+        setUsername(data.username);
       } catch (err) {
         console.error(err);
+        setUsername("Usuario"); // Fallback en caso de error
       }
     }
+
     fetchUser();
   }, []);
 
@@ -164,11 +183,6 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
     if (e.key === "Enter" && vin.trim() !== "") {
       router.push(`/buscador/${vin.trim()}`);
     }
-  };
-
-  const handleLogout = async () => {
-    await fetch("/api/logout");
-    router.push("/login");
   };
 
   return (
@@ -216,22 +230,8 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
                     <Menu.Item>
                       {({ active }) => (
                         <button
-                          className={`${
-                            active ? "bg-gray-100" : ""
-                          } block w-full text-left px-4 py-2 text-sm text-gray-700`}
-                          onClick={() => router.push("/perfil")}
-                        >
-                          Mi Cuenta
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          className={`${
-                            active ? "bg-gray-100" : ""
-                          } block w-full text-left px-4 py-2 text-sm text-gray-700`}
-                          onClick={handleLogout}
+                          className={`${active ? "bg-gray-100" : ""} block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                          onClick={handleLogout} // Usa la función centralizada
                         >
                           <LogOut className="inline w-4 h-4 mr-2" />
                           Salir
