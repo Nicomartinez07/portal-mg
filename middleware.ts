@@ -39,3 +39,4 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: ["/login/:path*", "/", "/ordenes"], // páginas donde actúa el middleware
 };
+

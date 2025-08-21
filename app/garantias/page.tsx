@@ -1,9 +1,9 @@
 "use client";
 
-import { MGDashboard } from "../../components/mg-dashboard";
+import { MGDashboard } from "@/components/mg-dashboard";
 import { WarrantyProvider, useWarranty } from "@/contexts/WarrantyContext";
-import { WarrantyFilters } from "../../components/warranty/WarrantyFilters.tsx";
-import { WarrantyTable } from "../../components/warranty/WarrantyTable";
+import { WarrantyFilters } from "@/components/warranty/WarrantyFilters";
+import { WarrantyTable } from "@/components/warranty/WarrantyTable";
 import { getFilteredWarranties } from "./actions";
 
 const GarantiasContent = () => {
@@ -11,9 +11,14 @@ const GarantiasContent = () => {
 
   const handleSearch = async () => {
     setLoading(true);
-    const data = await getFilteredWarranties(filters);
-    setResults(data);
-    setLoading(false);
+    try {
+      const data = await getFilteredWarranties(filters);
+      setResults(data);
+    } catch (err) {
+      console.error("Error al buscar garantías:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -18,7 +18,6 @@ export const WarrantyTable = () => {
             <th className="px-4 py-3 text-left">Cliente</th>
             <th className="px-4 py-3 text-left">Empresa</th>
             <th className="px-4 py-3 text-left">Usuario</th>
-            <th className="px-4 py-3 text-left">Acciones</th>
           </tr>
         </thead>
         <tbody>
