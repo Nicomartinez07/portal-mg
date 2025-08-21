@@ -109,12 +109,12 @@ const LoginForm = () => {
               <span className="ml-2 text-sm">Recordarme</span>
             </label>
             <button
-              type="submit"
-              disabled={state?.isPending}
-              className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
-            >
-              {state?.isPending ? 'Cargando...' : 'Login'}
-            </button>
+                type="submit"
+                disabled={state?.isPending} // <- ¡Aquí está el problema!
+                className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
+              >
+                {state?.isPending ? 'Cargando...' : 'Login'} 
+              </button>
           </div>
 
           {/* Mensaje final */}
