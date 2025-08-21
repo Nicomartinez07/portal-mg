@@ -64,7 +64,6 @@ node prisma/clean.js
 ```
 
 
-A DESARROLLAR:
 ### Ejecución de pruebas
 
 Para ejecutar los pruebas unitarias, correr el siguiente comando
@@ -93,6 +92,7 @@ bun run create:test:e2e
 
 To do:
 - Tests
-- Fijarme que onda con el apartado, servicios realizados, y el apartado reclamos
-- Mostrar info del admin al tocar usuario en el headeer
+- Fijarme que onda con las tablas, servicios realizados, y el apartado reclamos
 - Ir comentando funcionalidades explicando que hacen o como funcionan
+
+- Me tira error de prisma en el /garantias y me parece que es porque estoy usando "use client" con algo de prisma y rompe a la mierda todo, fijarse los 2 componente de warranty, el actions.ts y el page.tsx de garantias tambien cree algo de context que no se para que mierda se utiliza

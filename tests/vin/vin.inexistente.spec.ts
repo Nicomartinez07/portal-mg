@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('filtrar por vin inexistente y visibilizar que no hay datos de ese auto', async ({ page }) => {
+test('Filtrar por vin inexistente y visibilizar que no hay datos de ese auto', async ({ page }) => {
   await page.goto('http://localhost:3000/login');
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).click();
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('Admin');
