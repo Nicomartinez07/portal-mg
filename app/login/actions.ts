@@ -50,7 +50,6 @@ export async function loginUser(_: any, formData: FormData): Promise<LoginRespon
 
     // Compara la contraseña proporcionada con el hash almacenado en la DB
     const isValid = await bcrypt.compare(password, user.password);
-    console.log("[loginUser] Contraseña válida:", isValid);
 
     // Si la contraseña no coincide, devuelve error (mismo mensaje por seguridad)
     if (!isValid) {
@@ -73,7 +72,7 @@ export async function loginUser(_: any, formData: FormData): Promise<LoginRespon
       },
       process.env.JWT_SECRET!// Secreto para firmar el token (desde variables de entorno)
     );
-    console.log("[loginUser] Token generado:", token);
+    
 
     // Configura la cookie con el token
     const cookieStore = await cookies();

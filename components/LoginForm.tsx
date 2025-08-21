@@ -4,16 +4,14 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, startTransition } from 'react';
 import { loginUser } from '@/app/login/actions';
 import { Eye, EyeOff } from 'lucide-react';
-import Link from 'next/link';
 
 const LoginForm = () => {
   const router = useRouter();
   const [state, formAction] = React.useActionState(loginUser, { error: '', success: false });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Efecto para chequear cuando el login fue exitoso
+  // Efecto para chequear cuando el login fue exitoso, pushea al login si fue exitosox
   useEffect(() => {
-    console.log("[LoginForm] State cambiado:", state);
     if (state?.success) {
       router.push('/');
       console.log("[LoginForm] Login exitoso, redirigido...");
@@ -110,7 +108,7 @@ const LoginForm = () => {
             </label>
             <button
                 type="submit"
-                disabled={state?.isPending} // <- ¡Aquí está el problema!
+                disabled={state?.isPending} 
                 className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded w-full sm:w-auto"
               >
                 {state?.isPending ? 'Cargando...' : 'Login'} 
