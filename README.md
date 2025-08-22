@@ -96,3 +96,6 @@ To do:
 - Ir comentando funcionalidades explicando que hacen o como funcionan
 - FIJARME QUE MIERDA PASA CON EL FILTRADO DE DATOS POR NOMBRE, Y HACER TESTS PARA ENTREGAR FUNCIONALIDAD
 
+
+
+//const { toPDF, targetRef } = usePDF({ filename: `certificado-${selected.vehicle.vin}.pdf` });

@@ -54,7 +54,7 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
 
       {/* Contenedor de filtros */}
       <div
-        className={`grid grid-cols-1 md:grid-cols-7 gap-2 mt-2 transition-all duration-300 ${
+        className={`grid grid-cols-1 md:grid-cols-8 gap-1 mt-2 transition-all duration-300 ${
           open ? "block" : "hidden md:grid"
         }`}
       >
@@ -144,11 +144,12 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
           </div>
           
         <button
-          onClick={onSearch}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 col-span-full md:col-span-1"
-        >
-          Buscar
-        </button>
+        onClick={onSearch}
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full md:w-auto md:col-span-1"
+      >
+        Buscar
+      </button>
+
       </div>
     </div>
   );

@@ -110,17 +110,10 @@ function AppSidebar() {
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  
                 );
               })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="text-white bg-[#424f63] hover:bg-[#505f78] rounded-none h-12 justify-start">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
+              <SidebarMenuButton
               asChild
               onClick={handleLogout} // Usa la función centralizada
               className="text-white hover:bg-slate-600 rounded-none h-12 justify-start"
@@ -130,9 +123,10 @@ function AppSidebar() {
                 <span className="text-sm">Salir</span>
               </button>
             </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
     </Sidebar>
   );
 }
