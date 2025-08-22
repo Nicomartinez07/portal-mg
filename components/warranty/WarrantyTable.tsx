@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useWarranty } from "../../contexts/WarrantyContext";
+import { deleteWarranty } from "../../app/garantias/actions";
 
 export const WarrantyTable = () => {
   const { results } = useWarranty();
@@ -27,7 +28,9 @@ export const WarrantyTable = () => {
               <td className="px-4 py-3">{w.vehicle.vin}</td>
               <td className="px-4 py-3">{w.vehicle.model}</td>
               <td className="px-4 py-3">{w.vehicle.licensePlate}</td>
-              <td className="px-4 py-3">{w.user.username}</td>
+              <td className="px-4 py-3">
+                {w.customer.firstName} {w.customer.lastName}
+              </td>
               <td className="px-4 py-3">{w.company.name}</td>
               <td className="px-4 py-3">{w.user.username}</td>
               <td className="px-4 py-3">
@@ -71,18 +74,33 @@ export const WarrantyTable = () => {
       <div>
         <h3 className="font-semibold mb-2 border-t pt-2">Cliente</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <input readOnly value={selected.user.firstName} placeholder="Nombre" className="border rounded px-3 py-2 w-full bg-gray-100" />
-          <input readOnly value={selected.user.lastName} placeholder="Apellido" className="border rounded px-3 py-2 w-full bg-gray-100" />
-          <input readOnly value={selected.user.email} placeholder="Email" className="border rounded px-3 py-2 w-full bg-gray-100" />
-          <input readOnly value={selected.user.phone} placeholder="Teléfono" className="border rounded px-3 py-2 w-full bg-gray-100" />
-          <input readOnly value={selected.user.address} placeholder="Dirección" className="border rounded px-3 py-2 w-full bg-gray-100" />
+          <input readOnly value={selected.customer.firstName} placeholder="Nombre" className="border rounded px-3 py-2 w-full bg-gray-100" />
+          <input readOnly value={selected.customer.lastName} placeholder="Apellido" className="border rounded px-3 py-2 w-full bg-gray-100" />
+          <input readOnly value={selected.customer.email} placeholder="Email" className="border rounded px-3 py-2 w-full bg-gray-100" />
+          <input readOnly value={selected.customer.phone} placeholder="Teléfono" className="border rounded px-3 py-2 w-full bg-gray-100" />
+          <input readOnly value={selected.customer.address} placeholder="Dirección" className="border rounded px-3 py-2 w-full bg-gray-100" />
         </div>
       </div>
+
 
       {/* Botones */}
       <div className="mt-4 flex justify-end gap-2">
         <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Certificado</button>
-        <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Anular Garantía</button>
+        <button
+          onClick={async () => {
+            if (confirm("¿Seguro que querés anular esta garantía?")) {
+              const res = await deleteWarranty(selected.id);
+              if (res.success) {
+                alert("Garantía anulada");
+              } else {
+                alert("Error: " + res.error);
+              }
+            }
+          }}
+          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        >
+          Anular Garantía
+        </button>
         <button
           onClick={() => setSelected(null)}
           className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"

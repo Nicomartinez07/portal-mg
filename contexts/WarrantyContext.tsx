@@ -6,7 +6,13 @@ type Filters = {
   model: string;
   certificateNumber: string;
   status: string;
+  fromDate?: string;
+  toDate?: string;
+  licensePlate?: string;
+  customerName?: string;   // 👈 agregar esto
+  companyId?: number;      // 👈 y este también
 };
+
 
 type WarrantyContextType = {
   filters: Filters;
@@ -25,7 +31,13 @@ export const WarrantyProvider = ({ children }: { children: React.ReactNode }) =>
     model: "",
     certificateNumber: "",
     status: "",
+    fromDate: "",
+    toDate: "",
+    licensePlate: "",
+    customerName: "",
+    companyId: undefined,
   });
+
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 

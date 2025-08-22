@@ -1,10 +1,18 @@
 "use client";
 import { useWarranty } from "@/contexts/WarrantyContext";
 import { useState, useEffect } from "react";
+import { getCompanies } from "@/app/actions/get.companies";
 
 export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
   const { filters, setFilters } = useWarranty();
   const [open, setOpen] = useState(false);
+  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+
+  // Obtener empresas al cargar el componente
+  useEffect(() => {
+    getCompanies().then(setCompanies);
+  }, []);
+
 
   // Función para obtener el primer día del mes actual en formato YYYY-MM-DD
   const getFirstDayOfMonth = () => {
@@ -72,6 +80,7 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
           />
         </div>
         
+        {/* Campo VIN */}
         <div className="flex flex-col">
             <label className="text-sm text-gray-800">VIN</label>
             <input
@@ -82,6 +91,7 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
             />
         </div>
         
+        {/* Campo Modelo */}
         <div className="flex flex-col">
           <label className="text-sm text-gray-800">Modelo</label>
            <input
@@ -92,36 +102,47 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
         />
         </div>
         
+        {/* Campo Patente */}
         <div className="flex flex-col">
           <label className="text-sm text-gray-800">Patente</label>
           <input
           type="text"
-          value={filters.plate}
-          onChange={(e) => setFilters({ ...filters, plate: e.target.value })}
+          value={filters.licensePlate}
+          onChange={(e) => setFilters({ ...filters, licensePlate: e.target.value })}
           className="border rounded px-2 py-1 w-full"
         />
         </div>
-        
+
+        {/* Campo Nombre Cliente */}
         <div className="flex flex-col">
           <label className="text-sm text-gray-800">Nombre Cliente</label>
-            <input
-          type="text"
-          value={filters.clientName}
-          onChange={(e) => setFilters({ ...filters, clientName: e.target.value })}
-          className="border rounded px-2 py-1 w-full"
-        />
+          <input
+            type="text"
+            value={filters.customerName}  
+            onChange={(e) => setFilters({ ...filters, customerName: e.target.value })}
+            className="border rounded px-2 py-1 w-full"
+          />
         </div>
-        
+
+        {/* Campo Empresa  */}
         <div className="flex flex-col">
           <label className="text-sm text-gray-800">Empresa</label>
-          <input
-          type="text"
-          value={filters.company}
-          onChange={(e) => setFilters({ ...filters, company: e.target.value })}
-          className="border rounded px-2 py-1 w-full"
-        />
-        
-        </div>
+          <select
+            value={filters.companyId || ""}
+            onChange={(e) =>
+                setFilters({ ...filters, companyId: Number(e.target.value) })
+              }
+              className="border rounded px-2 py-1 w-full"
+            >
+              <option value=""></option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
         <button
           onClick={onSearch}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 col-span-full md:col-span-1"

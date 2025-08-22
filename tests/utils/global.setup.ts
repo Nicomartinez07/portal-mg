@@ -119,28 +119,25 @@ export default async function globalSetup() {
       customers.push(customer);
     }
 
-    // --------------------------------------
+     // --------------------------------------
     // Vehicles
     // --------------------------------------
-    const vehiclesData = Array.from({ length: 10 }, (_, i) => ({
+    const vehiclesData = Array.from({ length: 20 }, (_, i) => ({
       date: new Date(),
-      vin: `VIN000${i}`,
-      brand: `Brand${i}`,
-      model: `Model${i}`,
-      engineNumber: `Engine${i}`,
-      type: "Sedan",
-      year: 2020 + i % 3,
-      certificateNumber: `CERT00${i}`,
-      saleDate: new Date(),
-      importDate: new Date(),
-      licensePlate: `ABC${i}XYZ`
+      vin: `VIN${(i + 1).toString().padStart(5, "0")}`,
+      brand: `Brand${i + 1}`,
+      model: `Model${i + 1}`,
+      engineNumber: `Engine${i + 1}`,
+      type: (i + 1) % 2 === 0 ? "SUV" : "Sedan",
+      year: 2018 + ((i + 1) % 6),
+      certificateNumber: `CERT${(i + 1).toString().padStart(4, "0")}`,
+      saleDate: new Date(2020, ((i + 1) % 12), 15),
+      importDate: new Date(2019, ((i + 1) % 12), 10),
+      licensePlate: `ABC${i + 1}XYZ`
     }));
-
-    const vehicles = [];
-    for (const v of vehiclesData) {
-      const vehicle = await prisma.vehicle.create({ data: v });
-      vehicles.push(vehicle);
-    }
+    const vehicles = await prisma.$transaction(
+      vehiclesData.map((v) => prisma.vehicle.create({ data: v }))
+    );
 
     // --------------------------------------
     // Orders
@@ -183,14 +180,41 @@ export default async function globalSetup() {
     });
 
     // --------------------------------------
-    // Warranties
-    // --------------------------------------
-    await prisma.warranty.createMany({
-      data: [
-        { activationDate: new Date(), vehicleVin: vehicles[0].vin, companyId: companies[1].id, userId: users[1].id },
-        { activationDate: new Date(), vehicleVin: vehicles[1].vin, companyId: companies[3].id, userId: users[3].id }
-      ]
-    });
+// Warranties
+// --------------------------------------
+const warrantiesData: any[] = [];
+const customerCount = customers.length;
+
+for (let i = 0; i < 15; i++) {
+  warrantiesData.push({
+    activationDate: new Date(2023, i % 12, 10),
+    vehicleVin: vehicles[i].vin,
+    companyId: companies[i % companies.length].id,
+    userId: users[i % users.length].id,
+    customerId: customers[i % customerCount].id
+  });
+}
+for (let i = 15; i < 18; i++) {
+  warrantiesData.push({
+    activationDate: new Date(2024, (i - 15) * 3, 5),
+    vehicleVin: vehicles[i].vin,
+    companyId: companies[1].id,
+    userId: users[1].id,
+    customerId: customers[(i - 15) % customerCount].id
+  });
+}
+for (let i = 18; i < 20; i++) {
+  warrantiesData.push({
+    activationDate: new Date(2025, (i - 18) * 2, 20),
+    vehicleVin: vehicles[i].vin,
+    companyId: companies[2].id,
+    userId: users[2].id,
+    customerId: customers[(i - 18) % customerCount].id
+  });
+}
+
+await prisma.warranty.createMany({ data: warrantiesData });
+
 
     console.log('✅ Base de datos configurada correctamente.');
   } catch (error) {

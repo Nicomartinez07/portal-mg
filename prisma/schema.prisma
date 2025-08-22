@@ -16,6 +16,7 @@ model Customer {
   state     String
   city      String
   orders    Order[]
+  warranties Warranty[]  // <-- relación inversa agregada
 }
 
 model Company {
@@ -113,6 +114,8 @@ model Warranty {
   company         Company  @relation(fields: [companyId], references: [id])
   userId          Int
   user            User     @relation(fields: [userId], references: [id])
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
 }
 
 model Order {

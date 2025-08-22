@@ -143,27 +143,27 @@ async function main() {
   // --------------------------------------
   console.log("🚗 Inserting vehicles...");
   const vehiclesData = [];
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 20; i++) {
     vehiclesData.push({
       date: new Date(),
-      vin: `VIN000${i}`,
+      vin: `VIN${i.toString().padStart(5, "0")}`,
       brand: `Brand${i}`,
       model: `Model${i}`,
       engineNumber: `Engine${i}`,
-      type: "Sedan",
-      year: 2020 + i % 3,
-      certificateNumber: `CERT00${i}`,
-      saleDate: new Date(),
-      importDate: new Date(),
+      type: i % 2 === 0 ? "SUV" : "Sedan",
+      year: 2018 + (i % 6), // entre 2018 y 2023
+      certificateNumber: `CERT${i.toString().padStart(4, "0")}`,
+      saleDate: new Date(2020, (i % 12), 15),
+      importDate: new Date(2019, (i % 12), 10),
       licensePlate: `ABC${i}XYZ`
     });
   }
-  const vehicles = [];
-  for (const v of vehiclesData) {
-    const vehicle = await prisma.vehicle.create({ data: v });
-    vehicles.push(vehicle);
-  }
+  const vehicles = await prisma.$transaction(
+    vehiclesData.map((v) => prisma.vehicle.create({ data: v }))
+  );
   console.log("✅ Vehicles inserted");
+
+
 
   // --------------------------------------
   // Orders
@@ -209,17 +209,49 @@ async function main() {
   console.log("✅ Orders inserted");
 
   // --------------------------------------
-  // Warranties
-  // --------------------------------------
-  console.log("🛡 Inserting warranties...");
-  const warrantiesData = [
-    { activationDate: new Date(), vehicleVin: vehicles[0].vin, companyId: companies[1].id, userId: users[1].id },
-    { activationDate: new Date(), vehicleVin: vehicles[1].vin, companyId: companies[3].id, userId: users[3].id }
-  ];
-  for (const w of warrantiesData) {
-    await prisma.warranty.create({ data: w });
-  }
-  console.log("✅ Warranties inserted");
+// Warranties
+// --------------------------------------
+console.log("🛡 Inserting warranties...");
+const warrantiesData = [];
+
+// Asignar customerId de forma rotativa entre los customers existentes
+const customerCount = customers.length;
+
+// Crear 15 warranties con fechas variadas y clientes
+for (let i = 0; i < 15; i++) {
+  warrantiesData.push({
+    activationDate: new Date(2023, i % 12, 10),
+    vehicleVin: vehicles[i].vin,
+    companyId: companies[i % companies.length].id,
+    userId: users[i % users.length].id,
+    customerId: customers[i % customerCount].id
+  });
+}
+
+// Agregar algunas de 2024
+for (let i = 15; i < 18; i++) {
+  warrantiesData.push({
+    activationDate: new Date(2024, (i - 15) * 3, 5),
+    vehicleVin: vehicles[i].vin,
+    companyId: companies[1].id,
+    userId: users[1].id,
+    customerId: customers[(i - 15) % customerCount].id
+  });
+}
+
+// Agregar algunas de 2025
+for (let i = 18; i < 20; i++) {
+  warrantiesData.push({
+    activationDate: new Date(2025, (i - 18) * 2, 20),
+    vehicleVin: vehicles[i].vin,
+    companyId: companies[2].id,
+    userId: users[2].id,
+    customerId: customers[(i - 18) % customerCount].id
+  });
+}
+
+await prisma.warranty.createMany({ data: warrantiesData });
+console.log("✅ Warranties inserted");
 
   console.log("🎉 Seed completed!");
 }

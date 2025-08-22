@@ -94,5 +94,5 @@ To do:
 - Tests
 - Fijarme que onda con las tablas, servicios realizados, y el apartado reclamos
 - Ir comentando funcionalidades explicando que hacen o como funcionan
+- FIJARME QUE MIERDA PASA CON EL FILTRADO DE DATOS POR NOMBRE, Y HACER TESTS PARA ENTREGAR FUNCIONALIDAD
 
-- Me tira error de prisma en el /garantias y me parece que es porque estoy usando "use client" con algo de prisma y rompe a la mierda todo, fijarse los 2 componente de warranty, el actions.ts y el page.tsx de garantias tambien cree algo de context que no se para que mierda se utiliza
