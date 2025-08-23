@@ -1,8 +1,0 @@
-
-    Certificado de Garantía
-    -----------------------
-    Cliente: Anna Martinez
-    Vehículo: Model20
-    Empresa: Central Workshop
-    Fecha: Thu Aug 21 2025 23:58:00 GMT-0300 (hora estándar de Argentina)
-  

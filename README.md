@@ -94,8 +94,5 @@ To do:
 - Tests
 - Fijarme que onda con las tablas, servicios realizados, y el apartado reclamos
 - Ir comentando funcionalidades explicando que hacen o como funcionan
-- FIJARME QUE MIERDA PASA CON EL FILTRADO DE DATOS POR NOMBRE, Y HACER TESTS PARA ENTREGAR FUNCIONALIDAD
 
-
-
-//const { toPDF, targetRef } = usePDF({ filename: `certificado-${selected.vehicle.vin}.pdf` });
+las interacciones que pueden generarse en la etec son buenisimas
