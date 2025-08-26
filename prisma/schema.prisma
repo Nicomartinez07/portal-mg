@@ -29,6 +29,7 @@ model Company {
   phone2      String?
   email       String?
   companyType String
+  manager     String?      
   users       User[]
   parts       Part[]
   warranties  Warranty[]
