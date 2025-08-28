@@ -94,5 +94,3 @@ To do:
 - Tests
 - Fijarme que onda con las tablas, servicios realizados, y el apartado reclamos
 - Ir comentando funcionalidades explicando que hacen o como funcionan
-
-cuando se mete a vapearse al baño asjkldaljksda

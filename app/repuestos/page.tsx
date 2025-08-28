@@ -2,6 +2,7 @@
 
 import { MGDashboard } from "../../components/mg-dashboard";
 import { getTalleres, getRepuestos } from "./actions";
+import { getCompanies } from "@/app/actions/get.companies";
 import {
   Tabs,
   TabsContent,
@@ -9,7 +10,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Componente del Modal
 const ContactModal = ({ contact, onClose }: { 
@@ -29,7 +30,6 @@ const ContactModal = ({ contact, onClose }: {
           ×
         </button>
 
-        {/* Datos del Contacto */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -96,7 +96,6 @@ const ContactModal = ({ contact, onClose }: {
           </div>
         </div>
 
-        {/* Botón de Cerrar */}
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
@@ -113,21 +112,33 @@ const ContactModal = ({ contact, onClose }: {
 export default function RepuestosPage() {
   const [selectedContact, setSelectedContact] = useState<any>(null);
 
-  // Necesitamos hacer la carga de datos de manera diferente porque ahora es un client component
   const [talleres, setTalleres] = useState<any[]>([]);
   const [repuestos, setRepuestos] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Cargar datos cuando el componente se monte
-  useState(() => {
+  // Estados para los filtros
+  const [filterName, setFilterName] = useState("");
+  const [filterCompany, setFilterCompany] = useState("");
+  const [filterCode, setFilterCode] = useState("");
+  
+  // Estados para los valores de búsqueda activos
+  const [activeFilterName, setActiveFilterName] = useState("");
+  const [activeFilterCompany, setActiveFilterCompany] = useState("");
+  const [activeFilterCode, setActiveFilterCode] = useState("");
+
+  // 🔹 Cargar datos iniciales
+  useEffect(() => {
     async function loadData() {
       try {
-        const [talleresData, repuestosData] = await Promise.all([
+        const [talleresData, repuestosData, companiesData] = await Promise.all([
           getTalleres(),
-          getRepuestos()
+          getRepuestos(),
+          getCompanies(),
         ]);
         setTalleres(talleresData);
         setRepuestos(repuestosData);
+        setCompanies(companiesData);
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -135,6 +146,30 @@ export default function RepuestosPage() {
       }
     }
     loadData();
+  }, []);
+
+  // 🔹 Función para aplicar los filtros
+  const handleSearch = () => {
+    setActiveFilterName(filterName);
+    setActiveFilterCompany(filterCompany);
+    setActiveFilterCode(filterCode);
+  };
+
+  // 🔹 Filtrar repuestos basado en los filtros activos
+  const filteredRepuestos = repuestos.filter((rep) => {
+    const matchName = activeFilterName
+      ? rep.description?.toLowerCase().includes(activeFilterName.toLowerCase())
+      : true;
+
+    const matchCompany = activeFilterCompany
+        ? rep.company?.id === parseInt(activeFilterCompany)
+        : true;
+
+    const matchCode = activeFilterCode
+        ? rep.code?.toLowerCase().includes(activeFilterCode.toLowerCase())
+        : true;
+
+    return matchName && matchCompany && matchCode;
   });
 
   if (loading) {
@@ -157,7 +192,7 @@ export default function RepuestosPage() {
             <TabsTrigger value="repuestos">Listado de Repuestos</TabsTrigger>
           </TabsList>
 
-          {/* 🔹 TAB DE TALLERES */}
+          {/* TAB DE TALLERES */}
           <TabsContent value="talleres">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full min-w-[900px] border-collapse">
@@ -185,7 +220,7 @@ export default function RepuestosPage() {
                       <td className="px-4 py-3">{t.email || "-"}</td>
                       <td className="px-4 py-3">
                         <Link 
-                          href="/archivos/talleres.pdf" 
+                          href="/archivos/talleres .pdf" 
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-sm"
@@ -203,8 +238,89 @@ export default function RepuestosPage() {
             </div>
           </TabsContent>
 
-          {/* 🔹 TAB DE REPUESTOS */}
+           {/* TAB DE REPUESTOS */}
           <TabsContent value="repuestos">
+            {/* Formulario de filtros */}
+            <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearch();
+                }}
+                className="flex flex-wrap items-end gap-4 mb-6"
+              >
+                {/* Nombre */}
+                <div className="flex flex-col flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Nombre 
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre"
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    className="border px-4 py-2 rounded-lg"
+                  />
+                </div>
+
+                {/* Codigo */}
+                <div className="flex flex-col flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Código
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Buscar por código"
+                    value={filterCode}
+                    onChange={(e) => setFilterCode(e.target.value)}
+                    className="border px-4 py-2 rounded-lg"
+                  />
+                </div>
+
+                {/* Empresa */}
+                <div className="flex flex-col flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Empresa
+                  </label>
+                  <select
+                    value={filterCompany}
+                    onChange={(e) => setFilterCompany(e.target.value)}
+                    className="border px-4 py-2 rounded-lg"
+                  >
+                    <option value=""></option>
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Botón Buscar */}
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z"
+                      />
+                    </svg>
+                    Buscar
+                  </button>
+                </div>
+              </form>
+
+            {/* Tabla de repuestos filtrada */}
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full min-w-[1000px] border-collapse">
                 <thead className="bg-gray-50">
@@ -220,10 +336,12 @@ export default function RepuestosPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {repuestos.map((rep) => (
+                  {filteredRepuestos.map((rep) => (
                     <tr key={rep.id} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        {rep.loadDate?.toLocaleDateString("es-AR") || "-"}
+                        {rep.loadDate
+                          ? new Date(rep.loadDate).toLocaleDateString("es-AR")
+                          : "-"}
                       </td>
                       <td className="px-4 py-3">{rep.company?.name || "-"}</td>
                       <td className="px-4 py-3">{rep.code || "-"}</td>
@@ -234,7 +352,7 @@ export default function RepuestosPage() {
                         {rep.salePrice ? `$${rep.salePrice}` : "-"}
                       </td>
                       <td className="px-4 py-3">
-                        <button 
+                        <button
                           onClick={() => setSelectedContact(rep.contact)}
                           className="bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300"
                         >
@@ -243,6 +361,15 @@ export default function RepuestosPage() {
                       </td>
                     </tr>
                   ))}
+                  {filteredRepuestos.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                        {activeFilterName || activeFilterCompany || activeFilterCode 
+                          ? "No se encontraron resultados" 
+                          : "Ingrese criterios de búsqueda y haga clic en Buscar"}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
