@@ -118,12 +118,12 @@ export default function RepuestosPage() {
   const [loading, setLoading] = useState(true);
 
   // Estados para los filtros
-  const [filterName, setFilterName] = useState("");
+  const [filterModel, setFilterModel] = useState("");
   const [filterCompany, setFilterCompany] = useState("");
   const [filterCode, setFilterCode] = useState("");
   
   // Estados para los valores de búsqueda activos
-  const [activeFilterName, setActiveFilterName] = useState("");
+  const [activeFilterModel, setActiveFilterModel] = useState("");
   const [activeFilterCompany, setActiveFilterCompany] = useState("");
   const [activeFilterCode, setActiveFilterCode] = useState("");
 
@@ -150,15 +150,15 @@ export default function RepuestosPage() {
 
   // 🔹 Función para aplicar los filtros
   const handleSearch = () => {
-    setActiveFilterName(filterName);
+    setActiveFilterModel(filterModel);
     setActiveFilterCompany(filterCompany);
     setActiveFilterCode(filterCode);
   };
 
   // 🔹 Filtrar repuestos basado en los filtros activos
   const filteredRepuestos = repuestos.filter((rep) => {
-    const matchName = activeFilterName
-      ? rep.description?.toLowerCase().includes(activeFilterName.toLowerCase())
+    const matchModel = activeFilterModel
+      ? rep.Model?.toLowerCase().includes(activeFilterModel.toLowerCase())
       : true;
 
     const matchCompany = activeFilterCompany
@@ -169,7 +169,7 @@ export default function RepuestosPage() {
         ? rep.code?.toLowerCase().includes(activeFilterCode.toLowerCase())
         : true;
 
-    return matchName && matchCompany && matchCode;
+    return matchModel && matchCompany && matchCode;
   });
 
   if (loading) {
@@ -248,34 +248,6 @@ export default function RepuestosPage() {
                 }}
                 className="flex flex-wrap items-end gap-4 mb-6"
               >
-                {/* Nombre */}
-                <div className="flex flex-col flex-1 min-w-[200px]">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Nombre 
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Buscar por nombre"
-                    value={filterName}
-                    onChange={(e) => setFilterName(e.target.value)}
-                    className="border px-4 py-2 rounded-lg"
-                  />
-                </div>
-
-                {/* Codigo */}
-                <div className="flex flex-col flex-1 min-w-[200px]">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Código
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Buscar por código"
-                    value={filterCode}
-                    onChange={(e) => setFilterCode(e.target.value)}
-                    className="border px-4 py-2 rounded-lg"
-                  />
-                </div>
-
                 {/* Empresa */}
                 <div className="flex flex-col flex-1 min-w-[200px]">
                   <label className="text-sm font-medium text-gray-700 mb-1">
@@ -294,7 +266,32 @@ export default function RepuestosPage() {
                     ))}
                   </select>
                 </div>
-
+                {/* Codigo */}
+                <div className="flex flex-col flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Código
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Buscar por código"
+                    value={filterCode}
+                    onChange={(e) => setFilterCode(e.target.value)}
+                    className="border px-4 py-2 rounded-lg"
+                  />
+                </div>
+                {/* Nombre */}
+                <div className="flex flex-col flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Model 
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Buscar por Model"
+                    value={filterModel}
+                    onChange={(e) => setFilterModel(e.target.value)}
+                    className="border px-4 py-2 rounded-lg"
+                  />
+                </div>
                 {/* Botón Buscar */}
                 <div className="flex items-end">
                   <button
@@ -364,7 +361,7 @@ export default function RepuestosPage() {
                   {filteredRepuestos.length === 0 && (
                     <tr>
                       <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
-                        {activeFilterName || activeFilterCompany || activeFilterCode 
+                        {activeFilterModel || activeFilterCompany || activeFilterCode 
                           ? "No se encontraron resultados" 
                           : "Ingrese criterios de búsqueda y haga clic en Buscar"}
                       </td>
