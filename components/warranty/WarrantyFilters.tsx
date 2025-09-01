@@ -41,6 +41,8 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
     }
   }, []);
 
+
+  
   return (
     <div className="mb-4">
       {/* Botón solo visible en mobile */}

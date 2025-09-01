@@ -158,7 +158,7 @@ export default function RepuestosPage() {
   // 🔹 Filtrar repuestos basado en los filtros activos
   const filteredRepuestos = repuestos.filter((rep) => {
     const matchModel = activeFilterModel
-      ? rep.Model?.toLowerCase().includes(activeFilterModel.toLowerCase())
+      ? rep.model?.toLowerCase().includes(activeFilterModel.toLowerCase())
       : true;
 
     const matchCompany = activeFilterCompany
@@ -282,11 +282,11 @@ export default function RepuestosPage() {
                 {/* Nombre */}
                 <div className="flex flex-col flex-1 min-w-[200px]">
                   <label className="text-sm font-medium text-gray-700 mb-1">
-                    Model 
+                    Modelo 
                   </label>
                   <input
                     type="text"
-                    placeholder="Buscar por Model"
+                    placeholder="Buscar por Modelo"
                     value={filterModel}
                     onChange={(e) => setFilterModel(e.target.value)}
                     className="border px-4 py-2 rounded-lg"

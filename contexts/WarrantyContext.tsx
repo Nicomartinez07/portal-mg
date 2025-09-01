@@ -9,8 +9,8 @@ type Filters = {
   fromDate?: string;
   toDate?: string;
   licensePlate?: string;
-  customerName?: string;   // 👈 agregar esto
-  companyId?: number;      // 👈 y este también
+  customerName?: string;
+  companyId?: number;
 };
 
 

@@ -94,3 +94,8 @@ To do:
 - Tests
 - Fijarme que onda con las tablas, servicios realizados, y el apartado reclamos
 - Ir comentando funcionalidades explicando que hacen o como funcionan
+
+
+
+Estilizar tareas de solicitud de pre-ingreso
+Solo falta que filtre cuando yo toco el boton 

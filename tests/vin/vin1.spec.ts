@@ -11,7 +11,7 @@ test('filtrar por vin 01 y visibilizar los datos del auto correspondiente', asyn
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).click();
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).fill('VIN0001');
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).press('Enter');
-  await expect(page.locator('body')).toContainText('VIN: VIN0001');
+  await expect(page.locator('body')).toContainText('VIN: VIN00012');
   await expect(page.locator('body')).toContainText('Modelo: Brand1 Model1');
 
 });
