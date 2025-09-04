@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('test', async ({ page }) => {
   await page.goto('http://localhost:3000/login');
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).click();
-  await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('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');
+
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).press('ControlOrMeta+z');
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('');
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).press('CapsLock');
