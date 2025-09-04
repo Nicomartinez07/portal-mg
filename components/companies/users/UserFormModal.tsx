@@ -4,53 +4,74 @@
 import { useState, useEffect } from "react";
 import { createUser, updateUser } from "@/app/actions/companies";
 
-// Define la estructura de un usuario
+// Define la estructura de un usuario, incluyendo los roles
 interface User {
   id: number;
   username: string;
   email: string;
-  taller: boolean;
-  concesionario: boolean;
-  emailNotifications: boolean;
+  roles: { role: { name: string } }[]; // Arreglo de roles
+  notifications: boolean;
 }
 
 interface UserFormModalProps {
   companyId: number;
   onClose: () => void;
   onSuccess: () => void;
-  user?: User; // La prop `user` es opcional
+  user?: User;
 }
 
-export function UserFormModal({ companyId, onClose, onSuccess, user }: UserFormModalProps) {
+export function UserFormModal({
+  companyId,
+  onClose,
+  onSuccess,
+  user,
+}: UserFormModalProps) {
   const [form, setForm] = useState({
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    taller: false,
-    concesionario: false,
-    emailNotifications: false,
+    // Usamos un objeto para gestionar los roles
+    roles: {
+      taller: false,
+      concesionario: false,
+    },
+    notifications: false,
   });
 
-  const isEditing = !!user; // true si existe la prop user, false si no
+  const isEditing = !!user;
 
   useEffect(() => {
     if (isEditing && user) {
+      const userRoles = user.roles.map((ur) => ur.role.name);
       setForm({
         username: user.username,
         email: user.email,
-        password: "", // No precargamos la contraseña por seguridad
+        password: "",
         confirmPassword: "",
-        taller: user.taller,
-        concesionario: user.concesionario,
-        emailNotifications: user.emailNotifications,
+        roles: {
+          taller: userRoles.includes("Taller"),
+          concesionario: userRoles.includes("Concesionario"),
+        },
+        notifications: user.notifications, // Corrected from user.emailNotifications
       });
     }
   }, [isEditing, user]);
 
+  // handleChange function
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    if (name === "taller" || name === "concesionario") {
+      setForm((prev) => ({
+        ...prev,
+        roles: {
+          ...prev.roles,
+          [name]: checked,
+        },
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,30 +82,27 @@ export function UserFormModal({ companyId, onClose, onSuccess, user }: UserFormM
       return;
     }
 
-    // Datos a enviar (sin la confirmación de contraseña)
+    // Prepara los datos a enviar
     const dataToSend = {
       username: form.username,
       email: form.email,
-      taller: form.taller,
-      concesionario: form.concesionario,
-      emailNotifications: form.emailNotifications,
-      // Solo incluimos la contraseña si es un usuario nuevo o si se actualizó
+      roles: form.roles, // Enviamos el objeto de roles
+      emailNotifications: form.notifications,
       ...(form.password && { password: form.password }),
     };
 
     try {
       if (isEditing) {
-        // Llama a la acción de actualizar
         await updateUser(user!.id, dataToSend);
         alert("Usuario actualizado correctamente ✅");
       } else {
-        // Llama a la acción de crear
         await createUser({ ...dataToSend, companyId });
         alert("Usuario creado correctamente ✅");
       }
       onSuccess();
       onClose();
     } catch (error) {
+      console.error("Error al guardar usuario:", error);
       alert("Error al guardar usuario ❌");
     }
   };
@@ -93,7 +111,9 @@ export function UserFormModal({ companyId, onClose, onSuccess, user }: UserFormM
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4">
         <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
-          <h2 className="text-xl font-bold">{isEditing ? "Editar Usuario" : "Nuevo Usuario"}</h2>
+          <h2 className="text-xl font-bold">
+            {isEditing ? "Editar Usuario" : "Nuevo Usuario"}
+          </h2>
           <button onClick={onClose} className="text-white hover:text-gray-200">
             &times;
           </button>
@@ -130,7 +150,7 @@ export function UserFormModal({ companyId, onClose, onSuccess, user }: UserFormM
                   <input
                     type="checkbox"
                     name="taller"
-                    checked={form.taller}
+                    checked={form.roles.taller}
                     onChange={handleChange}
                   />
                   Taller
@@ -139,7 +159,7 @@ export function UserFormModal({ companyId, onClose, onSuccess, user }: UserFormM
                   <input
                     type="checkbox"
                     name="concesionario"
-                    checked={form.concesionario}
+                    checked={form.roles.concesionario}
                     onChange={handleChange}
                   />
                   Concesionario
@@ -182,7 +202,7 @@ export function UserFormModal({ companyId, onClose, onSuccess, user }: UserFormM
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              {isEditing ? "Aceptar" : "Aceptar"}
+              {isEditing ? "Actualizar" : "Crear"}
             </button>
           </div>
         </form>

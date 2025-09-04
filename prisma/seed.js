@@ -59,6 +59,7 @@ async function main() {
   }
   console.log("✅ Companies inserted");
 
+  
   // --------------------------------------
   // Users
   // --------------------------------------
@@ -68,6 +69,7 @@ async function main() {
     { username: "Admin", email: "admin@company.com", notifications: true, password: await bcrypt.hash("Admin123!", SALT_ROUNDS), companyId: companies[0].id },
     { username: "John Smith", email: "john@smith.com", notifications: true, password: await bcrypt.hash("John123!", SALT_ROUNDS), companyId: companies[1].id },
     { username: "Mary Johnson", email: "mary@johnson.com", notifications: false, password: await bcrypt.hash("Mary123!", SALT_ROUNDS), companyId: companies[2].id },
+    { username: "Mati PEDAZO DE GIL", email: "marAy@johnson.com", notifications: false, password: await bcrypt.hash("Marya123!", SALT_ROUNDS), companyId: companies[2].id },
     { username: "Carlos Brown", email: "carlos@brown.com", notifications: false, password: await bcrypt.hash("Carlos123!", SALT_ROUNDS), companyId: companies[3].id },
     { username: "Laura Wilson", email: "laura@wilson.com", notifications: true, password: await bcrypt.hash("Laura123!", SALT_ROUNDS), companyId: companies[4].id }
   ];

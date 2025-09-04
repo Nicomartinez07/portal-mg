@@ -117,25 +117,51 @@ export async function createUser(data: {
   email: string;
   companyId: number;
   password?: string;
-  taller: boolean;
-  concesionario: boolean;
-  emailNotifications: boolean;
+  roles: {
+    taller: boolean;
+    concesionario: boolean;
+  };
+  notifications: boolean;
 }) {
-  // Asegúrate de hashear la contraseña antes de guardarla
-  if (data.password) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    data.password = hashedPassword;
+  if (!data.password) {
+    throw new Error("La contraseña es requerida para crear un usuario.");
+  }
+
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
+  // Prepara la conexión de roles a crear
+  const rolesToConnect = [];
+  if (data.roles.taller) {
+    rolesToConnect.push({
+      role: {
+        connectOrCreate: {
+          where: { name: "Taller" },
+          create: { name: "Taller" },
+        },
+      },
+    });
+  }
+  if (data.roles.concesionario) {
+    rolesToConnect.push({
+      role: {
+        connectOrCreate: {
+          where: { name: "Concesionario" },
+          create: { name: "Concesionario" },
+        },
+      },
+    });
   }
 
   return prisma.user.create({
     data: {
       username: data.username,
       email: data.email,
+      password: hashedPassword,
       companyId: data.companyId,
-      password: data.password,
-      taller: data.taller,
-      concesionario: data.concesionario,
-      emailNotifications: data.emailNotifications,
+      notifications: data.notifications,
+      roles: {
+        create: rolesToConnect, // Usa 'create' para crear las relaciones
+      },
     },
   });
 }
@@ -147,22 +173,50 @@ export async function updateUser(
     username?: string;
     email?: string;
     password?: string;
-    taller?: boolean;
-    concesionario?: boolean;
-    emailNotifications?: boolean;
+    roles?: {
+      taller: boolean;
+      concesionario: boolean;
+    };
+    notifications?: boolean; 
   }
 ) {
   const updateData: any = {};
   if (data.username) updateData.username = data.username;
   if (data.email) updateData.email = data.email;
-  if (data.taller !== undefined) updateData.taller = data.taller;
-  if (data.concesionario !== undefined) updateData.concesionario = data.concesionario;
-  if (data.emailNotifications !== undefined) updateData.emailNotifications = data.emailNotifications;
-  
+  if (data.notifications !== undefined)
+    updateData.notifications = data.notifications;
+
   // Hashear la contraseña si se está actualizando
   if (data.password) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    updateData.password = hashedPassword;
+    updateData.password = await bcrypt.hash(data.password, 10);
+  }
+
+  // Lógica para actualizar los roles
+  if (data.roles) {
+    // 1. Desconecta todos los roles existentes del usuario
+    await prisma.userRole.deleteMany({
+      where: { userId: id },
+    });
+
+    // 2. Vuelve a crear las relaciones con los roles seleccionados
+    const rolesToCreate = [];
+    if (data.roles.taller) {
+      rolesToCreate.push({
+        role: {
+          connect: { name: "Taller" },
+        },
+      });
+    }
+    if (data.roles.concesionario) {
+      rolesToCreate.push({
+        role: {
+          connect: { name: "Concesionario" },
+        },
+      });
+    }
+    updateData.roles = {
+      create: rolesToCreate,
+    };
   }
 
   return prisma.user.update({
@@ -171,8 +225,27 @@ export async function updateUser(
   });
 }
 
-// 📌 Eliminar un usuario
+
+// 📌 Eliminar solo el usuario (sin borrar relaciones)
 export async function deleteUser(id: number) {
+  // Primero hacer null las relaciones en warranties
+  await prisma.warranty.updateMany({
+    where: { userId: id },
+    data: { userId: null }
+  });
+
+  // Hacer null las relaciones en orders
+  await prisma.order.updateMany({
+    where: { userId: id },
+    data: { userId: null }
+  });
+
+  // Eliminar roles del usuario
+  await prisma.userRole.deleteMany({
+    where: { userId: id }
+  });
+
+  // Finalmente eliminar el usuario
   return prisma.user.delete({
     where: { id },
   });

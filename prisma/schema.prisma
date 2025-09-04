@@ -138,8 +138,8 @@ model Warranty {
   vehicle        Vehicle  @relation(fields: [vehicleVin], references: [vin])
   companyId      Int
   company        Company  @relation(fields: [companyId], references: [id])
-  userId         Int
-  user           User     @relation(fields: [userId], references: [id])
+  userId         Int?
+  user           User?     @relation(fields: [userId], references: [id])
   customerId     Int
   customer       Customer @relation(fields: [customerId], references: [id])
 }
@@ -156,8 +156,8 @@ model Order {
   vehicle                Vehicle    @relation(fields: [vehicleVin], references: [vin])
   companyId              Int
   company                Company    @relation(fields: [companyId], references: [id])
-  userId                 Int
-  user                   User       @relation(fields: [userId], references: [id])
+  userId                 Int?
+  user                   User?     @relation(fields: [userId], references: [id])
   status                 OrderStatus
   internalStatus         InternalStatus?
   actualMileage          Int
