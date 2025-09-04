@@ -80,7 +80,7 @@ export const WarrantyTable = () => {
       </table>
 
       {selected && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-white p-6 rounded-lg w-2/3 max-h-[80vh] overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Activación de Garantía</h2>
             <button

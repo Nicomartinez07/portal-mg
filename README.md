@@ -97,5 +97,14 @@ To do:
 
 
 
-Estilizar tareas de solicitud de pre-ingreso
 Solo falta que filtre cuando yo toco el boton 
+Realizar tests ordenes
+observaciones del historial de observaciones (detalles de las ordenes)
+
+
+
+Fijarme que onda el crear y el borrar un ususario desde la seccion empresas,
+
+conflictos con crear: los roles y las relaciones muchos a muchos, fijarme que onda como voy a manejar eso
+
+conflitos con borrar: ver si mostrar un cartel que no te permita borrar un usuario con relaciones en las otras tablas o si derectamente lo borras, sin que se borren los registros de las otras tablas 

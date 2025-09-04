@@ -2,7 +2,7 @@
 
 import { MGDashboard } from "../../components/mg-dashboard";
 import { getTalleres, getRepuestos } from "./actions";
-import { getCompanies } from "@/app/actions/get.companies";
+import { getCompanies } from "@/app/actions/companies";
 import {
   Tabs,
   TabsContent,
