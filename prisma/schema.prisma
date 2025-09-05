@@ -99,6 +99,7 @@ model Vehicle {
   certificateNumber String    @unique
   saleDate          DateTime?
   importDate        DateTime?
+  blocked           Boolean? 
   licensePlate      String
   warranty          Warranty?
   orders            Order[]

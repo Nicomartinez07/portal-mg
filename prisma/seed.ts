@@ -128,15 +128,14 @@ async function main() {
       certificateNumber: `CERT${i.toString().padStart(4, "0")}`,
       saleDate: new Date(2020, (i % 12), 15),
       importDate: new Date(2019, (i % 12), 10),
-      licensePlate: `ABC${i}XYZ`
+      licensePlate: `ABC${i}XYZ`,
+      blocked: true
     });
   }
   const vehicles = await prisma.$transaction(
     vehiclesData.map((v) => prisma.vehicle.create({ data: v }))
   );
   console.log("✅ Vehicles inserted");
-
-  // ... (código anterior)
 
   // --------------------------------------
   // PartContact & Parts
