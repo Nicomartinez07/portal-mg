@@ -14,7 +14,7 @@
     "test": "npx playwright test",
     "test:report": "npx playwright show-report",
     "test:headed": "npx playwright test --headed",
-    "codegen": "npx playwright codegen"
+    "codegen": "node ./prisma/seed.js && npx playwright codegen && node ./prisma/clean.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",

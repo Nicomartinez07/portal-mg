@@ -8,6 +8,10 @@ async function main() {
   // El orden importa por las relaciones (de dependientes a padres)
   // Tablas dependientes
   await prisma.userRole.deleteMany();
+  await prisma.orderTaskPart.deleteMany(); // Añadir esta línea
+  await prisma.orderTask.deleteMany(); // Añadir esta línea
+  await prisma.orderPhoto.deleteMany(); // Añadir esta línea
+  await prisma.orderStatusHistory.deleteMany(); // Añadir esta línea
   await prisma.order.deleteMany();
   await prisma.warranty.deleteMany();
   await prisma.part.deleteMany();

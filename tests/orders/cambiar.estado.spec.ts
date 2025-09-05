@@ -6,8 +6,8 @@ test('test cambiar estado interno de una orden', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
   await page.getByRole('button', { name: 'Login' }).click();
   await page.getByRole('link', { name: 'Ordenes' }).click();
-  await page.getByTestId('detalles-28').click();  
-  await page.getByRole('combobox').nth(4).selectOption('RECLAMO_EN_ORIGEN');
+  await page.getByTestId('detalles-100').click();
+  await page.getByRole('combobox').nth(4).selectOption('RECHAZADO_EN_ORIGEN');
   page.once('dialog', dialog => {
     console.log(`Dialog message: ${dialog.message()}`);
     dialog.dismiss().catch(() => {});
@@ -15,4 +15,5 @@ test('test cambiar estado interno de una orden', async ({ page }) => {
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await page.getByRole('button', { name: 'Cerrar' }).click();
   await expect(page.locator('tbody')).toContainText('PENDIENTE_RECLAMO');
+
 });

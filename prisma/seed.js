@@ -185,6 +185,7 @@ async function main() {
   console.log("📄 Inserting orders and related data...");
   const ordersToCreate = [
     {
+      id: 100,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 0, 15),
       customerId: customers[0].id,
