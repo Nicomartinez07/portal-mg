@@ -85,6 +85,7 @@ export default function OrdersTable() {
                     <button
                       onClick={() => setSelectedOrder(order)}
                       className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                      data-testid={`detalles-${order.id}`}   // 👈 identificador único
                     >
                       Detalles
                     </button>

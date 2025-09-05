@@ -7,11 +7,11 @@ test('filtrar por vin 01 y visibilizar los datos del auto correspondiente', asyn
   await page.getByRole('textbox', { name: 'Contraseña' }).click();
   await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
   await page.getByRole('button', { name: 'Login' }).click();
-  await expect(page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' })).toBeVisible();
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).click();
-  await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).fill('VIN0001');
+  await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).press('CapsLock');
+  await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).fill('VIN00012');
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).press('Enter');
-  await expect(page.locator('body')).toContainText('VIN: VIN00012');
-  await expect(page.locator('body')).toContainText('Modelo: Brand1 Model1');
+  await expect(page.getByText('Brand12 Model12')).toBeVisible();
+  await expect(page.getByText('VIN00012')).toBeVisible();
 
 });

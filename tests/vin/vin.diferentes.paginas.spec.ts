@@ -8,6 +8,7 @@ test('Verificar que el buscador de VIN es visible desde distintas paginas', asyn
   await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' })).toBeVisible();
-  await page.getByRole('link', { name: 'Certificados' }).click();
+  await page.getByRole('link', { name: 'Garantías' }).click();
   await expect(page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' })).toBeVisible();
+
 });

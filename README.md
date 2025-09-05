@@ -61,6 +61,7 @@ npx prisma db seed
 Para eliminar datos de prisma correr siguiente comando:
 ```bash
 node prisma/clean.js
+node prisma/seed.js
 ```
 
 
