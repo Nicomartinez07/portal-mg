@@ -1,14 +1,15 @@
 "use client";
 import { useState } from "react";
 import { useCertificate } from "../../contexts/CertificateContext";
-// Importar la función deleteWarranty PARA BORRAR GARANTIAS EN PAGINAS DE CERTIFICADOS
 import { deleteWarranty } from "../../app/garantias/actions";
 
 export const CertificateTable = () => {
-  const { results } = useCertificate();
+  // Solo lee los datos del contexto, no los carga
+  const { results, loading } = useCertificate();
+
+  // Los estados locales para los modales de la UI se mantienen
   const [selected, setSelected] = useState<any | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const handleDownload = async () => {
     if (!selected) return;

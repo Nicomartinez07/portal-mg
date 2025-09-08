@@ -94,3 +94,38 @@ export interface Order {
   tasks: OrderTask[];
   photos: OrderPhoto[];
 }
+
+export type Certificate = {
+  id: number;
+  warranty: boolean;
+  importDate: string;
+  saleDate: string;
+  vehicle: {
+    vin: string;
+    model: string;
+    brand: string;
+    year: string;
+    engineNumber: string;
+    certificateNumber: string;
+    licensePlate: string;
+    blocked: boolean;
+    importDate?: string;
+    type: string;
+    warranty?: boolean;
+  };
+  company: {
+    name: string;
+  };
+  customer: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    state: string;
+    city: string;
+  };
+  user: {
+    username: string;
+  };
+};

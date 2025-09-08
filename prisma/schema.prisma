@@ -135,6 +135,7 @@ model Part {
 model Warranty {
   id             Int      @id @default(autoincrement())
   activationDate DateTime
+  blocked   Boolean?  
   vehicleVin     String   @unique
   vehicle        Vehicle  @relation(fields: [vehicleVin], references: [vin])
   companyId      Int

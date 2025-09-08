@@ -1,16 +1,18 @@
+// contexts/CertificateContext.ts
 "use client";
 import { createContext, useContext, useState } from "react";
 
-type CertificateFilters = {
-  orderNumber?: string;
-  vin?: string;
-  customerName?: string;
-  status?: string;
-  type?: string;  
-  internalStatus: string;
+export type CertificateFilters = {
   fromDate?: string;
   toDate?: string;
-  companyId?: number;
+  vin?: string;
+  model?: string;
+  certificateNumber?: string;
+  importDateFrom?: string;
+  importDateTo?: string;
+  combinacion?: "AMBOS" | "NRO_CERTIFICADO" | "F_IMPORTACION" | "NINGUNO";
+  garantia?: "ACTIVA" | "NO_ACTIVA" | null; // <-- Cambia a null
+  blocked?: "BLOQUEADO" | "NO_BLOQUEADO" | null; // <-- Cambia a null
 };
 
 type CertificateContextType = {
@@ -26,15 +28,16 @@ const CertificateContext = createContext<CertificateContextType | null>(null);
 
 export const CertificateProvider = ({ children }: { children: React.ReactNode }) => {
   const [filters, setFilters] = useState<CertificateFilters>({
-    orderNumber: "",
-    vin: "",
-    customerName: "",
-    status: "",
-    type: "",
-    fromDate: "",
-    internalStatus: "",
-    toDate: "",
-    companyId: undefined,
+    fromDate: undefined, // undefined es mejor que ""
+    toDate: undefined,
+    vin: undefined,
+    model: undefined,
+    certificateNumber: undefined,
+    importDateFrom: undefined,
+    importDateTo: undefined,
+    combinacion: undefined,
+    blocked: null, // <-- Inicializar con null para evitar el string ""
+    garantia: null, // <-- Inicializar con null para evitar el string ""
   });
 
   const [results, setResults] = useState<any[]>([]);

@@ -1,71 +1,73 @@
 // prisma/globalSetup.js
 const { execSync } = require('child_process');
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs'); // Usar 'bcryptjs' para mejor compatibilidad
+
+// Reorganizamos las variables globales y el cliente de Prisma para una mejor gestión
 const prisma = new PrismaClient();
+let roles = [];
+let companies = [];
+let users = [];
+let customers = [];
+let vehicles = [];
+let createdParts = [];
 
-export default const setup = async () => {
-  // A simple check to see if we're in a test environment
-  //
-  // prisma.$connect();
+export default async () => {
   console.log("🛠️ Running global setup for tests...");
+
+  try {
+    // La conexión se maneja automáticamente por la primera llamada.
     await clean_database();
-  await create_roles();
-  await create_companies();
-  await create_users();
-  await assign_users();
-  await create_clients();
-  await create_cars();
-  await create_and_assign_contacts_to_parts();
-  await create_orders();
-  await create_warranties();
-
+    await create_roles();
+    await create_companies();
+    await create_users();
+    await assign_users();
+    await create_clients();
+    await create_cars();
+    await create_and_assign_contacts_to_parts();
+    await create_orders();
+    await create_warranties();
     
-    // Clean and reset the database
-    // execSync('npx prisma migrate reset --force --skip-seed');
-
-    // Run the main seed script
-    // await require('./seed.js').main();
-
-    // Disconnect from the database
+  } catch (error) {
+    console.error("❌ Global setup failed:", error);
+    process.exit(1); // Salir con error si algo falla
+  } finally {
     await prisma.$disconnect();
-
     console.log("✅ Global setup complete!");
+  }
 };
 
 export const clean_database = async () => {
-
   console.log("🧹 Cleaning database...");
-
-  // Delete tables in correct order due to FK constraints
-  await prisma.userRole.deleteMany();
-  await prisma.orderTaskPart.deleteMany(); // Añadir esta línea
-  await prisma.orderTask.deleteMany(); // Añadir esta línea
-  await prisma.orderPhoto.deleteMany(); // Añadir esta línea
-  await prisma.orderStatusHistory.deleteMany(); // Añadir esta línea
-  await prisma.order.deleteMany();
-  await prisma.warranty.deleteMany();
-  await prisma.part.deleteMany();
-  await prisma.partContact.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.role.deleteMany();
-  await prisma.vehicle.deleteMany();
-  await prisma.company.deleteMany();
-  await prisma.customer.deleteMany();
-
+  await prisma.$transaction([
+    prisma.userRole.deleteMany(),
+    prisma.orderTaskPart.deleteMany(),
+    prisma.orderTask.deleteMany(),
+    prisma.orderPhoto.deleteMany(),
+    prisma.orderStatusHistory.deleteMany(),
+    prisma.order.deleteMany(),
+    prisma.warranty.deleteMany(),
+    prisma.part.deleteMany(),
+    prisma.partContact.deleteMany(),
+    prisma.user.deleteMany(),
+    prisma.role.deleteMany(),
+    prisma.vehicle.deleteMany(),
+    prisma.company.deleteMany(),
+    prisma.customer.deleteMany(),
+  ]);
   console.log("✅ Database cleaned");
-}
+  
+};
 
 const create_roles = async () => {
-
   console.log("🛠 Inserting roles...");
   const rolesData = ["ADMIN", "IMPORTER", "DEALER", "WORKSHOP"];
-  const roles = {};
   for (const name of rolesData) {
     const role = await prisma.role.create({ data: { name } });
     roles[name] = role;
   }
   console.log("✅ Roles inserted");
-}
+};
 
 const create_companies = async () => {
   console.log("🏢 Inserting companies...");
@@ -82,13 +84,11 @@ const create_companies = async () => {
     { name: "Service Automotor", address: "Belgrano 890", state: "Mendoza", city: "Mendoza", phone1: "2613456789", companyType: "Workshop", manager: "Pedro González" }
   ];
   
-  const companies = [];
-  for (const c of companiesData) {
-    const company = await prisma.company.create({ data: c });
-    companies.push(company);
-  }
+  companies = await prisma.$transaction(
+    companiesData.map(data => prisma.company.create({ data }))
+  );
   console.log("✅ Companies inserted");
-}
+};
 
 const create_users = async () => {
   console.log("👤 Inserting users...");
@@ -101,17 +101,13 @@ const create_users = async () => {
     { username: "Carlos Brown", email: "carlos@brown.com", notifications: false, password: await bcrypt.hash("Carlos123!", SALT_ROUNDS), companyId: companies[3].id },
     { username: "Laura Wilson", email: "laura@wilson.com", notifications: true, password: await bcrypt.hash("Laura123!", SALT_ROUNDS), companyId: companies[4].id }
   ];
-  const users = [];
-  for (const u of usersData) {
-    const user = await prisma.user.create({ data: u });
-    users.push(user);
-  }
+  users = await prisma.$transaction(
+    usersData.map(data => prisma.user.create({ data }))
+  );
   console.log("✅ Users inserted");
+};
 
-
-}
 const assign_users = async () => {
-  
   console.log("🔗 Assigning roles to users...");
   await prisma.userRole.createMany({
     data: [
@@ -123,29 +119,22 @@ const assign_users = async () => {
     ]
   });
   console.log("✅ Roles assigned to users");
-
-}
-
+};
 
 const create_clients = async () => {
-
   console.log("🧑‍🤝‍🧑 Inserting customers...");
   const customersData = [
     { firstName: "Peter", lastName: "Gomez", email: "peter@gmail.com", phone: "111222333", address: "123 A St", state: "Buenos Aires", city: "La Plata" },
     { firstName: "Anna", lastName: "Martinez", email: "anna@gmail.com", phone: "444555666", address: "456 B St", state: "Córdoba", city: "Córdoba" },
     { firstName: "Louis", lastName: "Rodriguez", email: "louis@gmail.com", phone: "777888999", address: "789 C St", state: "Mendoza", city: "Mendoza" }
   ];
-  const customers = [];
-  for (const c of customersData) {
-    const customer = await prisma.customer.create({ data: c });
-    customers.push(customer);
-  }
+  customers = await prisma.$transaction(
+    customersData.map(data => prisma.customer.create({ data }))
+  );
   console.log("✅ Customers inserted");
-}
+};
 
 const create_cars = async () => {
-
-
   console.log("🚗 Inserting vehicles...");
   const vehiclesData = [];
   for (let i = 1; i <= 20; i++) {
@@ -164,15 +153,13 @@ const create_cars = async () => {
       blocked: true
     });
   }
-  const vehicles = await prisma.$transaction(
-    vehiclesData.map((v) => prisma.vehicle.create({ data: v }))
+  vehicles = await prisma.$transaction(
+    vehiclesData.map(data => prisma.vehicle.create({ data }))
   );
   console.log("✅ Vehicles inserted");
-}
+};
 
-export const create_and_assign_contacts_to_parts = async () => {
-
-
+const create_and_assign_contacts_to_parts = async () => {
   console.log("📞 Inserting part contact...");
   const partContact = await prisma.partContact.create({
     data: {
@@ -195,7 +182,7 @@ export const create_and_assign_contacts_to_parts = async () => {
     { code: "ACE005", description: "Aceite Sintético 5W30", model: "OIL-S5W30", stock: 50, salePrice: 65.00, companyId: companies[4].id, contactId: partContact.id }
   ];
 
-  const createdParts = await prisma.$transaction(
+  createdParts = await prisma.$transaction(
     partsData.map(p => prisma.part.create({
       data: {
         ...p,
@@ -203,19 +190,14 @@ export const create_and_assign_contacts_to_parts = async () => {
       }
     }))
   );
-  // Ahora que la transacción se completó, puedes usar 'createdParts'
-  // que es un array de los objetos de partes que acabas de crear.
-  // Si necesitas este array para otras partes del seed, úsalo aquí.
-  // Por ejemplo, para crear OrderTaskPart, necesitarás los IDs de estas partes.
-  // No necesitas un bucle forEach separado.
-
   console.log("✅ Parts inserted");
-}
+};
+
 const create_orders = async () => {
- console.log("📄 Inserting orders and related data...");
+  console.log("📄 Inserting orders and related data...");
   const ordersToCreate = [
     {
-      id: 100,
+      id: 100, 
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 0, 15),
       customerId: customers[0].id,
@@ -229,6 +211,7 @@ const create_orders = async () => {
       additionalObservations: "El cliente reporta chirrido al frenar a baja velocidad."
     },
     {
+      id: 101,
       type: "RECLAMO",
       creationDate: new Date(2025, 1, 20),
       customerId: customers[1].id,
@@ -242,6 +225,7 @@ const create_orders = async () => {
       additionalObservations: "Se recomienda cambiar el filtro y la junta."
     },
     {
+      id: 102,
       type: "SERVICIO",
       creationDate: new Date(2025, 2, 10),
       customerId: customers[2].id,
@@ -255,6 +239,7 @@ const create_orders = async () => {
       additionalObservations: "El cliente reporta inestabilidad en la conducción."
     },
     {
+      id: 103,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 3, 5),
       customerId: customers[0].id,
@@ -272,38 +257,43 @@ const create_orders = async () => {
   for (const orderData of ordersToCreate) {
     const order = await prisma.order.create({ data: orderData });
 
-    // CREATE TASKS
     if (order.type === 'PRE_AUTORIZACION') {
-      const task1 = await prisma.orderTask.create({
-        data: {
-          orderId: order.id,
-          description: "Reemplazo de pastillas de freno delanteras.",
-          hoursCount: 2,
-          parts: {
-            create: {
-              partId: createdParts.find(p => p.code === "BUF004").id,
-              quantity: 1,
-              description: "Pastillas de freno marca XYZ."
+      const part = createdParts.find(p => p.code === "BUF004");
+      if (part) {
+        await prisma.orderTask.create({
+          data: {
+            orderId: order.id,
+            description: "Reemplazo de pastillas de freno delanteras.",
+            hoursCount: 2,
+            parts: {
+              create: {
+                partId: part.id,
+                quantity: 1,
+                description: "Pastillas de freno marca XYZ."
+              }
             }
           }
-        }
-      });
+        });
+      }
     } else if (order.type === 'RECLAMO') {
-      const task1 = await prisma.orderTask.create({
-        data: {
-          orderId: order.id,
-          description: "Cambio de aceite y filtro.",
-          hoursCount: 1,
-          parts: {
-            create: {
-              partId: createdParts.find(p => p.code === "FIL001").id,
-              quantity: 1,
-              description: "Filtro de aceite premium."
+      const part = createdParts.find(p => p.code === "FIL001");
+      if (part) {
+        await prisma.orderTask.create({
+          data: {
+            orderId: order.id,
+            description: "Cambio de aceite y filtro.",
+            hoursCount: 1,
+            parts: {
+              create: {
+                partId: part.id,
+                quantity: 1,
+                description: "Filtro de aceite premium."
+              }
             }
           }
-        }
-      });
-      const task2 = await prisma.orderTask.create({
+        });
+      }
+      await prisma.orderTask.create({
         data: {
           orderId: order.id,
           description: "Revisión y ajuste del sistema de suspensión.",
@@ -312,61 +302,43 @@ const create_orders = async () => {
       });
     }
 
-    // CREATE PHOTOS
     const photosData = [
-      { orderId: order.id, type: "license_plate", url: `https://example.com/photos/patente-${order.orderNumber}.jpg` },
-      { orderId: order.id, type: "vin_plate", url: `https://example.com/photos/vin-${order.orderNumber}.jpg` },
-      { orderId: order.id, type: "odometer", url: `https://example.com/photos/kilometros-${order.orderNumber}.jpg` },
-      { orderId: order.id, type: "extra", url: `https://example.com/photos/extra-${order.orderNumber}.jpg` },
+      { orderId: order.id, type: "license_plate", url: `https://example.com/photos/patente-${order.id}.jpg` },
+      { orderId: order.id, type: "vin_plate", url: `https://example.com/photos/vin-${order.id}.jpg` },
+      { orderId: order.id, type: "odometer", url: `https://example.com/photos/kilometros-${order.id}.jpg` },
+      { orderId: order.id, type: "extra", url: `https://example.com/photos/extra-${order.id}.jpg` },
     ];
     await prisma.orderPhoto.createMany({ data: photosData });
 
-    // CREATE STATUS HISTORY
-    const initialStatus = {
-      orderId: order.id,
-      status: "PENDIENTE",
-      changedAt: new Date(order.creationDate.getTime() - 1000 * 60 * 60 * 24 * 7)
-    };
-    await prisma.orderStatusHistory.create({ data: initialStatus });
+    await prisma.orderStatusHistory.create({
+      data: {
+        orderId: order.id,
+        status: "PENDIENTE",
+        changedAt: new Date(order.creationDate.getTime() - 1000 * 60 * 60 * 24 * 7)
+      }
+    });
 
     if (order.status === 'AUTORIZADO') {
       await prisma.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          status: "AUTORIZADO",
-          changedAt: new Date()
-        }
+        data: { orderId: order.id, status: "AUTORIZADO", changedAt: new Date() }
       });
     } else if (order.status === 'COMPLETADO') {
       await prisma.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          status: "AUTORIZADO",
-          changedAt: new Date(order.creationDate.getTime() + 1000 * 60 * 60 * 24 * 2)
-        }
+        data: { orderId: order.id, status: "AUTORIZADO", changedAt: new Date(order.creationDate.getTime() + 1000 * 60 * 60 * 24 * 2) }
       });
       await prisma.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          status: "COMPLETADO",
-          changedAt: new Date()
-        }
+        data: { orderId: order.id, status: "COMPLETADO", changedAt: new Date() }
       });
     } else if (order.status === 'RECHAZADO') {
       await prisma.orderStatusHistory.create({
-        data: {
-          orderId: order.id,
-          status: "RECHAZADO",
-          changedAt: new Date()
-        }
+        data: { orderId: order.id, status: "RECHAZADO", changedAt: new Date() }
       });
     }
   }
 
   console.log("✅ Orders and related data inserted");
+};
 
-
-}
 const create_warranties = async () => {
   console.log("🛡 Inserting warranties...");
   const warrantiesData = [];
@@ -382,6 +354,4 @@ const create_warranties = async () => {
   }
   await prisma.warranty.createMany({ data: warrantiesData });
   console.log("✅ Warranties inserted");
-
-  console.log("🎉 Seed completed!");
-}
+};

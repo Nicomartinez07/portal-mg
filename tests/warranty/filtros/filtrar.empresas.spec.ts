@@ -8,7 +8,7 @@ test('Poder seleccionar empresas y poder filtrar por ellas', async ({ page }) =>
   await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
   await page.getByRole('button', { name: 'Login' }).click();
   await page.getByRole('link', { name: 'Garantías' }).click();
-  await page.getByRole('combobox').selectOption('123');
+  await page.getByRole('combobox').selectOption({ label: 'Central Workshop' });
   await page.getByRole('button', { name: 'Buscar' }).click();
   await expect(page.locator('tbody')).toContainText('Central Workshop');
   await expect(page.getByRole('cell', { name: 'Central Workshop' }).nth(1)).toBeVisible();
