@@ -29,8 +29,9 @@ async function main() {
   console.log("🛠 Inserting roles...");
   const rolesData = ["ADMIN", "IMPORTER", "DEALER", "WORKSHOP"];
   const roles = {};
+  let roleIdCounter = 1;
   for (const name of rolesData) {
-    const role = await prisma.role.create({ data: { name } });
+    const role = await prisma.role.create({ data: { id: roleIdCounter++, name } });
     roles[name] = role;
   }
   console.log("✅ Roles inserted");
@@ -66,12 +67,12 @@ async function main() {
   console.log("👤 Inserting users...");
   const SALT_ROUNDS = 10;
   const usersData = [
-    { username: "Admin", email: "admin@company.com", notifications: true, password: await bcrypt.hash("Admin123!", SALT_ROUNDS), companyId: companies[0].id },
-    { username: "John Smith", email: "john@smith.com", notifications: true, password: await bcrypt.hash("John123!", SALT_ROUNDS), companyId: companies[1].id },
-    { username: "Mary Johnson", email: "mary@johnson.com", notifications: false, password: await bcrypt.hash("Mary123!", SALT_ROUNDS), companyId: companies[2].id },
-    { username: "Mati PEDAZO DE GIL", email: "marAy@johnson.com", notifications: false, password: await bcrypt.hash("Marya123!", SALT_ROUNDS), companyId: companies[2].id },
-    { username: "Carlos Brown", email: "carlos@brown.com", notifications: false, password: await bcrypt.hash("Carlos123!", SALT_ROUNDS), companyId: companies[3].id },
-    { username: "Laura Wilson", email: "laura@wilson.com", notifications: true, password: await bcrypt.hash("Laura123!", SALT_ROUNDS), companyId: companies[4].id }
+    { id: 1, username: "Admin", email: "admin@company.com", notifications: true, password: await bcrypt.hash("Admin123!", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 2, username: "John Smith", email: "john@smith.com", notifications: true, password: await bcrypt.hash("John123!", SALT_ROUNDS), companyId: companies[1].id },
+    { id: 3, username: "Mary Johnson", email: "mary@johnson.com", notifications: false, password: await bcrypt.hash("Mary123!", SALT_ROUNDS), companyId: companies[2].id },
+    { id: 4, username: "Mati PEDAZO DE GIL", email: "marAy@johnson.com", notifications: false, password: await bcrypt.hash("Marya123!", SALT_ROUNDS), companyId: companies[2].id },
+    { id: 5, username: "Carlos Brown", email: "carlos@brown.com", notifications: false, password: await bcrypt.hash("Carlos123!", SALT_ROUNDS), companyId: companies[3].id },
+    { id: 6, username: "Laura Wilson", email: "laura@wilson.com", notifications: true, password: await bcrypt.hash("Laura123!", SALT_ROUNDS), companyId: companies[4].id }
   ];
   const users = [];
   for (const u of usersData) {
@@ -86,11 +87,11 @@ async function main() {
   console.log("🔗 Assigning roles to users...");
   await prisma.userRole.createMany({
     data: [
-      { userId: users[0].id, roleId: roles["ADMIN"].id },
-      { userId: users[1].id, roleId: roles["DEALER"].id },
-      { userId: users[2].id, roleId: roles["WORKSHOP"].id },
-      { userId: users[3].id, roleId: roles["DEALER"].id },
-      { userId: users[4].id, roleId: roles["WORKSHOP"].id }
+      { userId: 1, roleId: roles["ADMIN"].id },
+      { userId: 2, roleId: roles["IMPORTER"].id },
+      { userId: 3, roleId: roles["IMPORTER"].id },
+      { userId: 4, roleId: roles["DEALER"].id },
+      { userId: 5, roleId: roles["WORKSHOP"].id }
     ]
   });
   console.log("✅ Roles assigned to users");

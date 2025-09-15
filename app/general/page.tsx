@@ -1,128 +1,213 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { MGDashboard } from "../../components/mg-dashboard";
-import { FaPlus, FaInfoCircle, FaTrashAlt, FaCheck } from "react-icons/fa";
+import { FaInfoCircle, FaTrashAlt, FaPlus, FaUpload } from "react-icons/fa";
+// ✅ Correct import for server actions
+import { getUsers, deleteUser } from "../general/actions";
+import { NewUserModal } from "../../components/general/users/NewUserModal";
+import { EditUserModal } from "../../components/general/users/EditUserModal";
 
-export default function GeneralPage() {
-  const administradores = [
-    { nombre: "Admin", email: "info@styfish.com", notificaciones: false },
-    {
-      nombre: "Florencia",
-      email: "mflobalzo@geelyargentina.com",
-      notificaciones: false,
-    },
-    {
-      nombre: "Federico Paterno",
-      email: "fpaterno@geelyargentina.com",
-      notificaciones: true,
-    },
-    {
-      nombre: "EXIMAR",
-      email: "postventa@geelyargentina.com",
-      notificaciones: false,
-    },
-    {
-      nombre: "Carlos Martinez",
-      email: "cmartinez@eximar.com.ar",
-      notificaciones: true,
-    },
-    {
-      nombre: "Hernan Ponce",
-      email: "hponce@eximar.com.ar",
-      notificaciones: false,
-    },
-    {
-      nombre: "Valentin Devries",
-      email: "vdevries@eximar.com.ar",
-      notificaciones: true,
-    },
-    {
-      nombre: "Gastón Santillan",
-      email: "gsantillan@eximar.com.ar",
-      notificaciones: false,
-    },
-  ];
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  notifications: boolean;
+  roles: { role: { name: string } }[];
+}
+
+export default function UsuariosPage() {
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // 📌 Handler para elegir archivo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  // 📌 Handler para subir archivo al backend
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      alert("Por favor selecciona un archivo primero");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    // ⚠️ Tenés que crear una ruta de API en tu Next.js (ej: /api/upload-tarifario)
+    const res = await fetch("/api/upload-tarifario", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (res.ok) {
+      alert("Tarifario actualizado ✅");
+    } else {
+      alert("Error al subir el tarifario ❌");
+    }
+  };
+
+  // 📌 Cargar usuarios
+  const loadUsers = async () => {
+    setLoading(true);
+    const data = await getUsers();
+    setUsuarios(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  function handleEdit(id: number) {
+    setEditingUserId(id);
+  }
+
+  const handleDelete = async (userId: number) => {
+    const confirmDelete = window.confirm("¿Estás seguro que quieres eliminar este usuario?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteUser(userId);
+      alert("Usuario eliminado correctamente ✅");
+      loadUsers();
+    } catch (error) {
+      alert("Error al eliminar el usuario ❌");
+    }
+  };
+
+  function handleCloseEditModal() {
+    setEditingUserId(null);
+    loadUsers();
+  }
 
   return (
     <MGDashboard>
       <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Configuración General</h1>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2">
+          <h1 className="text-3xl font-bold">Configuración de Administradores</h1>
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+          >
             <FaPlus /> Nuevo Usuario
           </button>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-4">
-          Configuración de Administradores
-        </h2>
-
-        {/* Search input for Name/Email */}
-        <div className="mb-6 flex items-center gap-4">
-          <input
-            type="text"
-            placeholder="Nombre"
-            className="border rounded px-3 py-2 w-full max-w-sm"
-          />
-          <input
-            type="text"
-            placeholder="Email"
-            className="border rounded px-3 py-2 w-full max-w-sm"
-          />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Buscar
-          </button>
-        </div>
-
-        {/* Table section */}
+        {/* Tabla */}
         <div className="border rounded-lg overflow-auto">
-          <table className="w-full border-collapse">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                  Nombre
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                  Notificaciones E-mail
-                </th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {administradores.map((admin, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-left">{admin.nombre}</td>
-                  <td className="px-4 py-3 text-left">{admin.email}</td>
-                  <td className="px-4 py-3 text-left">
-                    {admin.notificaciones ? (
-                      <div className="flex items-center justify-center w-6 h-6 bg-blue-500 rounded-sm text-white">
-                        <FaCheck className="text-sm" />
-                      </div>
-                    ) : (
-                      <div className="w-6 h-6 border rounded-sm bg-gray-200"></div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end items-center space-x-2">
-                      <button className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm flex items-center gap-1">
-                        <FaInfoCircle className="text-sm" /> detalles
-                      </button>
-                      <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm flex items-center gap-1">
-                        <FaTrashAlt className="text-sm" /> eliminar
-                      </button>
-                    </div>
-                  </td>
+          {loading ? (
+            <p className="p-4">Cargando usuarios...</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                    Nombre
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                    Email
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-700"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {usuarios.map((usuario) => (
+                  <tr key={usuario.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">{usuario.username}</td>
+                    <td className="px-4 py-3">{usuario.email}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end items-center space-x-2">
+                        <button
+                          onClick={() => handleEdit(usuario.id)}
+                          className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm flex items-center gap-1"
+                        >
+                          <FaInfoCircle className="text-sm" /> Detalles
+                        </button>
+                        <button
+                          onClick={async () => {
+                            handleDelete(usuario.id);
+                          }}
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm flex items-center gap-1"
+                        >
+                          <FaTrashAlt className="text-sm" /> Eliminar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {usuarios.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-3 text-center text-gray-500"
+                    >
+                      No se encontraron usuarios
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Configuración de Archivos</h2>
+
+          {/* Subida de tarifario */}
+          <div className="flex items-center gap-4 mb-4">
+            <a
+            href="/archivos/tarifario.pdf"
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline"
+          >
+            Archivo del tarifario
+          </a>
+            {/* Botón estilizado para seleccionar archivo */}
+            <label className="bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-pointer hover:bg-gray-300">
+              Seleccionar archivo
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+
+            {/* Mostrar el nombre del archivo si se seleccionó */}
+            {selectedFile && (
+              <>
+                <span className="text-gray-600">{selectedFile.name}</span>
+                <button
+                  onClick={handleUpload}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+                >
+                  <FaUpload className="w-4 h-4" /> Subir
+                </button>
+              </>
+            )}
+          </div>
+
+
         </div>
       </div>
+      {/* Nueva sección: Configuración de Archivos */}
+      
+      {/* Modales */}
+      {showNewModal && (
+        <NewUserModal onClose={() => setShowNewModal(false)} onSuccess={loadUsers} />
+      )}
+      {editingUserId !== null && (
+        <EditUserModal userId={editingUserId} onClose={handleCloseEditModal} />
+      )}
     </MGDashboard>
   );
 }

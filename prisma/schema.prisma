@@ -61,7 +61,7 @@ model Company {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   username     String
   email        String    @unique
   password     String
@@ -74,7 +74,7 @@ model User {
 }
 
 model Role {
-  id    Int        @id @default(autoincrement())
+  id    Int        @id 
   name  String     @unique
   users UserRole[]
 }

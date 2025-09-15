@@ -1,4 +1,4 @@
-# Portal MG 
+no# Portal MG 
 
 Sistema de administracio de informacion y usuarios de una empresa de autos. La misma va contar con:
 
@@ -104,3 +104,16 @@ observaciones del historial de observaciones (detalles de las ordenes)
 
 
 Pagina certificados: falta desarrollar el funcionamiento de los filtros, Descargar certificado, logica de Garantia y bloqueado, y corregir las 4 fechas
+
+Seccion:  general
+
+Formularios de Carga
+
+Detalle servicio busqueda de VIN
+
+ARREGLAR DESCARGA DE CERTIFICADO
+
+Empadronamiento: fecha activacion de garantia
+F. Importacion: Cuando el auto llego al pais
+
+laburar el getusers
