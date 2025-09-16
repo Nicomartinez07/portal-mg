@@ -3,6 +3,7 @@
 import type React from "react";
 import { useState, useEffect, Fragment } from "react";
 import { useRouter } from "next/navigation";
+import { VehicleModal } from "@/components/vehiculos/vehicle-modal";
 
 import {
   Home,
@@ -15,6 +16,7 @@ import {
   DollarSign,
   FileText,
   LogOut,
+  Car,
   User,
 } from "lucide-react";
 
@@ -35,7 +37,7 @@ import {
 
 import { Menu, Transition } from "@headlessui/react";
 
-//Configuracion de las rutas de navegacion
+// Configuración de las rutas de navegación
 const navigationItems = [
   { name: "Inicio", icon: Home, href: "/" },
   { name: "Garantías", icon: Shield, href: "/garantias" },
@@ -46,12 +48,14 @@ const navigationItems = [
   { name: "Repuestos", icon: Wrench, href: "/repuestos" },
   { name: "Tarifario", icon: DollarSign, href: "/archivos/tarifario.pdf", download: true },
   { name: "Info Técnica", icon: FileText, href: "https://drive.google.com/drive/folders/1unjLakNYCpBBbOorUzeuMp0N5jAs1qSt", external: true },
+  // Cargar Auto se manejará por estado, no por href
+  { name: "Cargar Auto", icon: Car, modal: "vehicle" },
 ];
 
 const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
 
 // Componente para la barra lateral
-function AppSidebar() {
+function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) {
   const router = useRouter();
 
   // Función de logout centralizada
@@ -77,6 +81,27 @@ function AppSidebar() {
             <SidebarMenu>
               {navigationItems.map((item, index) => {
                 const Icon = item.icon;
+
+                if (item.modal === "vehicle") {
+                  // Botón especial para abrir modal
+                  return (
+                    <SidebarMenuItem key={`${item.name}-${index}`}>
+                      <SidebarMenuButton
+                        asChild
+                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
+                      >
+                        <button
+                          onClick={onOpenVehicleModal}
+                          className="flex items-center gap-3 w-full text-left"
+                        >
+                          <Icon className="w-5 h-5" />
+                          <span className="text-sm">{item.name}</span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
                 return (
                   <SidebarMenuItem key={`${item.name}-${index}`}>
                     <SidebarMenuButton
@@ -110,19 +135,20 @@ function AppSidebar() {
                       )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  
                 );
               })}
+
+              {/* Botón de logout */}
               <SidebarMenuButton
-              asChild
-              onClick={handleLogout} // Usa la función centralizada
-              className="text-white hover:bg-slate-600 rounded-none h-12 justify-start"
-            >
-              <button className="flex items-center gap-3">
-                <LogOut className="w-5 h-5" />
-                <span className="text-sm">Salir</span>
-              </button>
-            </SidebarMenuButton>
+                asChild
+                onClick={handleLogout}
+                className="text-white hover:bg-slate-600 rounded-none h-12 justify-start"
+              >
+                <button className="flex items-center gap-3">
+                  <LogOut className="w-5 h-5" />
+                  <span className="text-sm">Salir</span>
+                </button>
+              </SidebarMenuButton>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -139,10 +165,11 @@ interface MGDashboardProps {
 
 export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) {
   const [vin, setVin] = useState("");
-  const [username, setUsername] = useState("Cargando..."); // Estado inicial para evitar "undefined"
+  const [username, setUsername] = useState("Cargando...");
+  const [openVehicleModal, setOpenVehicleModal] = useState(false);
 
   const router = useRouter();
-  
+
   // Función de logout centralizada
   const handleLogout = async () => {
     await fetch("/api/logout");
@@ -155,18 +182,16 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
       try {
         const res = await fetch("/api/me", {
           method: "GET",
-          credentials: "include", // Necesario para enviar la cookie
+          credentials: "include",
         });
 
-        if (!res.ok) {
-          throw new Error("No autorizado");
-        }
+        if (!res.ok) throw new Error("No autorizado");
 
         const data = await res.json();
         setUsername(data.username);
       } catch (err) {
         console.error(err);
-        setUsername("Usuario"); // Fallback en caso de error
+        setUsername("Usuario");
       }
     }
 
@@ -182,7 +207,7 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <div className="flex h-screen w-full">
-        <AppSidebar />
+        <AppSidebar onOpenVehicleModal={() => setOpenVehicleModal(true)} />
 
         <SidebarInset className="flex flex-col flex-1 min-h-0">
           {/* Header */}
@@ -225,7 +250,7 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
                       {({ active }) => (
                         <button
                           className={`${active ? "bg-gray-100" : ""} block w-full text-left px-4 py-2 text-sm text-gray-700`}
-                          onClick={handleLogout} // Usa la función centralizada
+                          onClick={handleLogout}
                         >
                           <LogOut className="inline w-4 h-4 mr-2" />
                           Salir
@@ -253,6 +278,9 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
             )}
           </main>
         </SidebarInset>
+
+        {/* Modal para cargar vehículo */}
+        <VehicleModal open={openVehicleModal} onClose={() => setOpenVehicleModal(false)} />
       </div>
     </SidebarProvider>
   );
