@@ -59,17 +59,6 @@ export const NewCompanyModal = ({ onClose, onSuccess }: { onClose: () => void; o
           </div>
 
           <h3 className="font-semibold text-gray-700">Datos de Contacto de Taller</h3>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="showParts"
-              checked={form.showParts}
-              onChange={handleChange}
-            />
-            <label>Mostrar en Repuestos</label>
-          </div>
-
           <label className="block font-medium mb-1">Nombre encargado</label>
           <input
             type="text"

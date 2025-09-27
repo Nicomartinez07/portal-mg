@@ -105,15 +105,21 @@ observaciones del historial de observaciones (detalles de las ordenes)
 
 Pagina certificados: falta desarrollar el funcionamiento de los filtros, Descargar certificado, logica de Garantia y bloqueado, y corregir las 4 fechas
 
-Seccion:  general
+Pagina general: Testing 
 
-Formularios de Carga
+Formularios de Carga, desarrollar todo lo posible
 
-Detalle servicio busqueda de VIN
+Desarrollar el detalle servicio en la busqueda por VIN
 
-ARREGLAR DESCARGA DE CERTIFICADO
+ARREGLAR DESCARGA DE CERTIFICADO EN PAGINA DE CERTIFICADOS
 
+
+Filtros de Certificados:
 Empadronamiento: fecha activacion de garantia
 F. Importacion: Cuando el auto llego al pais
 
 laburar el getusers
+
+Al crear un usuario en la pagina de General, ese usuario tiene que crearse como admin (importador)
+
+Seguir desarrollando tests
