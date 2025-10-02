@@ -1,0 +1,442 @@
+[
+  {
+    "provincia": "Buenos Aires",
+    "localidades": [
+      "No Encontrada",
+      "La Plata",
+      "Mar del Plata",
+      "Bahía Blanca",
+      "Quilmes",
+      "Lomas de Zamora",
+      "Lanús",
+      "Morón",
+      "San Isidro",
+      "Tigre",
+      "Pilar",
+      "Junín",
+      "Tandil",
+      "Olavarría",
+      "Necochea",
+      "Zárate",
+      "Campana",
+      "Chivilcoy",
+      "Dolores",
+      "Mercedes",
+      "Luján"
+    ]
+  },
+  {
+    "provincia": "Catamarca",
+    "localidades": [
+      "No Encontrada",
+      "San Fernando del Valle de Catamarca",
+      "Valle Viejo",
+      "Andalgalá",
+      "Belén",
+      "Santa María",
+      "Fiambalá",
+      "Recreo",
+      "Icaño",
+      "La Merced",
+      "El Alto"
+    ]
+  },
+  {
+    "provincia": "Chaco",
+    "localidades": [
+      "No Encontrada",
+      "Resistencia",
+      "Barranqueras",
+      "Presidencia Roque Sáenz Peña",
+      "Villa Ángela",
+      "Charata",
+      "General San Martín",
+      "Quitilipi",
+      "Machagai",
+      "Las Breñas",
+      "Tres Isletas"
+    ]
+  },
+  {
+    "provincia": "Chubut",
+    "localidades": [
+      "No Encontrada",
+      "Rawson",
+      "Comodoro Rivadavia",
+      "Trelew",
+      "Puerto Madryn",
+      "Esquel",
+      "Sarmiento",
+      "Gaiman",
+      "Dolavon",
+      "Rada Tilly",
+      "Lago Puelo"
+    ]
+  },
+  {
+    "provincia": "Córdoba",
+    "localidades": [
+      "No Encontrada",
+      "Córdoba",
+      "Río Cuarto",
+      "Villa María",
+      "San Francisco",
+      "Alta Gracia",
+      "Villa Carlos Paz",
+      "Jesús María",
+      "La Calera",
+      "Bell Ville",
+      "Río Tercero",
+      "Marcos Juárez",
+      "Arroyito",
+      "Villa Dolores",
+      "Cruz del Eje"
+    ]
+  },
+  {
+    "provincia": "Corrientes",
+    "localidades": [
+      "No Encontrada",
+      "Corrientes",
+      "Goya",
+      "Mercedes",
+      "Curuzú Cuatiá",
+      "Paso de los Libres",
+      "Bella Vista",
+      "Monte Caseros",
+      "Ituzaingó",
+      "Santo Tomé",
+      "Empedrado"
+    ]
+  },
+  {
+    "provincia": "Entre Ríos",
+    "localidades": [
+      "No Encontrada",
+      "Paraná",
+      "Concordia",
+      "Gualeguaychú",
+      "Concepción del Uruguay",
+      "Gualeguay",
+      "Victoria",
+      "La Paz",
+      "Diamante",
+      "Villaguay",
+      "Nogoyá",
+      "Federación"
+    ]
+  },
+  {
+    "provincia": "Formosa",
+    "localidades": [
+      "No Encontrada",
+      "Formosa",
+      "Clorinda",
+      "Pirané",
+      "El Colorado",
+      "Las Lomitas",
+      "Ingeniero Juárez",
+      "Laguna Yema",
+      "Villa General Güemes",
+      "Comandante Fontana"
+    ]
+  },
+  {
+    "provincia": "Jujuy",
+    "localidades": [
+      "No Encontrada",
+      "San Salvador de Jujuy",
+      "Palpalá",
+      "San Pedro de Jujuy",
+      "Libertador General San Martín",
+      "Perico",
+      "La Quiaca",
+      "Humahuaca",
+      "El Carmen",
+      "Tilcara",
+      "Yala"
+    ]
+  },
+  {
+    "provincia": "La Pampa",
+    "localidades": [
+      "No Encontrada",
+      "Santa Rosa",
+      "General Pico",
+      "Toay",
+      "Realicó",
+      "Eduardo Castex",
+      "Victorica",
+      "Macachín",
+      "Intendente Alvear",
+      "Quemú Quemú",
+      "General Acha"
+    ]
+  },
+  {
+    "provincia": "La Rioja",
+    "localidades": [
+      "No Encontrada",
+      "La Rioja",
+      "Chilecito",
+      "Aimogasta",
+      "Chamical",
+      "Chepes",
+      "Villa Unión",
+      "Ulapes",
+      "Vinchina",
+      "Famatina",
+      "Milagro"
+    ]
+  },
+  {
+    "provincia": "Mendoza",
+    "localidades": [
+      "No Encontrada",
+      "Mendoza",
+      "San Rafael",
+      "Godoy Cruz",
+      "Guaymallén",
+      "Las Heras",
+      "Maipú",
+      "Luján de Cuyo",
+      "Tunuyán",
+      "Tupungato",
+      "Malargüe",
+      "San Martín",
+      "Rivadavia",
+      "Santa Rosa",
+      "La Paz"
+    ]
+  },
+  {
+    "provincia": "Misiones",
+    "localidades": [
+      "No Encontrada",
+      "Posadas",
+      "Oberá",
+      "Eldorado",
+      "San Vicente",
+      "Puerto Iguazú",
+      "Leandro N. Alem",
+      "Apóstoles",
+      "Aristóbulo del Valle",
+      "Candelaria",
+      "Jardín América",
+      "San Javier",
+      "Concepción de la Sierra"
+    ]
+  },
+  {
+    "provincia": "Neuquén",
+    "localidades": [
+      "No Encontrada",
+      "Neuquén",
+      "Cutral Có",
+      "Plottier",
+      "Zapala",
+      "San Martín de los Andes",
+      "Centenario",
+      "Villa La Angostura",
+      "Junín de los Andes",
+      "Rincón de los Sauces",
+      "Aluminé",
+      "Chos Malal"
+    ]
+  },
+  {
+    "provincia": "Río Negro",
+    "localidades": [
+      "No Encontrada",
+      "Viedma",
+      "San Carlos de Bariloche",
+      "General Roca",
+      "Cipolletti",
+      "Allen",
+      "El Bolsón",
+      "Choele Choel",
+      "Cinco Saltos",
+      "Villa Regina",
+      "Río Colorado",
+      "Sierra Grande"
+    ]
+  },
+  {
+    "provincia": "Salta",
+    "localidades": [
+      "No Encontrada",
+      "Salta",
+      "San Ramón de la Nueva Orán",
+      "Tartagal",
+      "Joaquín V. González",
+      "Metán",
+      "Cafayate",
+      "Cerrillos",
+      "Rosario de la Frontera",
+      "Aguaray",
+      "Embarcación",
+      "General Güemes",
+      "San José de Metán"
+    ]
+  },
+  {
+    "provincia": "San Juan",
+    "localidades": [
+      "No Encontrada",
+      "San Juan",
+      "Rivadavia",
+      "Santa Lucía",
+      "Pocito",
+      "Caucete",
+      "Chimbas",
+      "Albardón",
+      "Jáchal",
+      "Calingasta",
+      "Valle Fértil",
+      "Iglesia",
+      "Ullum"
+    ]
+  },
+  {
+    "provincia": "San Luis",
+    "localidades": [
+      "No Encontrada",
+      "San Luis",
+      "Villa Mercedes",
+      "Merlo",
+      "Juana Koslay",
+      "La Toma",
+      "Quines",
+      "Concarán",
+      "Justo Daract",
+      "Naschel",
+      "Tilisarao"
+    ]
+  },
+  {
+    "provincia": "Santa Cruz",
+    "localidades": [
+      "No Encontrada",
+      "Río Gallegos",
+      "Caleta Olivia",
+      "Pico Truncado",
+      "Río Turbio",
+      "Las Heras",
+      "Puerto Deseado",
+      "El Calafate",
+      "Perito Moreno",
+      "Puerto San Julián",
+      "Los Antiguos"
+    ]
+  },
+  {
+    "provincia": "Santa Fe",
+    "localidades": [
+      "No Encontrada",
+      "Santa Fe",
+      "Rosario",
+      "Rafaela",
+      "Venado Tuerto",
+      "Reconquista",
+      "Sunchales",
+      "San Lorenzo",
+      "Capitán Bermúdez",
+      "Villa Gobernador Gálvez",
+      "Esperanza",
+      "Funes",
+      "Granadero Baigorria",
+      "Casilda",
+      "San Justo"
+    ]
+  },
+  {
+    "provincia": "Santiago del Estero",
+    "localidades": [
+      "No Encontrada",
+      "Santiago del Estero",
+      "La Banda",
+      "Frías",
+      "Añatuya",
+      "Termas de Río Hondo",
+      "Clodomira",
+      "Loreto",
+      "Quimilí",
+      "Sumampa",
+      "Villa Ojo de Agua",
+      "Bandera"
+    ]
+  },
+  {
+    "provincia": "Tierra del Fuego",
+    "localidades": ["No Encontrada", "Ushuaia", "Río Grande", "Tolhuin"]
+  },
+  {
+    "provincia": "Tucumán",
+    "localidades": [
+      "No Encontrada",
+      "San Miguel de Tucumán",
+      "Yerba Buena",
+      "Tafí Viejo",
+      "Concepción",
+      "Banda del Río Salí",
+      "Aguilares",
+      "Monteros",
+      "Famaillá",
+      "Lules",
+      "Simoca",
+      "Trancas",
+      "Burruyacú"
+    ]
+  },
+  {
+    "provincia": "Ciudad Autonoma De Buenos Aires",
+    "localidades": [
+      "Retiro",
+      "San Nicolás",
+      "Puerto Madero",
+      "San Telmo",
+      "Montserrat",
+      "Constitución",
+      "Recoleta",
+      "Balvanera",
+      "San Cristóbal",
+      "La Boca",
+      "Barracas",
+      "Parque Patricios",
+      "Nueva Pompeya",
+      "Almagro",
+      "Boedo",
+      "Caballito",
+      "Flores",
+      "Floresta",
+      "Vélez Sársfield",
+      "Villa Luro",
+      "Monte Castro",
+      "Versalles",
+      "Villa Real",
+      "Villa del Parque",
+      "Villa General Mitre",
+      "Villa Devoto",
+      "Villa Pueyrredón",
+      "Villa Urquiza",
+      "Coghlan",
+      "Saavedra",
+      "Villa Ortúzar",
+      "Colegiales",
+      "Chacarita",
+      "Paternal",
+      "Palermo",
+      "Belgrano",
+      "Núñez",
+      "Colegiales",
+      "Agronomía",
+      "Parque Chas",
+      "Parque Avellaneda",
+      "Mataderos",
+      "Liniers",
+      "Villa Soldati",
+      "Villa Riachuelo",
+      "Villa Lugano"
+    ]
+  }
+]

@@ -1,9 +1,9 @@
 "use client";
 
-import type React from "react";
 import { useState, useEffect, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { VehicleModal } from "@/components/vehiculos/vehicle-modal";
+import { ActivationModal } from "@/components/warranty/modal/WarrantyActivation";
 
 import {
   Home,
@@ -46,16 +46,32 @@ const navigationItems = [
   { name: "Empresas", icon: Building2, href: "/empresas" },
   { name: "Certificados", icon: Award, href: "/certificados" },
   { name: "Repuestos", icon: Wrench, href: "/repuestos" },
-  { name: "Tarifario", icon: DollarSign, href: "/archivos/tarifario.pdf", download: true },
-  { name: "Info Técnica", icon: FileText, href: "https://drive.google.com/drive/folders/1unjLakNYCpBBbOorUzeuMp0N5jAs1qSt", external: true },
-  // Cargar Auto se manejará por estado, no por href
+  {
+    name: "Tarifario",
+    icon: DollarSign,
+    href: "/archivos/tarifario.pdf",
+    download: true,
+  },
+  {
+    name: "Info Técnica",
+    icon: FileText,
+    href: "https://drive.google.com/drive/folders/1unjLakNYCpBBbOorUzeuMp0N5jAs1qSt",
+    external: true,
+  },
   { name: "Cargar Auto", icon: Car, modal: "vehicle" },
+  { name: "Activar Garantia", icon: Shield, modal: "warranty" },
 ];
 
 const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
 
 // Componente para la barra lateral
-function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) {
+function AppSidebar({
+  onOpenVehicleModal,
+  onOpenWarrantyModal,
+}: {
+  onOpenVehicleModal: () => void;
+  onOpenWarrantyModal: () => void;
+}) {
   const router = useRouter();
 
   // Función de logout centralizada
@@ -71,7 +87,9 @@ function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) 
           <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">MG</span>
           </div>
-          <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">MG</span>
+          <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
+            MG
+          </span>
         </div>
       </SidebarHeader>
 
@@ -83,7 +101,6 @@ function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) 
                 const Icon = item.icon;
 
                 if (item.modal === "vehicle") {
-                  // Botón especial para abrir modal
                   return (
                     <SidebarMenuItem key={`${item.name}-${index}`}>
                       <SidebarMenuButton
@@ -92,6 +109,25 @@ function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) 
                       >
                         <button
                           onClick={onOpenVehicleModal}
+                          className="flex items-center gap-3 w-full text-left"
+                        >
+                          <Icon className="w-5 h-5" />
+                          <span className="text-sm">{item.name}</span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                if (item.modal === "warranty") {
+                  return (
+                    <SidebarMenuItem key={`${item.name}-${index}`}>
+                      <SidebarMenuButton
+                        asChild
+                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
+                      >
+                        <button
+                          onClick={onOpenWarrantyModal}
                           className="flex items-center gap-3 w-full text-left"
                         >
                           <Icon className="w-5 h-5" />
@@ -123,7 +159,11 @@ function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) 
                           <span className="text-sm">{item.name}</span>
                         </a>
                       ) : item.download ? (
-                        <a href={item.href} download className="flex items-center gap-3">
+                        <a
+                          href={item.href}
+                          download
+                          className="flex items-center gap-3"
+                        >
                           <Icon className="w-5 h-5" />
                           <span className="text-sm">{item.name}</span>
                         </a>
@@ -158,15 +198,14 @@ function AppSidebar({ onOpenVehicleModal }: { onOpenVehicleModal: () => void }) 
 }
 
 // Componente principal del dashboard
-interface MGDashboardProps {
-  children?: React.ReactNode;
-  defaultOpen?: boolean;
-}
-
-export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) {
+export function MGDashboard({
+  children,
+  defaultOpen = true,
+}: MGDashboardProps) {
   const [vin, setVin] = useState("");
   const [username, setUsername] = useState("Cargando...");
   const [openVehicleModal, setOpenVehicleModal] = useState(false);
+  const [openWarrantyModal, setOpenWarrantyModal] = useState(false);
 
   const router = useRouter();
 
@@ -207,7 +246,10 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <div className="flex h-screen w-full">
-        <AppSidebar onOpenVehicleModal={() => setOpenVehicleModal(true)} />
+        <AppSidebar
+          onOpenVehicleModal={() => setOpenVehicleModal(true)}
+          onOpenWarrantyModal={() => setOpenWarrantyModal(true)}
+        />
 
         <SidebarInset className="flex flex-col flex-1 min-h-0">
           {/* Header */}
@@ -249,7 +291,9 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
                     <Menu.Item>
                       {({ active }) => (
                         <button
-                          className={`${active ? "bg-gray-100" : ""} block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                          className={`${
+                            active ? "bg-gray-100" : ""
+                          } block w-full text-left px-4 py-2 text-sm text-gray-700`}
                           onClick={handleLogout}
                         >
                           <LogOut className="inline w-4 h-4 mr-2" />
@@ -270,7 +314,9 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
                 <div className="flex items-center justify-center h-full text-gray-500">
                   <div className="text-center">
                     <div className="text-6xl mb-4">📊</div>
-                    <h2 className="text-2xl font-semibold mb-2">Panel de Control MG</h2>
+                    <h2 className="text-2xl font-semibold mb-2">
+                      Panel de Control MG
+                    </h2>
                     <p>Selecciona una opción del menú para comenzar</p>
                   </div>
                 </div>
@@ -280,7 +326,16 @@ export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) 
         </SidebarInset>
 
         {/* Modal para cargar vehículo */}
-        <VehicleModal open={openVehicleModal} onClose={() => setOpenVehicleModal(false)} />
+        <VehicleModal
+          open={openVehicleModal}
+          onClose={() => setOpenVehicleModal(false)}
+        />
+
+        {/* Modal para activar garantía */}
+        <ActivationModal
+          open={openWarrantyModal}
+          onClose={() => setOpenWarrantyModal(false)}
+        />
       </div>
     </SidebarProvider>
   );

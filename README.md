@@ -118,8 +118,6 @@ Filtros de Certificados:
 Empadronamiento: fecha activacion de garantia
 F. Importacion: Cuando el auto llego al pais
 
-laburar el getusers
-
-Al crear un usuario en la pagina de General, ese usuario tiene que crearse como admin (importador)
-
 Seguir desarrollando tests
+
+Cree modal de Activar Garantia: Falta desarrollar el actions y que pueda ingresar un VIN y busque el auto y que me traiga todos los datos del auto, posteriormente quiero poder activar una garantia 

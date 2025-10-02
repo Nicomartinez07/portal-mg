@@ -37,7 +37,7 @@ export function VehicleModal({
     }));
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -48,7 +48,7 @@ export function VehicleModal({
 
     try {
       const result = await createVehicle(formData);
-      
+
       if (result.success) {
         alert("✅ Vehículo insertado correctamente");
         onClose();
@@ -70,9 +70,11 @@ export function VehicleModal({
         // Mostrar errores específicos de campos
         if (result.errors) {
           setErrors(result.errors);
-        } 
+          console.log("Esta mostrando estos errores");
+        }
         // Mostrar error general
         else if (result.message) {
+          console.log("Entra a mandar la alerta");
           alert(`❌ ${result.message}`);
         }
       }
@@ -90,8 +92,8 @@ export function VehicleModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg shadow-lg w-[500px] max-h-[90vh] overflow-y-auto relative">
         <h2 className="text-lg font-bold mb-4">Cargar Auto</h2>
-        <button 
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700" 
+        <button
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
           onClick={onClose}
         >
           ×
@@ -101,7 +103,9 @@ export function VehicleModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Fecha de carga */}
             <div>
-              <label className="block text-sm font-medium">Fecha de carga</label>
+              <label className="block text-sm font-medium">
+                Fecha de carga
+              </label>
               <input
                 type="date"
                 name="date"
@@ -119,11 +123,14 @@ export function VehicleModal({
                 name="vin"
                 value={formData.vin}
                 onChange={handleChange}
-                className={`border px-3 py-2 w-full rounded ${errors.vin ? 'border-red-500' : ''}`}
-                required
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.vin ? "border-red-500" : ""
+                }`}
                 maxLength={17}
               />
-              {errors.vin && <p className="text-red-500 text-xs mt-1">{errors.vin}</p>}
+              {errors.vin && (
+                <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
+              )}
             </div>
 
             {/* Marca */}
@@ -134,10 +141,13 @@ export function VehicleModal({
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
-                className={`border px-3 py-2 w-full rounded ${errors.brand ? 'border-red-500' : ''}`}
-                required
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.brand ? "border-red-500" : ""
+                }`}
               />
-              {errors.brand && <p className="text-red-500 text-xs mt-1">{errors.brand}</p>}
+              {errors.brand && (
+                <p className="text-red-500 text-xs mt-1">{errors.brand}</p>
+              )}
             </div>
 
             {/* Modelo */}
@@ -148,10 +158,13 @@ export function VehicleModal({
                 name="model"
                 value={formData.model}
                 onChange={handleChange}
-                className={`border px-3 py-2 w-full rounded ${errors.model ? 'border-red-500' : ''}`}
-                required
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.model ? "border-red-500" : ""
+                }`}
               />
-              {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
+              {errors.model && (
+                <p className="text-red-500 text-xs mt-1">{errors.model}</p>
+              )}
             </div>
 
             {/* Patente */}
@@ -162,10 +175,15 @@ export function VehicleModal({
                 name="licensePlate"
                 value={formData.licensePlate}
                 onChange={handleChange}
-                className={`border px-3 py-2 w-full rounded ${errors.licensePlate ? 'border-red-500' : ''}`}
-                required
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.licensePlate ? "border-red-500" : ""
+                }`}
               />
-              {errors.licensePlate && <p className="text-red-500 text-xs mt-1">{errors.licensePlate}</p>}
+              {errors.licensePlate && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.licensePlate}
+                </p>
+              )}
             </div>
 
             {/* Año */}
@@ -184,7 +202,9 @@ export function VehicleModal({
 
             {/* Nº de Motor */}
             <div>
-              <label className="block text-sm font-medium">Número de motor</label>
+              <label className="block text-sm font-medium">
+                Número de motor
+              </label>
               <input
                 type="text"
                 name="engineNumber"
@@ -208,7 +228,9 @@ export function VehicleModal({
 
             {/* Nº de Certificado */}
             <div>
-              <label className="block text-sm font-medium">Número de certificado</label>
+              <label className="block text-sm font-medium">
+                Número de certificado
+              </label>
               <input
                 type="text"
                 name="certificateNumber"
@@ -220,7 +242,9 @@ export function VehicleModal({
 
             {/* Fecha de venta */}
             <div>
-              <label className="block text-sm font-medium">Fecha de venta</label>
+              <label className="block text-sm font-medium">
+                Fecha de venta
+              </label>
               <input
                 type="date"
                 name="saleDate"
@@ -232,7 +256,9 @@ export function VehicleModal({
 
             {/* Fecha de importación */}
             <div>
-              <label className="block text-sm font-medium">Fecha de importación</label>
+              <label className="block text-sm font-medium">
+                Fecha de importación
+              </label>
               <input
                 type="date"
                 name="importDate"

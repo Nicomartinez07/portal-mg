@@ -1,19 +1,20 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { vehicleSchema } from "@/schemas/vehicle";
+import { activateWarrantySchema } from "@/schemas/warranty";
 
-export async function createVehicle(data: unknown): Promise<{
+export async function activateWarranty(data: unknown): Promise<{
   success: boolean;
   errors?: Record<string, string>;
   message?: string;
   vehicle?: any;
+  Warranty?: any;
 }> {
   try {
     console.log("Datos recibidos:", data);
 
     // ✅ Validar con safeParse
-    const parsed = vehicleSchema.safeParse(data);
+    const parsed = activateWarrantySchema.safeParse(data);
 
     if (!parsed.success) {
       const errors: Record<string, string> = {};
@@ -25,24 +26,25 @@ export async function createVehicle(data: unknown): Promise<{
       return { success: false, errors };
     }
 
-    // Validación de negocio: VIN duplicado
-    const existingVehicle = await prisma.vehicle.findUnique({
+    // Validación: VIN CON GARANTIA ACTIVA
+    const existingWarranty = await prisma.vehicle.findUnique({
       where: { vin: parsed.data.vin },
     });
 
     if (existingVehicle) {
       return {
         success: false,
-        errors: { vin: "Ya existe un vehículo con este VIN." },
+        errors: { vin: "Ese VIN ya tiene una garantia Activada." },
       };
     }
 
-    // Crear en DB
-    const newVehicle = await prisma.vehicle.create({
+    // Crear Warranty en la tabla warranty y insertar bien los datos
+    const newWarranty = await prisma.warranty.create({
       data: parsed.data,
     });
 
-    return { success: true, vehicle: newVehicle };
+    //VER QUE ONDA PORQUE HAY CAMPOS EN LOS QUE NADA Q VER LO Q MANDO A LO QUE CONTIENE WARRANTY
+    return { success: true, warranty: newWarranty };
   } catch (error) {
     console.error("Error completo:", error);
 
