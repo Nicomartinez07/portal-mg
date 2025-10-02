@@ -17,20 +17,38 @@ export async function getUserById(id: number) {
   });
 }
 
-// 📌 Listar todos los usuarios
+// Listar usuarios (FILTRADOS POR ROL ADMIN Y IMPORTADORA)
 export async function getUsers() {
+  const IMPORTER_ROLE_ID = 2;
+  const ADMIN_ROLE_ID = 1;
+
   return prisma.user.findMany({
+    where: {
+      roles: {
+        some: {
+          OR: [
+            { roleId: IMPORTER_ROLE_ID },
+            { roleId: ADMIN_ROLE_ID },
+          ],
+        },
+      },
+    },
     select: {
       id: true,
       username: true,
       email: true,
       notifications: true,
-      roles: { include: { role: true } },
+      roles: { 
+        select: {
+          role: {
+            select: { name: true }
+          }
+        }
+      },
     },
     orderBy: { username: "asc" },
   });
 }
-
 export async function createUser(data: {
   username: string;
   email: string;
@@ -39,23 +57,31 @@ export async function createUser(data: {
   notifications: boolean;
 }) {
   const hashedPassword = await bcrypt.hash(data.password, 10);
+  const IMPORTER_ROLE_ID = 2;
 
-  return prisma.user.create({
-    data: {
-      username: data.username,
-      email: data.email,
-      password: hashedPassword,
-      companyId: data.companyId,
-      notifications: data.notifications,
-      roles: {
-        create: [
-          {
-            roleId: 2 // 👈 Así es la forma correcta para relaciones many-to-many
-          }
-        ]
-      }
-    }
-  });
+  // Utilizamos una transacción para asegurar que ambos pasos se completen o ninguno.
+    return prisma.$transaction(async (tx) => {
+        // 1. Crear el usuario
+        const newUser = await tx.user.create({
+            data: {
+                username: data.username,
+                email: data.email,
+                password: hashedPassword,
+                companyId: data.companyId,
+                notifications: data.notifications,
+            },
+        });
+
+        // 2. Asignar el rol de IMPORTADOR
+        await tx.userRole.create({
+            data: {
+                userId: newUser.id,
+                roleId: IMPORTER_ROLE_ID, // Asignación fija al ID 2 (IMPORTER)
+            },
+        });
+
+        return newUser;
+    });
 }
 
 

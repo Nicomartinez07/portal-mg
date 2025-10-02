@@ -62,8 +62,9 @@ export const clean_database = async () => {
 const create_roles = async () => {
   console.log("🛠 Inserting roles...");
   const rolesData = ["ADMIN", "IMPORTER", "DEALER", "WORKSHOP"];
+  let roleIdCounter = 1;
   for (const name of rolesData) {
-    const role = await prisma.role.create({ data: { name } });
+    const role = await prisma.role.create({ data: {id: roleIdCounter++ , name } });
     roles[name] = role;
   }
   console.log("✅ Roles inserted");

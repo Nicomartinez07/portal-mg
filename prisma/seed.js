@@ -91,7 +91,8 @@ async function main() {
       { userId: 2, roleId: roles["IMPORTER"].id },
       { userId: 3, roleId: roles["IMPORTER"].id },
       { userId: 4, roleId: roles["DEALER"].id },
-      { userId: 5, roleId: roles["WORKSHOP"].id }
+      { userId: 5, roleId: roles["WORKSHOP"].id },
+      { userId: 6, roleId: roles["WORKSHOP"].id }
     ]
   });
   console.log("✅ Roles assigned to users");

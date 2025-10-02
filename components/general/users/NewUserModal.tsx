@@ -56,8 +56,8 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
         username: form.username,
         email: form.email,
         password: form.password,
-        companyId: Number(form.companyId), // 👈 se manda el companyId seleccionado
-        notifications: true, // o false según quieras
+        companyId: Number(form.companyId), 
+        notifications: true, 
       });
       alert("Usuario creado correctamente ✅");
       onSuccess();
