@@ -157,6 +157,7 @@ model Order {
   orderNumber            Int @default(99999)
   type                   OrderType
   creationDate           DateTime
+  draft                  Boolean?
   customerId             Int
   customer               Customer   @relation(fields: [customerId], references: [id])
   vehicleVin             String

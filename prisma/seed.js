@@ -238,6 +238,62 @@ async function main() {
       actualMileage: 22000,
       diagnosis: "Problema eléctrico en luces delanteras. Se requiere cambio de batería.",
       additionalObservations: "La batería no está cubierta por la garantía."
+    },
+    {
+      draft: true,
+      type: "PRE_AUTORIZACION",
+      creationDate: new Date(2025, 0, 15),
+      customerId: customers[0].id,
+      vehicleVin: vehicles[0].vin,
+      companyId: companies[2].id,
+      userId: users[2].id,
+      status: "PENDIENTE",
+      internalStatus: "PENDIENTE_RECLAMO",
+      actualMileage: 12500,
+      diagnosis: "Diagnóstico inicial: Falla en el sistema de frenos.",
+      additionalObservations: "El cliente reporta chirrido al frenar a baja velocidad."
+    },
+    {
+      draft: true,
+      type: "RECLAMO",
+      creationDate: new Date(2025, 1, 20),
+      customerId: customers[1].id,
+      vehicleVin: vehicles[1].vin,
+      companyId: companies[6].id,
+      userId: users[2].id,
+      status: "AUTORIZADO",
+      internalStatus: "APROBADO_EN_ORIGEN",
+      actualMileage: 35000,
+      diagnosis: "Inspección de motor: se detecta fuga de aceite en el cárter.",
+      additionalObservations: "Se recomienda cambiar el filtro y la junta."
+    },
+    {
+      draft: true,
+      type: "SERVICIO",
+      creationDate: new Date(2025, 2, 10),
+      customerId: customers[2].id,
+      vehicleVin: vehicles[2].vin,
+      companyId: companies[3].id,
+      userId: users[3].id,
+      status: "COMPLETADO",
+      internalStatus: "CARGADO",
+      actualMileage: 50000,
+      diagnosis: "Revisión completa de la suspensión y alineación.",
+      additionalObservations: "El cliente reporta inestabilidad en la conducción."
+    },
+    {
+      draft: true,
+      type: "PRE_AUTORIZACION",
+      creationDate: new Date(2025, 3, 5),
+      customerId: customers[0].id,
+      vehicleVin: vehicles[3].vin,
+      companyId: companies[8].id,
+      userId: users[4].id,
+      status: "RECHAZADO",
+      internalStatus: "RECHAZADO_EN_ORIGEN",
+      actualMileage: 22000,
+      diagnosis: "Problema eléctrico en luces delanteras. Se requiere cambio de batería.",
+      additionalObservations: "La batería no está cubierta por la garantía."
     }
   ];
 

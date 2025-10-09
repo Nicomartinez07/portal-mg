@@ -42,6 +42,7 @@ const navigationItems = [
   { name: "Inicio", icon: Home, href: "/" },
   { name: "Garantías", icon: Shield, href: "/garantias" },
   { name: "Ordenes", icon: ShoppingCart, href: "/ordenes" },
+  { name: "Borradores", icon: ShoppingCart, href: "/ordenes/borradores" },
   { name: "General", icon: Settings, href: "/general" },
   { name: "Empresas", icon: Building2, href: "/empresas" },
   { name: "Certificados", icon: Award, href: "/certificados" },

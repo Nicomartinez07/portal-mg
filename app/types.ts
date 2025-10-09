@@ -95,6 +95,29 @@ export interface Order {
   photos: OrderPhoto[];
 }
 
+
+// Interfaz principal de Draft, reflejando la consulta de Prisma
+export interface Draft {
+  preAuthorizationNumber: string;
+  id: number;
+  creationDate: string | Date;
+  orderNumber: number;
+  type: OrderType;
+  status: OrderStatus;
+  actualMileage: number;
+  diagnosis: string | null;
+  additionalObservations: string | null;
+
+  // Relaciones incluidas
+  customer: Customer;
+  company: Company;
+  user: User;
+  vehicle: Vehicle;
+  statusHistory: OrderStatusHistory[];
+  tasks: OrderTask[];
+  photos: OrderPhoto[];
+}
+
 export type Certificate = {
   id: number;
   warranty: boolean;
@@ -129,3 +152,4 @@ export type Certificate = {
     username: string;
   };
 };
+
