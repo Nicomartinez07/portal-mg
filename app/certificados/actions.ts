@@ -16,43 +16,44 @@ export async function getCertificate(filters: {
   const blockedValue = typeof filters.blocked === "boolean" ? filters.blocked : null;
 
   return prisma.warranty.findMany({
-  where: {
-    vehicle: {
-      vin: filters.vin ? { equals: filters.vin } : undefined,
-      licensePlate: filters.licensePlate
-        ? { contains: filters.licensePlate, }
-        : undefined,
-      model: filters.model
-        ? { contains: filters.model }
-        : undefined,
-      certificateNumber: filters.certificateNumber
-        ? { contains: filters.certificateNumber }
-        : undefined,
-    },
-    companyId: filters.companyId || undefined,
-    customerId: filters.customerId || undefined,
-    activationDate:
-      filters.fromDate || filters.toDate
-        ? {
+    where: {
+      vehicle: {
+        vin: filters.vin ? { equals: filters.vin } : undefined,
+        licensePlate: filters.licensePlate
+          ? { contains: filters.licensePlate, }
+          : undefined,
+        model: filters.model
+          ? { contains: filters.model }
+          : undefined,
+        certificateNumber: filters.certificateNumber
+          ? { contains: filters.certificateNumber }
+          : undefined,
+      },
+      companyId: filters.companyId || undefined,
+      customerId: filters.customerId || undefined,
+      activationDate:
+        filters.fromDate || filters.toDate
+          ? {
             gte: filters.fromDate && filters.fromDate !== "" ? new Date(filters.fromDate) : undefined,
             lte: filters.toDate && filters.toDate !== "" ? new Date(filters.toDate) : undefined,
           }
-        : undefined,
-    customer: filters.customerName
-      ? {
+          : undefined,
+      customer: filters.customerName
+        ? {
           OR: [
             { firstName: { contains: filters.customerName } },
             { lastName: { contains: filters.customerName } },
           ],
         }
-      : undefined,
-    blocked: blockedValue,
-  },
-  include: {
-    vehicle: true,
-    user: true,
-    company: true,
-    customer: true,
-  },
-  orderBy: { activationDate: "desc" },
-});
+        : undefined,
+      blocked: blockedValue,
+    },
+    include: {
+      vehicle: true,
+      user: true,
+      company: true,
+      customer: true,
+    },
+    orderBy: { activationDate: "desc" },
+  })
+};

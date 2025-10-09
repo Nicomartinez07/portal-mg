@@ -15,7 +15,6 @@ async function findOrCreateCustomer(
         state?: string;
         city?: string;
     },
-    companyId: number
 ) {
     // Buscar customer por nombre y apellido
     let customer = await prisma.customer.findFirst({
@@ -33,7 +32,6 @@ async function findOrCreateCustomer(
                         mode: 'insensitive'
                     }
                 },
-                { companyId: companyId }
             ]
         }
     });
@@ -49,7 +47,6 @@ async function findOrCreateCustomer(
                 address: customerData.address || "No proporcionado",
                 state: customerData.state || "No proporcionado",
                 city: customerData.city || "No proporcionado",
-                companyId: companyId,
             }
         });
     }
@@ -94,7 +91,7 @@ export async function createOrder(
         }
 
         // Buscar o crear customer
-        const customer = await findOrCreateCustomer(orderData.customerName, companyId);
+        const customer = await findOrCreateCustomer(orderData.customerName);
 
         // Generar número de orden (podrías tener una lógica más sofisticada)
         const lastOrder = await prisma.order.findFirst({
@@ -205,7 +202,7 @@ export async function saveOrderDraft(
         }
 
         // Buscar o crear customer
-        const customer = await findOrCreateCustomer(orderData.customerName, companyId);
+        const customer = await findOrCreateCustomer(orderData.customerName);
 
         // Para borradores, podrías usar un número temporal o null
         const draftOrderNumber = 99999; // O tu valor default del schema
