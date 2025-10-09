@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { MGDashboard } from "../../components/mg-dashboard";
 import { FaInfoCircle, FaTrashAlt, FaPlus, FaUpload } from "react-icons/fa";
-// ✅ Correct import for server actions
 import { getUsers, deleteUser } from "../general/actions";
 import { NewUserModal } from "../../components/general/users/NewUserModal";
 import { EditUserModal } from "../../components/general/users/EditUserModal";

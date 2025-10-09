@@ -4,6 +4,7 @@ import { useState, useEffect, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { VehicleModal } from "@/components/vehiculos/vehicle-modal";
 import { ActivationModal } from "@/components/warranty/modal/WarrantyActivation";
+import InsertPreAuthorizationModal from "@/components/orders/modals/InsertPreAuthorizationModal";
 
 import {
   Home,
@@ -61,6 +62,7 @@ const navigationItems = [
   },
   { name: "Cargar Auto", icon: Car, modal: "vehicle" },
   { name: "Activar Garantia", icon: Shield, modal: "warranty" },
+  { name: "Pre-autorización", icon: ShoppingCart, modal: "insertPreAuthorization" },
 ];
 
 const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
@@ -69,9 +71,11 @@ const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
 function AppSidebar({
   onOpenVehicleModal,
   onOpenWarrantyModal,
+  onOpenInsertPreAuthorizationModal,
 }: {
   onOpenVehicleModal: () => void;
   onOpenWarrantyModal: () => void;
+  onOpenInsertPreAuthorizationModal: () => void;
 }) {
   const router = useRouter();
 
@@ -129,6 +133,25 @@ function AppSidebar({
                       >
                         <button
                           onClick={onOpenWarrantyModal}
+                          className="flex items-center gap-3 w-full text-left"
+                        >
+                          <Icon className="w-5 h-5" />
+                          <span className="text-sm">{item.name}</span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                if (item.modal === "insertPreAuthorization") {
+                  return (
+                    <SidebarMenuItem key={`${item.name}-${index}`}>
+                      <SidebarMenuButton
+                        asChild
+                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
+                      >
+                        <button
+                          onClick={onOpenInsertPreAuthorizationModal}
                           className="flex items-center gap-3 w-full text-left"
                         >
                           <Icon className="w-5 h-5" />
@@ -207,6 +230,7 @@ export function MGDashboard({
   const [username, setUsername] = useState("Cargando...");
   const [openVehicleModal, setOpenVehicleModal] = useState(false);
   const [openWarrantyModal, setOpenWarrantyModal] = useState(false);
+  const [openInsertPreAuthorizationModal, setOpenInsertPreAuthorizationModal] = useState(false);
 
   const router = useRouter();
 
@@ -250,6 +274,7 @@ export function MGDashboard({
         <AppSidebar
           onOpenVehicleModal={() => setOpenVehicleModal(true)}
           onOpenWarrantyModal={() => setOpenWarrantyModal(true)}
+          onOpenInsertPreAuthorizationModal={() => setOpenInsertPreAuthorizationModal(true)}
         />
 
         <SidebarInset className="flex flex-col flex-1 min-h-0">
@@ -336,6 +361,11 @@ export function MGDashboard({
         <ActivationModal
           open={openWarrantyModal}
           onClose={() => setOpenWarrantyModal(false)}
+        />
+        {/* Modal para pre-autorización */}
+        <InsertPreAuthorizationModal
+          open={openInsertPreAuthorizationModal}
+          onClose={() => setOpenInsertPreAuthorizationModal(false)}
         />
       </div>
     </SidebarProvider>
