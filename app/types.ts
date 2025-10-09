@@ -96,26 +96,31 @@ export interface Order {
 }
 
 
-// Interfaz principal de Draft, reflejando la consulta de Prisma
-export interface Draft {
-  preAuthorizationNumber: string;
-  id: number;
-  creationDate: string | Date;
-  orderNumber: number;
-  type: OrderType;
-  status: OrderStatus;
-  actualMileage: number;
-  diagnosis: string | null;
-  additionalObservations: string | null;
+export interface CreateOrderData {
+  orderNumber: string;
+  customerName: string;
+  vin: string;
+  actualMileage: string;
+  diagnosis: string;
+  additionalObservations: string;
+  tasks: {
+    description: string;
+    hoursCount: string;
+    parts: {
+      part: {
+        code: string;
+        description: string;
+      }
+    }[];
+  }[];
+  // Fotos vendrían después
+}
 
-  // Relaciones incluidas
-  customer: Customer;
-  company: Company;
-  user: User;
-  vehicle: Vehicle;
-  statusHistory: OrderStatusHistory[];
-  tasks: OrderTask[];
-  photos: OrderPhoto[];
+export interface CreateOrderResult {
+  success: boolean;
+  order?: any;
+  message?: string;
+  errors?: Record<string, string>;
 }
 
 export type Certificate = {

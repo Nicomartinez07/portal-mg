@@ -6,7 +6,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     // 1. Leer cookie
     const token = req.cookies.token; // 👈 Asegúrate que este sea el nombre que usaste al loguear
-
+    console.log("hola", token)
     if (!token) {
       return res.status(401).json({ message: "No autorizado" });
     }
