@@ -14,7 +14,7 @@ export async function getCompanies() {
   });
 }
 
-// 📌 Crear empresa
+// Crear empresa
 export async function createCompany(data: {
   name: string;
   address?: string;
@@ -35,12 +35,13 @@ export async function createCompany(data: {
       phone1: data.phone1 ?? null,
       phone2: data.phone2 ?? null,
       email: data.email ?? null,
-      companyType: data.companyType ?? "GENERAL", // 👈 default si no se pasa
+      companyType: data.companyType ?? "GENERAL",
       manager: data.manager ?? null,
     },
   });
 }
 
+// Eliminar empresa
 export async function deleteCompany(id: number) {
   try {
     return await prisma.company.delete({
@@ -56,7 +57,7 @@ export async function deleteCompany(id: number) {
 }
 
 
-// 📌 Obtener detalles de una empresa (ejemplo para tu botón "detalles")
+// Obtener detalles de una empresa para tu botón "detalles"
 export async function getCompanyById(id: number) {
   return prisma.company.findUnique({
     where: { id },
@@ -69,7 +70,7 @@ export async function getCompanyById(id: number) {
   });
 }
 
-// 📌 Listar usuarios de una empresa
+// Listar usuarios de una empresa en especifico
 export async function getUsersByCompany(companyId: number) {
   return prisma.user.findMany({
     where: { companyId },
@@ -84,6 +85,7 @@ export async function getUsersByCompany(companyId: number) {
   });
 }
 
+// Actualizar empresa
 export async function updateCompany(
   id: number,
   data: {

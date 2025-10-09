@@ -40,7 +40,7 @@ export const NewCompanyModal = ({ onClose, onSuccess }: { onClose: () => void; o
       >
         {/* Header */}
         <div className="bg-blue-500 text-white px-4 py-2 flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Editar Empresa</h2>
+          <h2 className="text-lg font-semibold">Crear Empresa</h2>
           <button type="button" onClick={onClose} className="text-white hover:text-gray-200">✕</button>
         </div>
 

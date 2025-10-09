@@ -1,13 +1,15 @@
 import { z } from "zod";
 
 export const activateWarrantySchema = z.object({
-  // Fechas: coerce para convertir strings a Date
   date: z.coerce.date(),
 
   vin: z
     .string()
-    .min(1, "Campo requerido.")
-    .length(17, "El VIN debe tener exactamente 17 caracteres."),
+    .min(1, "Campo requerido."),
+
+  company: z.string().min(1, "Campo requerido."),
+
+  user: z.string().min(1, "Campo requerido."),
 
   clientName: z.string().min(1, "Campo requerido."),
 
@@ -22,6 +24,9 @@ export const activateWarrantySchema = z.object({
   clientProvince: z.string().min(1, "Campo requerido."),
 
   clientLocality: z.string().min(1, "Campo requerido."),
+
+  companyId: z.coerce.number().min(1, "La compañía es obligatoria."),
+
 });
 
 export type WarrantyActivationInput = z.infer<typeof activateWarrantySchema>;

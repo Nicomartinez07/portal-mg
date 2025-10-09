@@ -38,6 +38,7 @@ export const vehicleSchema = z.object({
     .transform((str) => (str ? new Date(str) : null)),
 
   licensePlate: z.string().min(1, "La patente es obligatoria."),
+  companyId: z.coerce.number().positive("La compañía es obligatoria."),
 });
 
 export type VehicleInput = z.infer<typeof vehicleSchema>;

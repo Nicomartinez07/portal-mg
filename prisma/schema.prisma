@@ -44,21 +44,23 @@ model Customer {
 }
 
 model Company {
-  id          Int       @id @default(autoincrement())
-  name        String
-  address     String
-  state       String
-  city        String?
-  phone1      String?
-  phone2      String?
-  email       String?
-  companyType String
-  manager     String?
-  users       User[]
-  parts       Part[]
-  warranties  Warranty[]
-  orders      Order[]
+  id           Int        @id @default(autoincrement())
+  name         String
+  address      String
+  state        String
+  city         String?
+  phone1       String?
+  phone2       String?
+  email        String?
+  companyType  String
+  manager      String?
+  users        User[]
+  parts        Part[]
+  warranties   Warranty[]
+  orders       Order[]
+  vehicles     Vehicle[]   
 }
+
 
 model User {
   id    Int    @id @default(autoincrement())
@@ -88,22 +90,25 @@ model UserRole {
 }
 
 model Vehicle {
-  id                Int       @id @default(autoincrement())
-  date              DateTime
-  vin               String    @unique
-  brand             String
-  model             String
-  engineNumber      String?
-  type              String?
-  year              Int?
-  certificateNumber String    @unique
-  saleDate          DateTime?
-  importDate        DateTime?
-  blocked           Boolean? 
-  licensePlate      String
-  warranty          Warranty?
-  orders            Order[]
+  id                Int       @id @default(autoincrement())
+  date              DateTime
+  vin               String    @unique
+  brand             String
+  model             String
+  engineNumber      String?
+  type              String?
+  year              Int?
+  certificateNumber String    @unique
+  saleDate          DateTime?
+  importDate        DateTime?
+  blocked           Boolean?
+  licensePlate      String
+  warranty          Warranty?
+  orders            Order[]
+  companyId         Int?
+  company           Company?   @relation(fields: [companyId], references: [id])
 }
+
 
 model PartContact {
   id          Int     @id @default(autoincrement())

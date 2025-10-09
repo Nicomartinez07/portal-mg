@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createVehicle } from "@/app/vehiculos/actions";
+import { getVehicleByVin } from "@/app/vehiculos/actions";
+import { activateWarranty } from "@/app/garantias/activate/actions";
 import provinciasData from "@/data/provincias.json";
 
 export function ActivationModal({
@@ -11,6 +12,11 @@ export function ActivationModal({
   open: boolean;
   onClose: () => void;
 }) {
+  // Provincias
+  useEffect(() => {
+    setProvincias(provinciasData);
+  }, []);
+
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
     vin: "",
@@ -19,8 +25,9 @@ export function ActivationModal({
     engineNumber: "",
     type: "",
     year: "",
+    licensePlate: "",
     company: "",
-    seller: "",
+    user: "",
     clientName: "",
     clientSurname: "",
     clientEmail: "",
@@ -35,6 +42,19 @@ export function ActivationModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedProvince = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      clientProvince: selectedProvince,
+    }));
+
+    const selectedProvincia = provinciasData.find(
+      (prov) => prov.provincia === selectedProvince
+    );
+    setLocalidades(selectedProvincia ? selectedProvincia.localidades : []);
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -43,29 +63,10 @@ export function ActivationModal({
       ...prev,
       [name]: value,
     }));
-    // Limpiar error del campo cuando el usuario empiece a escribir
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  };
-
-  // Cargar provincias desde el JSON
-  useEffect(() => {
-    setProvincias(provinciasData);
-  }, []);
-
-  const handleProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedProvince = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      clientProvince: selectedProvince,
-    }));
-
-    // Obtener las localidades de la provincia seleccionada
-    const selectedProvincia = provinciasData.find(
-      (prov) => prov.provincia === selectedProvince
-    );
-    setLocalidades(selectedProvincia ? selectedProvincia.localidades : []);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,39 +75,16 @@ export function ActivationModal({
     setErrors({});
 
     try {
-      const result = await createVehicle(formData);
+      const result = await activateWarranty(formData);
 
       if (result.success) {
-        alert("✅ Garantia Activada correctamente");
+        alert("✅ Garantía activada correctamente");
         onClose();
-        // Resetear formulario
-        setFormData({
-          date: new Date().toISOString().slice(0, 10),
-          vin: "",
-          brand: "",
-          model: "",
-          engineNumber: "",
-          type: "",
-          year: "",
-          company: "",
-          seller: "",
-          clientName: "",
-          clientSurname: "",
-          clientEmail: "",
-          clientPhone: "",
-          clientDirection: "",
-          clientProvince: "",
-          clientLocality: "",
-        });
+        resetForm();
       } else {
-        // Mostrar errores específicos de campos
         if (result.errors) {
           setErrors(result.errors);
-          console.log("Esta mostrando estos errores");
-        }
-        // Mostrar error general
-        else if (result.message) {
-          console.log("Entra a mandar la alerta");
+        } else if (result.message) {
           alert(`❌ ${result.message}`);
         }
       }
@@ -118,6 +96,60 @@ export function ActivationModal({
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      date: new Date().toISOString().slice(0, 10),
+      vin: "",
+      brand: "",
+      model: "",
+      engineNumber: "",
+      type: "",
+      year: "",
+      licensePlate: "",
+      company: "",
+      user: "",
+      clientName: "",
+      clientSurname: "",
+      clientEmail: "",
+      clientPhone: "",
+      clientDirection: "",
+      clientProvince: "",
+      clientLocality: "",
+    });
+    setErrors({});
+    setLocalidades([]);
+  };
+
+  const handleSearchVehicle = async () => {
+    if (!formData.vin) {
+      alert("Ingrese un VIN primero");
+      return;
+    }
+
+    const result = await getVehicleByVin(formData.vin);
+
+    if (result.success && result.vehicle) {
+      const v = result.vehicle;
+      setFormData((prev) => ({
+        ...prev,
+        brand: v.brand || "",
+        model: v.model || "",
+        engineNumber: v.engineNumber || "",
+        type: v.type || "",
+        year: v.year?.toString() || "",
+        licensePlate: v.licensePlate || "",
+        company: v.company?.name || "",
+      }));
+    } else {
+      alert(result.message);
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -126,7 +158,7 @@ export function ActivationModal({
         <h2 className="text-lg font-bold mb-4">Activar Garantia</h2>
         <button
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-          onClick={onClose}
+          onClick={handleClose}
         >
           ×
         </button>
@@ -153,21 +185,29 @@ export function ActivationModal({
                 />
               </div>
 
-              {/* VIN */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   VIN *
                 </label>
-                <input
-                  type="text"
-                  name="vin"
-                  value={formData.vin}
-                  onChange={handleChange}
-                  className={`border px-3 py-2 w-full rounded ${
-                    errors.vin ? "border-red-500" : "border-gray-300"
-                  }`}
-                  maxLength={17}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="vin"
+                    value={formData.vin}
+                    onChange={handleChange}
+                    className={`border px-3 py-2 w-full rounded ${
+                      errors.vin ? "border-red-500" : "border-gray-300"
+                    }`}
+                    maxLength={17}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearchVehicle}
+                    className="bg-green-600 text-white px-3 rounded hover:bg-green-700"
+                  >
+                    Buscar
+                  </button>
+                </div>
                 {errors.vin && (
                   <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
                 )}
@@ -243,19 +283,37 @@ export function ActivationModal({
                 />
               </div>
 
-              {/* Empresa */}
+              {/* Patente */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Empresa
+                  Patente
                 </label>
                 <input
                   type="text"
-                  name="company"
-                  value={formData.company}
+                  name="licensePlate"
+                  value={formData.licensePlate}
                   className="border px-3 py-2 w-full rounded bg-gray-100"
                   readOnly
                 />
               </div>
+              {/* Empresa */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Empresa 
+                </label>
+                <input
+                  type="text"
+                  name="licensePlate"
+                  value={formData.company}
+                  className="border px-3 py-2 w-full rounded bg-gray-100"
+                  readOnly
+                />
+                
+                {errors.company && (
+                  <p className="text-red-500 text-xs mt-1">{errors.company}</p>
+                )}
+              </div>
+
 
               {/* Vendedor */}
               <div>
@@ -264,93 +322,119 @@ export function ActivationModal({
                 </label>
                 <input
                   type="text"
-                  name="seller"
-                  value={formData.seller}
+                  name="user"
+                  value={formData.user}
                   onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
+                  className={`border px-3 py-2 w-full rounded ${
+                    errors.user ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                {errors.user && (
+                  <p className="text-red-500 text-xs mt-1">{errors.user}</p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Separador */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Cliente
-            </h3>
+          {/* ================= CLIENTE ================= */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Nombre
+              </label>
+              <input
+                type="text"
+                name="clientName"
+                value={formData.clientName}
+                onChange={handleChange}
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.clientName ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.clientName && (
+                <p className="text-red-500 text-xs mt-1">{errors.clientName}</p>
+              )}
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Nombre */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  name="clientName"
-                  value={formData.clientName}
-                  onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
-                />
-              </div>
+            {/* Apellido */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Apellido
+              </label>
+              <input
+                type="text"
+                name="clientSurname"
+                value={formData.clientSurname}
+                onChange={handleChange}
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.clientSurname ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.clientSurname && (
+                <p className="text-red-500 text-xs mt-1">{errors.clientSurname}</p>
+              )}
+            </div>
 
-              {/* Apellido */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Apellido
-                </label>
-                <input
-                  type="text"
-                  name="clientSurname"
-                  value={formData.clientSurname}
-                  onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
-                />
-              </div>
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                name="clientEmail"
+                value={formData.clientEmail}
+                onChange={handleChange}
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.clientEmail ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.clientEmail && (
+                <p className="text-red-500 text-xs mt-1">{errors.clientEmail}</p>
+              )}
+            </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="text"
-                  name="clientEmail"
-                  value={formData.clientEmail}
-                  onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
-                />
-              </div>
+            {/* Teléfono */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Teléfono
+              </label>
+              <input
+                type="text"
+                name="clientPhone"
+                value={formData.clientPhone}
+                onChange={handleChange}
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.clientPhone ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.clientPhone && (
+                <p className="text-red-500 text-xs mt-1">{errors.clientPhone}</p>
+              )}
+            </div>
 
-              {/* Teléfono */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Telefono
-                </label>
-                <input
-                  type="text"
-                  name="clientPhone"
-                  value={formData.clientPhone}
-                  onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
-                />
-              </div>
+            {/* Dirección */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Dirección
+              </label>
+              <input
+                type="text"
+                name="clientDirection"
+                value={formData.clientDirection}
+                onChange={handleChange}
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.clientDirection ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.clientDirection && (
+                <p className="text-red-500 text-xs mt-1">{errors.clientDirection}</p>
+              )}
+            </div>
 
-              {/* Dirección */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Direccion
-                </label>
-                <input
-                  type="text"
-                  name="clientDirection"
-                  value={formData.clientDirection}
-                  onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
-                />
-              </div>
-
-              {/* Provincia */}
+            {/* Provincia */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Provincia
@@ -390,14 +474,14 @@ export function ActivationModal({
                   ))}
                 </select>
               </div>
-            </div>
           </div>
+
 
           {/* Botones */}
           <div className="flex justify-end gap-4 pt-6">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
               disabled={isSubmitting}
             >

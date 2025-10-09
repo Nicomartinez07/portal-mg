@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { createVehicle } from "@/app/vehiculos/actions";
+import { getCompanies } from "@/app/actions/companies";
 
 export function VehicleModal({
   open,
@@ -22,10 +23,26 @@ export function VehicleModal({
     saleDate: "",
     importDate: "",
     licensePlate: "",
+    companyId: "",
   });
-
+  
+  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🔹 Cargar las empresas cuando se abre el modal
+  useEffect(() => {
+    if (open) {
+      (async () => {
+        try {
+          const data = await getCompanies();
+          setCompanies(data);
+        } catch (error) {
+          console.error("Error al obtener empresas:", error);
+        }
+      })();
+    }
+  }, [open]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -41,13 +58,37 @@ export function VehicleModal({
     }
   };
 
+  const handleClose = () => {
+    setFormData({
+      date: new Date().toISOString().slice(0, 10),
+      vin: "",
+      brand: "",
+      model: "",
+      engineNumber: "",
+      type: "",
+      year: "",
+      certificateNumber: "",
+      saleDate: "",
+      importDate: "",
+      licensePlate: "",
+      companyId: "",
+    });
+    setErrors({});
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
 
     try {
-      const result = await createVehicle(formData);
+      // 🔹 Convertir companyId a número si no está vacío
+      const dataToSend = {
+        ...formData,
+        companyId: formData.companyId ? Number(formData.companyId) : null,
+      };
+      const result = await createVehicle(dataToSend);
 
       if (result.success) {
         alert("✅ Vehículo insertado correctamente");
@@ -65,6 +106,7 @@ export function VehicleModal({
           saleDate: "",
           importDate: "",
           licensePlate: "",
+          companyId: "",
         });
       } else {
         // Mostrar errores específicos de campos
@@ -94,7 +136,7 @@ export function VehicleModal({
         <h2 className="text-lg font-bold mb-4">Cargar Auto</h2>
         <button
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-          onClick={onClose}
+          onClick={handleClose}
         >
           ×
         </button>
@@ -267,13 +309,33 @@ export function VehicleModal({
                 className="border px-3 py-2 w-full rounded"
               />
             </div>
+            {/* Empresa */}
+            <div>
+              <label className="block text-sm font-medium">
+                Empresa
+              </label>
+              <select
+                name="companyId"
+                value={formData.companyId}
+                onChange={handleChange}
+                required
+                className="border px-3 py-2 w-full rounded"
+              >
+                <option value="" disabled>Seleccioná una empresa</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Botones */}
           <div className="flex justify-end gap-2 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
               disabled={isSubmitting}
             >

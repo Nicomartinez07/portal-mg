@@ -3,6 +3,34 @@
 import { prisma } from "@/lib/prisma";
 import { vehicleSchema } from "@/schemas/vehicle";
 
+export async function getVehicleByVin(vin: string) {
+  if (!vin) return { success: false, message: "VIN vacío" };
+
+  try {
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { vin },
+      include: {
+        warranty: true,
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!vehicle) {
+      return { success: false, message: "No se encontró vehículo con ese VIN" };
+    }
+
+    return { success: true, vehicle };
+  } catch (error) {
+    console.error("Error buscando vehículo:", error);
+    return { success: false, message: "Error al buscar vehículo" };
+  }
+}
+
 export async function createVehicle(data: unknown): Promise<{
   success: boolean;
   errors?: Record<string, string>;

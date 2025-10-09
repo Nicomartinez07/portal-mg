@@ -97,27 +97,68 @@ To do:
 - Ir comentando funcionalidades explicando que hacen o como funcionan
 
 
-Pagina Ordenes:
+--------------------------------------------------------------------------------------------------------------------------
+LISTADO DE CADA PAGINA Y COSAS POR HACER: 
+
+Garantias: Descarga de certificado, boton para exportar 
+
+Activar garantia: Desarrollar tests
+
+--------------------------------------------------------------------------------------------------------------------------
+ 
+Ordenes:
 Solo falta que filtre cuando yo toco el boton 
 Realizar tests ordenes
-observaciones del historial de observaciones (detalles de las ordenes)
+Manejo de imagenes
+Exportar ordenes 
 
 
-Pagina certificados: falta desarrollar el funcionamiento de los filtros, Descargar certificado, logica de Garantia y bloqueado, y corregir las 4 fechas
+Borradores
+Ingreso de Pre-autorizacion
+Ingreso de Reclamo
+Ingreso de servicio 
+
+--------------------------------------------------------------------------------------------------------------------------
 
 Pagina general: Testing 
 
+
+--------------------------------------------------------------------------------------------------------------------------
+
+Empresa: Mostrar en repuestos para facilitar la busqueda de empresas en la seccion de repuestos
+Tengo que modificar tanto el schema como los datos como la logica de los repuestos
+
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+Pagina certificados: filtros. -Empadronamiento: fecha activacion de garantia
+                              -F. Importacion: Cuando el auto llego al pais
+
+                    Testing
+                    Descargar certificado, 
+                    Logica de Garantia y bloqueado,
+                    Arreglar las 4 fechas
+                    Importar certificados
+                    paginado
+
+--------------------------------------------------------------------------------------------------------------------------
+Repuestos: Cargar stock de repuestos 
+            link a Catalogo de repuestos de origen
+            Que solo cargue los talleres
+            Descargar repuesto de TU empresa
+
+--------------------------------------------------------------------------------------------------------------------------
+
+Cargar Auto: cargar empresa desde aca, modificar schema, y modificar el traer los datos
+
+--------------------------------------------------------------------------------------------------------------------------
+
+Buscador de VIN: Desarrollar el detalle servicio 
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
 Formularios de Carga, desarrollar todo lo posible
-
-Desarrollar el detalle servicio en la busqueda por VIN
-
-ARREGLAR DESCARGA DE CERTIFICADO EN PAGINA DE CERTIFICADOS
-
-
-Filtros de Certificados:
-Empadronamiento: fecha activacion de garantia
-F. Importacion: Cuando el auto llego al pais
-
-Seguir desarrollando tests
-
-Cree modal de Activar Garantia: Falta desarrollar el actions y que pueda ingresar un VIN y busque el auto y que me traiga todos los datos del auto, posteriormente quiero poder activar una garantia 
+Desarrollar pagina Borradores,
+Desarrollar FORMULARIO CARGA 3 TIPOS DE OREDENES.
