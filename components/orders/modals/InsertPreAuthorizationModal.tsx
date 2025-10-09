@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
 import { getVehicleByVin } from "@/app/vehiculos/actions";
-import {  } from "@/app/ordenes/insert/preAutorizacion/actions";
+import { savePreAuthorization } from "@/app/ordenes/insert/preAutorizacion/actions";
 
 interface InsertPreAuthorizationModalProps {
   onClose: () => void;
@@ -16,7 +16,7 @@ interface Task {
     part: {
       code: string;
       description: string;
-    }
+    };
   }[];
 }
 
@@ -33,11 +33,11 @@ const initialFormData = {
   diagnosis: "",
   additionalObservations: "",
   tasks: [
-    { 
-      description: '', 
-      hoursCount: '', 
-      parts: [{ part: { code: '', description: '' } }] 
-    }
+    {
+      description: "",
+      hoursCount: "",
+      parts: [{ part: { code: "", description: "" } }],
+    },
   ] as Task[],
   // Estados para archivos (puedes agregarlos aquí también si quieres)
   badgePhoto: null as File | null,
@@ -53,7 +53,7 @@ export default function InsertPreAuthorizationModal({
 }: InsertPreAuthorizationModalProps) {
   // Estado unificado del formulario
   const [formData, setFormData] = useState(initialFormData);
-  
+
   // Estados para UI y control
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,9 +63,9 @@ export default function InsertPreAuthorizationModal({
   useEffect(() => {
     if (open) {
       const date = new Date();
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        creationDate: date.toLocaleDateString()
+        creationDate: date.toLocaleDateString(),
       }));
       setErrors({});
       setIsSubmitting(false);
@@ -77,14 +77,14 @@ export default function InsertPreAuthorizationModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
@@ -99,7 +99,7 @@ export default function InsertPreAuthorizationModal({
 
     if (result.success && result.vehicle) {
       const v = result.vehicle;
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         //warrantyActivation: v.warranty?.activationDate || "",
         model: v.model || "",
@@ -117,47 +117,46 @@ export default function InsertPreAuthorizationModal({
     }
   };
 
-  const handleUpload = async () => {
-  };
+  const handleUpload = async () => {};
 
   // Funciones para manejar tareas
   const handleAddTask = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       tasks: [
         ...prev.tasks,
-        { 
-          description: '', 
-          hoursCount: '', 
-          parts: [{ part: { code: '', description: '' } }] 
-        }
-      ]
+        {
+          description: "",
+          hoursCount: "",
+          parts: [{ part: { code: "", description: "" } }],
+        },
+      ],
     }));
   };
 
   const handleRemoveTask = (index: number) => {
     if (formData.tasks.length > 1) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tasks: prev.tasks.filter((_, i) => i !== index)
+        tasks: prev.tasks.filter((_, i) => i !== index),
       }));
     }
   };
 
   const handleTaskChange = (index: number, field: string, value: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newTasks = [...prev.tasks];
-      
-      if (field === 'description') {
+
+      if (field === "description") {
         newTasks[index].description = value;
-      } else if (field === 'hoursCount') {
+      } else if (field === "hoursCount") {
         newTasks[index].hoursCount = value;
-      } else if (field === 'partCode') {
+      } else if (field === "partCode") {
         newTasks[index].parts[0].part.code = value;
-      } else if (field === 'partDescription') {
+      } else if (field === "partDescription") {
         newTasks[index].parts[0].part.description = value;
       }
-      
+
       return { ...prev, tasks: newTasks };
     });
   };
@@ -167,40 +166,40 @@ export default function InsertPreAuthorizationModal({
     onClose();
   };
 
-  // Handler para enviar formulario (ENVIAR)
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
 
     try {
-      // Validación básica (puedes expandir esto)
-      const validationErrors = validateForm(formData);
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        return;
-      }
-
-      // Preparar datos para enviar (filtramos tareas vacías)
       const dataToSubmit = {
         ...formData,
-        tasks: formData.tasks.filter(task => 
-          task.description.trim() !== '' || 
-          task.hoursCount.trim() !== '' || 
-          task.parts[0].part.code.trim() !== '' || 
-          task.parts[0].part.description.trim() !== ''
-        )
+        tasks: formData.tasks.filter(
+          (task) =>
+            task.description.trim() !== "" ||
+            task.hoursCount.trim() !== "" ||
+            task.parts[0].part.code.trim() !== "" ||
+            task.parts[0].part.description.trim() !== ""
+        ),
       };
 
-      console.log("Datos a enviar:", dataToSubmit);
-      
-      // Aquí iría tu API call real:
-      // const result = await savePreAuthorization(dataToSubmit);
-      
-      // Simulación de éxito
-      alert("✅ Pre-autorización enviada correctamente");
-      handleClose();
-      
+      // 🔹 Asignamos valores de prueba o por contexto
+      const companyId = 1; // Cambialo según tu base de datos
+      const userId = 1; // ID del usuario que guarda la orden
+
+      const result = await savePreAuthorization(
+        dataToSubmit,
+        companyId,
+        userId,
+        false
+      );
+
+      if (result.success) {
+        alert("✅ Pre-autorización enviada correctamente");
+        handleClose();
+      } else {
+        alert("⚠️ " + result.message);
+      }
     } catch (error) {
       console.error(error);
       alert("❌ Error inesperado al procesar la solicitud");
@@ -209,33 +208,41 @@ export default function InsertPreAuthorizationModal({
     }
   };
 
-  // Handler para guardar borrador
+  // Guardar borrador
   const handleDraftSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
 
     try {
-      // Preparar datos para borrador
       const draftData = {
         ...formData,
-        tasks: formData.tasks.filter(task => 
-          task.description.trim() !== '' || 
-          task.hoursCount.trim() !== '' || 
-          task.parts[0].part.code.trim() !== '' || 
-          task.parts[0].part.description.trim() !== ''
+        tasks: formData.tasks.filter(
+          (task) =>
+            task.description.trim() !== "" ||
+            task.hoursCount.trim() !== "" ||
+            task.parts[0].part.code.trim() !== "" ||
+            task.parts[0].part.description.trim() !== ""
         ),
-        status: "draft"
       };
 
-      console.log("Borrador a guardar:", draftData);
-      
-      // Aquí iría tu API call real para borrador:
-      // const result = await savePreAuthorizationDraft(draftData);
-      
-      alert("✅ Borrador guardado correctamente");
-      handleClose();
-      
+      // 🔹 Asignamos valores de prueba o por contexto
+      const companyId = 1; // Cambialo según tu base de datos
+      const userId = 1; // ID del usuario que guarda la orden
+
+      const result = await savePreAuthorization(
+        draftData,
+        companyId,
+        userId,
+        true
+      );
+
+      if (result.success) {
+        alert("✅ Borrador guardado correctamente");
+        handleClose();
+      } else {
+        alert("⚠️ " + result.message);
+      }
     } catch (error) {
       console.error(error);
       alert("❌ Error al guardar borrador");
@@ -243,26 +250,15 @@ export default function InsertPreAuthorizationModal({
       setIsSubmitting(false);
     }
   };
-
-  // Función de validación (puedes expandir según tus necesidades)
-  const validateForm = (data: typeof initialFormData) => {
-    const errors: Record<string, string> = {};
-    
-    if (!data.vin.trim()) errors.vin = "El VIN es obligatorio";
-    if (!data.orderNumber.trim()) errors.orderNumber = "La orden interna es obligatoria";
-    if (!data.customerName.trim()) errors.customerName = "El nombre del cliente es obligatorio";
-    if (!data.diagnosis.trim()) errors.diagnosis = "El diagnóstico es obligatorio";
-    
-    return errors;
-  };
-
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
       <div className="bg-white p-6 rounded-lg w-[900px] max-h-[90vh] overflow-y-auto relative shadow-lg text-sm">
         {/* Header */}
-        <h2 className="text-lg font-semibold mb-4">Ingreso de Pre-Autorizacion</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          Ingreso de Pre-Autorizacion
+        </h2>
 
         <button
           onClick={handleClose}
@@ -273,176 +269,182 @@ export default function InsertPreAuthorizationModal({
         </button>
 
         <form onSubmit={handleSubmitOrder}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Fecha */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Fecha
-            </label>
-            <input
-              readOnly
-              value={formData.creationDate}
-              className="border rounded px-2 py-1 w-full bg-gray-100"
-            />
-          </div>
-
-          {/* OR interna */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Or interna
-            </label>
-            <div className="flex gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Fecha */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Fecha
+              </label>
               <input
-                name="orderNumber"
-                value={formData.orderNumber}
-                onChange={handleChange}
-                placeholder="Ingrese el numero interno de orden de reparacion"
-                className={`border rounded px-2 py-1 w-full ${
-                  errors.orderNumber ? "border-red-500" : "border-gray-300"
-                }`}
+                readOnly
+                value={formData.creationDate}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
               />
             </div>
-            {errors.orderNumber && (
-              <p className="text-red-500 text-xs mt-1">{errors.orderNumber}</p>
-            )}
-          </div>
 
-          {/* Nombre Cliente */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Nombre Cliente
-            </label>
-            <div className="flex gap-2">
+            {/* OR interna */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Or interna
+              </label>
+              <div className="flex gap-2">
+                <input
+                  name="orderNumber"
+                  value={formData.orderNumber}
+                  onChange={handleChange}
+                  placeholder="Ingrese el numero interno de orden de reparacion"
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.orderNumber ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+              </div>
+              {errors.orderNumber && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.orderNumber}
+                </p>
+              )}
+            </div>
+
+            {/* Nombre Cliente */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Nombre Cliente
+              </label>
+              <div className="flex gap-2">
+                <input
+                  name="customerName"
+                  value={formData.customerName}
+                  onChange={handleChange}
+                  placeholder="Ingrese nombre completo del cliente"
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.customerName ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+              </div>
+              {errors.customerName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.customerName}
+                </p>
+              )}
+            </div>
+
+            {/* VIN + Buscar */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                VIN
+              </label>
+              <div className="flex gap-2">
+                <input
+                  name="vin"
+                  value={formData.vin}
+                  onChange={handleChange}
+                  placeholder="Ingrese VIN del vehículo"
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.vin ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={handleSearchVehicle}
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  disabled={isSubmitting}
+                >
+                  Buscar
+                </button>
+              </div>
+              {errors.vin && (
+                <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Activación Garantía
+              </label>
               <input
-                name="customerName"
-                value={formData.customerName}
-                onChange={handleChange}
-                placeholder="Ingrese nombre completo del cliente"
-                className={`border rounded px-2 py-1 w-full ${
-                  errors.customerName ? "border-red-500" : "border-gray-300"
-                }`}
+                value={formData.warrantyActivation}
+                readOnly
+                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
               />
             </div>
-            {errors.customerName && (
-              <p className="text-red-500 text-xs mt-1">{errors.customerName}</p>
-            )}
-          </div>
 
-          {/* VIN + Buscar */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              VIN 
-            </label>
-            <div className="flex gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Nro. Motor
+              </label>
               <input
-                name="vin"
-                value={formData.vin}
+                value={formData.engineNumber}
+                readOnly
+                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Modelo
+              </label>
+              <input
+                value={formData.model}
+                readOnly
+                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Kilometraje Real del vehiculo
+              </label>
+              <input
+                name="actualMileage"
+                placeholder="Ingrese kilometraje"
+                value={formData.actualMileage}
                 onChange={handleChange}
-                placeholder="Ingrese VIN del vehículo"
                 className={`border rounded px-2 py-1 w-full ${
-                  errors.vin ? "border-red-500" : "border-gray-300"
+                  errors.actualMileage ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              <button
-                type="button"
-                onClick={handleSearchVehicle}
-                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                disabled={isSubmitting}
-              >
-                Buscar
-              </button>
+              {errors.actualMileage && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.actualMileage}
+                </p>
+              )}
             </div>
-            {errors.vin && (
-              <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
-            )}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Activación Garantía
-            </label>
-            <input
-              value={formData.warrantyActivation}
-              readOnly
-              className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
-            />
-          </div>
+            {/* Diagnóstico */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Diagnóstico
+              </label>
+              <textarea
+                name="diagnosis"
+                placeholder="Ingrese el diagnóstico"
+                value={formData.diagnosis}
+                onChange={handleChange}
+                rows={3}
+                className={`border rounded px-2 py-1 w-full resize-none ${
+                  errors.diagnosis ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.diagnosis && (
+                <p className="text-red-500 text-xs mt-1">{errors.diagnosis}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Nro. Motor
-            </label>
-            <input
-              value={formData.engineNumber}
-              readOnly
-              className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
-            />
+            {/* Observaciones */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Observaciones adicionales
+              </label>
+              <textarea
+                name="additionalObservations"
+                placeholder="Ingrese observaciones"
+                value={formData.additionalObservations}
+                onChange={handleChange}
+                rows={3}
+                className="border rounded px-2 py-1 w-full resize-none"
+              />
+            </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Modelo
-            </label>
-            <input
-              value={formData.model}
-              readOnly
-              className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Kilometraje Real del vehiculo
-            </label>
-            <input
-              name="actualMileage"
-              placeholder="Ingrese kilometraje"
-              value={formData.actualMileage}
-              onChange={handleChange}
-              className={`border rounded px-2 py-1 w-full ${
-                errors.actualMileage ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.actualMileage && (
-              <p className="text-red-500 text-xs mt-1">{errors.actualMileage}</p>
-            )}
-          </div>
-
-          {/* Diagnóstico */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Diagnóstico
-            </label>
-            <textarea
-              name="diagnosis"
-              placeholder="Ingrese el diagnóstico"
-              value={formData.diagnosis}
-              onChange={handleChange}
-              rows={3}
-              className={`border rounded px-2 py-1 w-full resize-none ${
-                errors.diagnosis ? "border-red-500" : "border-gray-300"
-              }`}
-            />
-            {errors.diagnosis && (
-              <p className="text-red-500 text-xs mt-1">{errors.diagnosis}</p>
-            )}
-          </div>
-
-          {/* Observaciones */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Observaciones adicionales
-            </label>
-            <textarea
-              name="additionalObservations"
-              placeholder="Ingrese observaciones"
-              value={formData.additionalObservations}
-              onChange={handleChange}
-              rows={3}
-              className="border rounded px-2 py-1 w-full resize-none"
-            />
-          </div>
-        </div>
 
           {/* SECCIÓN DE TAREAS */}
           <div className="mt-6">
@@ -464,10 +466,16 @@ export default function InsertPreAuthorizationModal({
                   <thead>
                     <tr className="bg-gray-100 text-gray-700 text-left text-xs">
                       <th className="px-3 py-2 border">Tarea</th>
-                      <th className="px-3 py-2 border text-center w-24">Cant. horas</th>
-                      <th className="px-3 py-2 border text-center w-32">Nro. repuesto</th>
+                      <th className="px-3 py-2 border text-center w-24">
+                        Cant. horas
+                      </th>
+                      <th className="px-3 py-2 border text-center w-32">
+                        Nro. repuesto
+                      </th>
                       <th className="px-3 py-2 border">Descripción repuesto</th>
-                      <th className="px-3 py-2 border text-center w-16">Acciones</th>
+                      <th className="px-3 py-2 border text-center w-16">
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -476,7 +484,13 @@ export default function InsertPreAuthorizationModal({
                         <td className="px-3 py-2 border">
                           <input
                             value={task.description}
-                            onChange={(e) => handleTaskChange(index, 'description', e.target.value)}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                index,
+                                "description",
+                                e.target.value
+                              )
+                            }
                             placeholder="Descripción de la tarea"
                             className="w-full border rounded px-2 py-1 text-xs"
                             disabled={isSubmitting}
@@ -486,7 +500,13 @@ export default function InsertPreAuthorizationModal({
                           <input
                             type="number"
                             value={task.hoursCount}
-                            onChange={(e) => handleTaskChange(index, 'hoursCount', e.target.value)}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                index,
+                                "hoursCount",
+                                e.target.value
+                              )
+                            }
                             placeholder="0"
                             className="w-full border rounded px-2 py-1 text-xs text-center"
                             disabled={isSubmitting}
@@ -495,7 +515,13 @@ export default function InsertPreAuthorizationModal({
                         <td className="px-3 py-2 border">
                           <input
                             value={task.parts[0].part.code}
-                            onChange={(e) => handleTaskChange(index, 'partCode', e.target.value)}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                index,
+                                "partCode",
+                                e.target.value
+                              )
+                            }
                             placeholder="Código repuesto"
                             className="w-full border rounded px-2 py-1 text-xs text-center"
                             disabled={isSubmitting}
@@ -504,7 +530,13 @@ export default function InsertPreAuthorizationModal({
                         <td className="px-3 py-2 border">
                           <input
                             value={task.parts[0].part.description}
-                            onChange={(e) => handleTaskChange(index, 'partDescription', e.target.value)}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                index,
+                                "partDescription",
+                                e.target.value
+                              )
+                            }
                             placeholder="Descripción del repuesto"
                             className="w-full border rounded px-2 py-1 text-xs"
                             disabled={isSubmitting}
@@ -534,7 +566,7 @@ export default function InsertPreAuthorizationModal({
               </div>
             )}
           </div>
-         
+
           {/* Subida de archivo */}
           <div className="mt-6">
             <div className="grid grid-cols-[160px_1fr] gap-2 items-center text-sm">

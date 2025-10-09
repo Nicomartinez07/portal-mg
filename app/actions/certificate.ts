@@ -1,27 +1,9 @@
 "use server";
 
-
-
-
-
-
 import { prisma } from "@/lib/prisma";
-
-
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-
-
 import fs from "fs";
-
-
 import path from "path";
-
-
-
-
-
-// Ruta del logo
-
 
 const logoPath = path.join(process.cwd(), "public", "logoMG.png");
 

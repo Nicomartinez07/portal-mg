@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { generateCertificate } from "@/app/actions/certificates";
+import { generateCertificate } from "@/app/actions/certificate";
 
 export async function GET(
   req: Request,
