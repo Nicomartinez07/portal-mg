@@ -17,7 +17,7 @@ export async function getOrders(filters: {
 }) {
   return prisma.order.findMany({
     where: {
-      draft: false || null,
+      draft: false,
       ...(filters.orderNumber && { orderNumber: Number(filters.orderNumber) }),
       vehicle: filters.vin
         ? { vin: { contains: filters.vin } }

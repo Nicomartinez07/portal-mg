@@ -12,6 +12,7 @@ enum OrderStatus {
   AUTORIZADO
   RECHAZADO
   COMPLETADO
+  BORRADOR
 }
 
 enum OrderType {

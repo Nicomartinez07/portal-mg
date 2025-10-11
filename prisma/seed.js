@@ -188,6 +188,7 @@ async function main() {
   const ordersToCreate = [
     {
       id: 100,
+      draft: false,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 0, 15),
       customerId: customers[0].id,
@@ -202,6 +203,7 @@ async function main() {
     },
     {
       type: "RECLAMO",
+      draft: false,
       creationDate: new Date(2025, 1, 20),
       customerId: customers[1].id,
       vehicleVin: vehicles[1].vin,
@@ -215,6 +217,7 @@ async function main() {
     },
     {
       type: "SERVICIO",
+      draft: false,
       creationDate: new Date(2025, 2, 10),
       customerId: customers[2].id,
       vehicleVin: vehicles[2].vin,
@@ -227,6 +230,7 @@ async function main() {
       additionalObservations: "El cliente reporta inestabilidad en la conducción."
     },
     {
+      draft: false,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 3, 5),
       customerId: customers[0].id,

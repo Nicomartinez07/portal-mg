@@ -1,8 +1,9 @@
 // src/app/components/InsertPreAuthorizationModal.tsx
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
 import { getVehicleByVin } from "@/app/vehiculos/actions";
 import { savePreAuthorization } from "@/app/ordenes/insert/preAutorizacion/actions";
+import { useUser } from '@/hooks/useUser';
 
 interface InsertPreAuthorizationModalProps {
   onClose: () => void;
@@ -58,6 +59,8 @@ export default function InsertPreAuthorizationModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { user, loading } = useUser();
+  
 
   // Setea la fecha actual cuando se abre el modal
   useEffect(() => {
@@ -100,11 +103,14 @@ export default function InsertPreAuthorizationModal({
     if (result.success && result.vehicle) {
       const v = result.vehicle;
       setFormData((prev) => ({
-        ...prev,
-        //warrantyActivation: v.warranty?.activationDate || "",
-        model: v.model || "",
-        engineNumber: v.engineNumber || "",
-      }));
+      ...prev,
+      warrantyActivation: v.warranty?.activationDate
+        ? new Date(v.warranty.activationDate).toISOString().split("T")[0] // ✅ formato "YYYY-MM-DD"
+        : "",
+      model: v.model || "",
+      engineNumber: v.engineNumber || "",
+    }));
+
     } else {
       alert(result.message);
     }
@@ -168,6 +174,12 @@ export default function InsertPreAuthorizationModal({
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      alert('❌ No se pudo obtener la información del usuario');
+      return;
+    }
+    console.log('User data:', user);
     setIsSubmitting(true);
     setErrors({});
 
@@ -183,14 +195,10 @@ export default function InsertPreAuthorizationModal({
         ),
       };
 
-      // 🔹 Asignamos valores de prueba o por contexto
-      const companyId = 1; // Cambialo según tu base de datos
-      const userId = 1; // ID del usuario que guarda la orden
-
       const result = await savePreAuthorization(
         dataToSubmit,
-        companyId,
-        userId,
+        user.companyId, 
+        user.userId,     
         false
       );
 
@@ -211,6 +219,12 @@ export default function InsertPreAuthorizationModal({
   // Guardar borrador
   const handleDraftSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      alert('❌ No se pudo obtener la información del usuario');
+      return;
+    }
+    
     setIsSubmitting(true);
     setErrors({});
 
@@ -226,14 +240,10 @@ export default function InsertPreAuthorizationModal({
         ),
       };
 
-      // 🔹 Asignamos valores de prueba o por contexto
-      const companyId = 1; // Cambialo según tu base de datos
-      const userId = 1; // ID del usuario que guarda la orden
-
       const result = await savePreAuthorization(
         draftData,
-        companyId,
-        userId,
+        user.companyId,  
+        user.userId,
         true
       );
 
@@ -470,7 +480,7 @@ export default function InsertPreAuthorizationModal({
                         Cant. horas
                       </th>
                       <th className="px-3 py-2 border text-center w-32">
-                        Nro. repuesto
+                        Código repuesto
                       </th>
                       <th className="px-3 py-2 border">Descripción repuesto</th>
                       <th className="px-3 py-2 border text-center w-16">
