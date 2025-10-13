@@ -1,186 +1,464 @@
-"use client";
-import React from "react";
+// src/app/components/InsertServiceModal.tsx
+import React, { useEffect, useState } from "react";
+import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
+import { saveService } from "@/app/ordenes/insert/service/actions";
+import { getVehicleByVin } from "@/app/vehiculos/actions";
+import { useUser } from '@/hooks/useUser';
+import type { Draft } from "@/app/types";
 
-interface PreAutorizacionModalProps {
-  isOpen: boolean;
+interface InsertServiceModalProps {
   onClose: () => void;
+  open: boolean;
+  draft?: Draft;
+  isEditMode?: boolean;
 }
+// Estado inicial del formulario
+const initialFormData = {
+  creationDate: "",
+  orderNumber: "",
+  vin: "",
+  warrantyActivation: "",
+  engineNumber: "",
+  model: "",
+  service: "",
+  actualMileage: "",
+  additionalObservations: "",
+  badgePhoto: null as File | null,
+  orPhoto: null as File | null,
+};
 
-const PreAutorizacionModal: React.FC<PreAutorizacionModalProps> = ({
-  isOpen,
+export default function InsertServiceModal({
   onClose,
-}) => {
-  if (!isOpen) return null;
+  open,
+  draft,
+  isEditMode = false,
+}: InsertServiceModalProps) {
+  // Estado unificado del formulario
+  const [formData, setFormData] = useState(initialFormData);
+  // Estados para UI y control
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { user, loading } = useUser();
+
+  // Cargar datos del draft cuando se abre el modal
+  useEffect(() => {
+    if (open && draft) {
+      // Convertir tasks del draft al formato del formulario
+      const draftFormData = {
+        creationDate: draft.creationDate 
+          ? (typeof draft.creationDate === 'string' 
+             ? draft.creationDate 
+             : new Date(draft.creationDate).toLocaleDateString())
+          : new Date().toLocaleDateString(),
+        orderNumber: draft.orderNumber?.toString() || "",
+        vin: draft.vin || draft.vehicle?.vin || "",
+        warrantyActivation: draft.warrantyActivation || "",
+        engineNumber: draft.engineNumber || "",
+        service: draft.service || "",
+        actualMileage: draft.actualMileage?.toString() || "",
+        model: draft.model || "",
+        additionalObservations: draft.additionalObservations || "",
+        badgePhoto: null,
+        orPhoto: null,
+      };
+
+      setFormData(draftFormData);
+      console.log("FormData cargado:", draftFormData);
+    } else if (open) {
+      // Resetear si no hay draft
+      const date = new Date();
+      setFormData({
+        ...initialFormData,
+        creationDate: date.toLocaleDateString(),
+      });
+    }
+    
+    setErrors({});
+    setIsSubmitting(false);
+  }, [open, draft]);
+
+  // Handler único para todos los campos del formulario
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  // Handler para buscar vehículo
+  const handleSearchVehicle = async () => {
+    if (!formData.vin) {
+      alert("Ingrese un VIN primero");
+      return;
+    }
+
+    const result = await getVehicleByVin(formData.vin);
+
+    if (result.success && result.vehicle) {
+      const v = result.vehicle;
+      setFormData((prev) => ({
+        ...prev,
+        warrantyActivation: v.warranty?.activationDate
+          ? new Date(v.warranty.activationDate).toISOString().split("T")[0]
+          : "",
+        model: v.model || "",
+        engineNumber: v.engineNumber || "",
+        customerID: v.warranty?.customerId?.toString() || "",
+      }));
+    } else {
+      alert(result.message);
+    }
+  };
+
+  // Handlers para archivos
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {};
+
+  // Handler para cerrar modal
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleSubmitOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert('❌ No se pudo obtener la información del usuario');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      const dataToSubmit = {
+        ...formData,
+      };
+
+      const result = await saveService(
+        dataToSubmit,
+        user.companyId, 
+        user.userId,     
+        false,
+        draft?.id
+      );
+
+      if (result.success) {
+        alert(`✅ ${isEditMode ? "Borrador convertido a Servicio" : "Servicio enviado"} correctamente`);
+        handleClose();
+      } else {
+        if (result.errors) {
+          setErrors(result.errors); // ⬅️ Muestra los errores de Zod
+        }
+        alert("⚠️ " + result.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error inesperado al procesar la solicitud");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Guardar borrador
+  const handleDraftSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert('❌ No se pudo obtener la información del usuario');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      const draftData = {
+        ...formData,
+      };
+
+      const result = await saveService(
+        draftData,
+        user.companyId,  
+        user.userId,
+        true,
+        draft?.id
+      );
+
+      if (result.success) {
+        alert(`✅ ${draft?.id ? "Borrador actualizado" : "Borrador guardado"} correctamente`);
+        handleClose();
+      } else {
+        if (result.errors) {
+          setErrors(result.errors); // ⬅️ Muestra los errores de Zod
+        }
+        alert("⚠️ " + result.message);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error al guardar borrador");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white w-[900px] max-h-[90vh] overflow-y-auto rounded-lg shadow-lg">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div className="bg-white p-6 rounded-lg w-[900px] max-h-[90vh] overflow-y-auto relative shadow-lg text-sm">
         {/* Header */}
-        <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Ingreso de Pre-Autorización</h2>
-          <button
-            onClick={onClose}
-            className="text-white hover:text-gray-200 text-2xl leading-none"
-          >
-            ×
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold mb-4">
+          {isEditMode ? "Editar Borrador - Servicio" : "Ingreso de Servicio"}
+          {isEditMode && draft?.id && (
+            <span className="text-sm text-gray-500 ml-2">(ID: {draft.id})</span>
+          )}
+        </h2>
 
-        {/* Body */}
-        <div className="p-6 space-y-4 text-sm">
-          {/* Fecha y campos principales */}
-          <div className="grid grid-cols-2 gap-4">
+        <button
+          onClick={handleClose}
+          className="absolute top-3 right-4 text-lg font-bold"
+          disabled={isSubmitting}
+        >
+          ×
+        </button>
+
+        <form onSubmit={handleSubmitOrder}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Fecha */}
             <div>
-              <label className="font-medium">Fecha creación</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Fecha
+              </label>
               <input
-                type="text"
-                disabled
-                value={new Date().toLocaleString()}
-                className="w-full border rounded-md p-2 bg-gray-100"
-              />
-            </div>
-            <div>
-              <label className="font-medium">OR interna *</label>
-              <input
-                type="text"
-                placeholder="Ingrese el número interno de orden de reparación"
-                className="w-full border rounded-md p-2"
+                readOnly
+                value={formData.creationDate}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
               />
             </div>
 
+            {/* OR interna */}
             <div>
-              <label className="font-medium">Nombre completo cliente *</label>
-              <input
-                type="text"
-                placeholder="Ingrese el nombre completo del cliente"
-                className="w-full border rounded-md p-2"
-              />
-            </div>
-
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <label className="font-medium">VIN *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Or interna
+              </label>
+              <div className="flex gap-2">
                 <input
-                  type="text"
-                  placeholder="Ingrese el VIN del vehículo"
-                  className="w-full border rounded-md p-2"
+                  name="orderNumber"
+                  value={formData.orderNumber}
+                  onChange={handleChange}
+                  placeholder="Ingrese el numero interno de orden de reparacion"
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.orderNumber ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
               </div>
-              <button className="bg-gray-200 px-4 py-2 rounded-md hover:bg-gray-300">
-                Buscar
-              </button>
+              {errors.orderNumber && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.orderNumber}
+                </p>
+              )}
+            </div>
+            {/* VIN + Buscar */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                VIN
+              </label>
+              <div className="flex gap-2">
+                <input
+                  name="vin"
+                  value={formData.vin}
+                  onChange={handleChange}
+                  placeholder="Ingrese VIN del vehículo"
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.vin ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={handleSearchVehicle}
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  disabled={isSubmitting}
+                >
+                  Buscar
+                </button>
+              </div>
+              {errors.vin && (
+                <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
+              )}
             </div>
 
             <div>
-              <label className="font-medium">Activación garantía</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Activación Garantía
+              </label>
               <input
-                type="text"
-                disabled
-                className="w-full border rounded-md p-2 bg-gray-100"
+                value={formData.warrantyActivation}
+                readOnly
+                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
               />
             </div>
 
             <div>
-              <label className="font-medium">Nro. motor</label>
-              <input type="text" className="w-full border rounded-md p-2 bg-gray-100" />
-            </div>
-
-            <div>
-              <label className="font-medium">Modelo</label>
-              <input type="text" className="w-full border rounded-md p-2 bg-gray-100" />
-            </div>
-
-            <div>
-              <label className="font-medium">Kilometraje real *</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Nro. Motor
+              </label>
               <input
-                type="text"
-                placeholder="Ingrese el kilometraje real del vehículo"
-                className="w-full border rounded-md p-2"
+                value={formData.engineNumber}
+                readOnly
+                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Modelo
+              </label>
+              <input
+                value={formData.model}
+                readOnly
+                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+
+            {/* Servicio */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+            Servicio
+          </label>
+
+          <select
+            name="service"
+            value={formData.service}
+            onChange={handleChange}
+            className={`border rounded px-2 py-1 w-full ${
+              errors.service ? "border-red-500" : "border-gray-300"
+            }`}
+          >
+            <option value="">Seleccionar...</option>
+            {Array.from({ length: 13 }, (_, i) => i * 12000).map((km) => (
+              <option key={km} value={km}>
+                {km.toLocaleString("es-AR")} km
+              </option>
+            ))}
+          </select>
+
+          {errors.service && (
+            <p className="text-red-500 text-xs mt-1">{errors.service}</p>
+          )}
+            </div>
+
+            {/* Kilometraje Real */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Kilometraje Real del vehiculo
+              </label>
+              <input
+                name="actualMileage"
+                placeholder="Ingrese kilometraje"
+                value={formData.actualMileage}
+                onChange={handleChange}
+                className={`border rounded px-2 py-1 w-full ${
+                  errors.actualMileage ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.actualMileage && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.actualMileage}
+                </p>
+              )}
+            </div>
+
+            {/* Observaciones */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Observaciones 
+              </label>
+              <textarea
+                name="additionalObservations" 
+                placeholder="Ingrese observaciones"
+                value={formData.additionalObservations}
+                onChange={handleChange}
+                rows={3}
+                className="border rounded px-2 py-1 w-full resize-none"
               />
             </div>
           </div>
 
-          {/* Diagnóstico */}
-          <div>
-            <label className="font-medium">Diagnóstico *</label>
-            <textarea
-              placeholder="Ingrese el diagnóstico"
-              className="w-full border rounded-md p-2 h-20"
-            />
-          </div>
-
-          {/* Observaciones */}
-          <div>
-            <label className="font-medium">Observaciones adicionales</label>
-            <textarea
-              placeholder="Ingrese observaciones adicionales"
-              className="w-full border rounded-md p-2 h-20"
-            />
-          </div>
-
-          {/* Tareas */}
-          <div>
-            <label className="font-medium flex items-center gap-1">
-              Tareas <span className="text-blue-500 text-lg">+</span>
-            </label>
-
-            <div className="grid grid-cols-4 gap-2 mt-2 items-center">
-              <button className="text-red-500 text-lg">−</button>
-              <input type="text" placeholder="Tarea" className="border rounded-md p-2" />
-              <input type="text" placeholder="Cant. horas" className="border rounded-md p-2" />
-              <input type="text" placeholder="Nro. repuesto" className="border rounded-md p-2" />
-              <input
-                type="text"
-                placeholder="Descripción repuesto"
-                className="border rounded-md p-2 col-span-2"
-              />
-              <button className="text-blue-500 text-lg">+</button>
-            </div>
-          </div>
-
-          {/* Fotos */}
-          <div className="space-y-3">
-            {[
-              "Foto patente",
-              "Foto chapa VIN",
-              "Foto cuenta kilómetros",
-              "Fotos piezas adicionales",
-              "Fotos OR",
-            ].map((label) => (
-              <div key={label}>
-                <label className="font-medium">{label}</label>
-                <div className="flex">
+          {/* Subida de archivo */}
+          <div className="mt-6">
+            <div className="grid grid-cols-[160px_1fr] gap-2 items-center text-sm">
+              
+              <label>Foto chapa VIN</label>
+              <div className="flex items-center gap-3 mb-2">
+                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
+                  Seleccionar archivo
                   <input
                     type="file"
-                    className="flex-1 border rounded-l-md p-2 text-sm"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isSubmitting}
                   />
-                  <button className="bg-gray-200 px-4 py-2 rounded-r-md hover:bg-gray-300">
-                    Seleccionar
-                  </button>
-                </div>
+                </label>
               </div>
-            ))}
+              <label>Foto Or</label>
+              <div className="flex items-center gap-3 mb-2">
+                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
+                  Seleccionar archivo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isSubmitting}
+                  />
+                </label>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="flex justify-end items-center gap-2 bg-gray-100 p-4 rounded-b-lg">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-200"
-          >
-            Cancelar
-          </button>
-          <button className="px-4 py-2 bg-gray-300 text-black rounded-md hover:bg-gray-400 flex items-center gap-2">
-            <span>📄</span> Borrador
-          </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2">
-            <span>📤</span> Enviar
-          </button>
-        </div>
+          {/* Botones */}
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-sm"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleDraftSave}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Guardando..." : isEditMode ? "Actualizar Borrador" : "Guardar Borrador"}
+            </button>
+            <button
+              type="submit"
+              onClick={handleSubmitOrder}
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm disabled:opacity-50"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Enviando..." : isEditMode ? "Enviar Pre-Autorización" : "Enviar Pre-Autorización"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
-};
-
-export default PreAutorizacionModal;
+}

@@ -1,13 +1,16 @@
 // src/app/components/InsertPreAuthorizationModal.tsx
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
 import { getVehicleByVin } from "@/app/vehiculos/actions";
 import { savePreAuthorization } from "@/app/ordenes/insert/preAutorizacion/actions";
 import { useUser } from '@/hooks/useUser';
+import type { Draft } from "@/app/types";
 
 interface InsertPreAuthorizationModalProps {
   onClose: () => void;
   open: boolean;
+  draft?: Draft;
+  isEditMode?: boolean;
 }
 
 interface Task {
@@ -40,7 +43,6 @@ const initialFormData = {
       parts: [{ part: { code: "", description: "" } }],
     },
   ] as Task[],
-  // Estados para archivos (puedes agregarlos aquí también si quieres)
   badgePhoto: null as File | null,
   vinPhoto: null as File | null,
   milagePhoto: null as File | null,
@@ -51,6 +53,8 @@ const initialFormData = {
 export default function InsertPreAuthorizationModal({
   onClose,
   open,
+  draft,
+  isEditMode = false,
 }: InsertPreAuthorizationModalProps) {
   // Estado unificado del formulario
   const [formData, setFormData] = useState(initialFormData);
@@ -60,20 +64,65 @@ export default function InsertPreAuthorizationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { user, loading } = useUser();
-  
 
-  // Setea la fecha actual cuando se abre el modal
+  // Cargar datos del draft cuando se abre el modal
   useEffect(() => {
-    if (open) {
+    if (open && draft) {
+      console.log("Cargando draft:", draft);
+      
+      // Convertir tasks del draft al formato del formulario
+      const draftTasks = draft.tasks?.length > 0 
+        ? draft.tasks.map(task => ({
+            description: task.description || "",
+            hoursCount: task.hoursCount?.toString() || "",
+            parts: task.parts?.length > 0 
+              ? task.parts.map(part => ({
+                  part: {
+                    code: part.part?.code || "",
+                    description: part.part?.description || ""
+                  }
+                }))
+              : [{ part: { code: "", description: "" } }]
+          }))
+        : initialFormData.tasks;
+
+      const draftFormData = {
+        creationDate: draft.creationDate 
+          ? (typeof draft.creationDate === 'string' 
+             ? draft.creationDate 
+             : new Date(draft.creationDate).toLocaleDateString())
+          : new Date().toLocaleDateString(),
+        orderNumber: draft.orderNumber?.toString() || "",
+        customerName: draft.customerName || draft.customer?.firstName || "",
+        vin: draft.vin || draft.vehicle?.vin || "",
+        warrantyActivation: draft.warrantyActivation || "",
+        engineNumber: draft.engineNumber || "",
+        model: draft.model || "",
+        actualMileage: draft.actualMileage?.toString() || "",
+        diagnosis: draft.diagnosis || "",
+        additionalObservations: draft.additionalObservations || "",
+        tasks: draftTasks,
+        badgePhoto: null,
+        vinPhoto: null,
+        milagePhoto: null,
+        aditionalPartsPhoto: null,
+        orPhoto: null,
+      };
+
+      setFormData(draftFormData);
+      console.log("FormData cargado:", draftFormData);
+    } else if (open) {
+      // Resetear si no hay draft
       const date = new Date();
-      setFormData((prev) => ({
-        ...prev,
+      setFormData({
+        ...initialFormData,
         creationDate: date.toLocaleDateString(),
-      }));
-      setErrors({});
-      setIsSubmitting(false);
+      });
     }
-  }, [open]);
+    
+    setErrors({});
+    setIsSubmitting(false);
+  }, [open, draft]);
 
   // Handler único para todos los campos del formulario
   const handleChange = (
@@ -103,20 +152,19 @@ export default function InsertPreAuthorizationModal({
     if (result.success && result.vehicle) {
       const v = result.vehicle;
       setFormData((prev) => ({
-      ...prev,
-      warrantyActivation: v.warranty?.activationDate
-        ? new Date(v.warranty.activationDate).toISOString().split("T")[0] // ✅ formato "YYYY-MM-DD"
-        : "",
-      model: v.model || "",
-      engineNumber: v.engineNumber || "",
-    }));
-
+        ...prev,
+        warrantyActivation: v.warranty?.activationDate
+          ? new Date(v.warranty.activationDate).toISOString().split("T")[0]
+          : "",
+        model: v.model || "",
+        engineNumber: v.engineNumber || "",
+      }));
     } else {
       alert(result.message);
     }
   };
 
-  // Handlers para archivos (manteniendo temporalmente el approach actual)
+  // Handlers para archivos
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
       setSelectedFile(e.target.files[0]);
@@ -179,7 +227,7 @@ export default function InsertPreAuthorizationModal({
       alert('❌ No se pudo obtener la información del usuario');
       return;
     }
-    console.log('User data:', user);
+
     setIsSubmitting(true);
     setErrors({});
 
@@ -199,11 +247,12 @@ export default function InsertPreAuthorizationModal({
         dataToSubmit,
         user.companyId, 
         user.userId,     
-        false
+        false,
+        draft?.id
       );
 
       if (result.success) {
-        alert("✅ Pre-autorización enviada correctamente");
+        alert(`✅ ${isEditMode ? "Borrador convertido a orden" : "Pre-autorización enviada"} correctamente`);
         handleClose();
       } else {
         alert("⚠️ " + result.message);
@@ -244,11 +293,12 @@ export default function InsertPreAuthorizationModal({
         draftData,
         user.companyId,  
         user.userId,
-        true
+        true,
+        draft?.id
       );
 
       if (result.success) {
-        alert("✅ Borrador guardado correctamente");
+        alert(`✅ ${draft?.id ? "Borrador actualizado" : "Borrador guardado"} correctamente`);
         handleClose();
       } else {
         alert("⚠️ " + result.message);
@@ -260,6 +310,7 @@ export default function InsertPreAuthorizationModal({
       setIsSubmitting(false);
     }
   };
+
   if (!open) return null;
 
   return (
@@ -267,7 +318,10 @@ export default function InsertPreAuthorizationModal({
       <div className="bg-white p-6 rounded-lg w-[900px] max-h-[90vh] overflow-y-auto relative shadow-lg text-sm">
         {/* Header */}
         <h2 className="text-lg font-semibold mb-4">
-          Ingreso de Pre-Autorizacion
+          {isEditMode ? "Editar Borrador - Pre-Autorización" : "Ingreso de Pre-Autorización"}
+          {isEditMode && draft?.id && (
+            <span className="text-sm text-gray-500 ml-2">(ID: {draft.id})</span>
+          )}
         </h2>
 
         <button
@@ -675,15 +729,15 @@ export default function InsertPreAuthorizationModal({
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Guardando..." : "Borradores"}
+              {isSubmitting ? "Guardando..." : isEditMode ? "Actualizar Borrador" : "Guardar Borrador"}
             </button>
             <button
               type="submit"
               onClick={handleSubmitOrder}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm disabled:opacity-50"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Enviando..." : "Enviar"}
+              {isSubmitting ? "Enviando..." : isEditMode ? "Enviar Pre-Autorización" : "Enviar Pre-Autorización"}
             </button>
           </div>
         </form>

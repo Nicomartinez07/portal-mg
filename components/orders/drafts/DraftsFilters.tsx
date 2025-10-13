@@ -135,6 +135,7 @@ export const DraftFilters = () => {
             <option value="PENDIENTE">Pendiente</option>
             <option value="AUTORIZADO">Autorizada</option>
             <option value="RECHAZADO">Rechazada</option>
+            <option value="BORRADOR">Borrador</option>
           </select>
         </div>
 

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { VehicleModal } from "@/components/vehiculos/vehicle-modal";
 import { ActivationModal } from "@/components/warranty/modal/WarrantyActivation";
 import InsertPreAuthorizationModal from "@/components/orders/modals/InsertPreAuthorizationModal";
+import InsertClaimModal from "@/components/orders/modals/InsertClaimModal";
+import InsertServiceModal from "@/components/orders/modals/InsertServiceModal";
 
 import {
   Home,
@@ -19,6 +21,7 @@ import {
   LogOut,
   Car,
   User,
+  Star,
 } from "lucide-react";
 
 import {
@@ -60,22 +63,36 @@ const navigationItems = [
     href: "https://drive.google.com/drive/folders/1unjLakNYCpBBbOorUzeuMp0N5jAs1qSt",
     external: true,
   },
-  { name: "Cargar Auto", icon: Car, modal: "vehicle" },
-  { name: "Activar Garantia", icon: Shield, modal: "warranty" },
-  { name: "Pre-autorización", icon: ShoppingCart, modal: "insertPreAuthorization" },
+  { name: "Cargar Auto", icon: Car, modal: "vehicle", color: "text-yellow-500", fill: "yellow" },
+  { name: "Activar Garantia", icon: Shield, modal: "warranty", color: "text-yellow-500", fill: "yellow" },
+  { name: "Pre-autorización", icon: Star, modal: "insertPreAuthorization", color: "text-yellow-500", fill: "yellow" },
+  {  name: "Reclamo", icon: Star, modal: "insertClaim", color: "text-yellow-500", fill: "yellow" },
+  {  name: "Servicio", icon: Star, modal: "insertService", color: "text-yellow-500", fill: "yellow" },
 ];
 
 const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
+
+
+
+type MGDashboardProps = {
+  children?: React.ReactNode;
+  defaultOpen?: boolean;
+};
+
 
 // Componente para la barra lateral
 function AppSidebar({
   onOpenVehicleModal,
   onOpenWarrantyModal,
   onOpenInsertPreAuthorizationModal,
+  onOpenInsertClaimModal,
+  onOpenInsertServiceModal,
 }: {
   onOpenVehicleModal: () => void;
   onOpenWarrantyModal: () => void;
   onOpenInsertPreAuthorizationModal: () => void;
+  onOpenInsertClaimModal: () => void;
+  onOpenInsertServiceModal: () => void;
 }) {
   const router = useRouter();
 
@@ -116,7 +133,10 @@ function AppSidebar({
                           onClick={onOpenVehicleModal}
                           className="flex items-center gap-3 w-full text-left"
                         >
-                          <Icon className="w-5 h-5" />
+                          <Icon 
+                            className={`w-5 h-5 ${item.color || "text-white"}`}
+                            fill={item.fill ? "currentColor" : "none"}
+                          />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -135,7 +155,10 @@ function AppSidebar({
                           onClick={onOpenWarrantyModal}
                           className="flex items-center gap-3 w-full text-left"
                         >
-                          <Icon className="w-5 h-5" />
+                          <Icon 
+                            className={`w-5 h-5 ${item.color || "text-white"}`}
+                            fill={item.fill ? "currentColor" : "none"}
+                          />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -154,7 +177,54 @@ function AppSidebar({
                           onClick={onOpenInsertPreAuthorizationModal}
                           className="flex items-center gap-3 w-full text-left"
                         >
-                          <Icon className="w-5 h-5" />
+                         <Icon 
+                          className={`w-5 h-5 ${item.color || "text-white"}`}
+                          fill={item.fill ? "currentColor" : "none"}
+                        /> 
+                          <span className="text-sm">{item.name}</span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                if (item.modal === "insertClaim") {
+                  return (
+                    <SidebarMenuItem key={`${item.name}-${index}`}>
+                      <SidebarMenuButton
+                        asChild
+                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
+                      >
+                        <button
+                          onClick={onOpenInsertClaimModal}
+                          className="flex items-center gap-3 w-full text-left"
+                        >
+                          <Icon 
+                            className={`w-5 h-5 ${item.color || "text-white"}`}
+                            fill={item.fill ? "currentColor" : "none"}
+                          />
+                          <span className="text-sm">{item.name}</span>
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                if (item.modal === "insertService") {
+                  return (
+                    <SidebarMenuItem key={`${item.name}-${index}`}>
+                      <SidebarMenuButton
+                        asChild
+                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
+                      >
+                        <button
+                          onClick={onOpenInsertServiceModal}
+                          className="flex items-center gap-3 w-full text-left"
+                        >
+                          <Icon 
+                            className={`w-5 h-5 ${item.color || "text-white"}`}
+                            fill={item.fill ? "currentColor" : "none"}
+                          />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -231,6 +301,8 @@ export function MGDashboard({
   const [openVehicleModal, setOpenVehicleModal] = useState(false);
   const [openWarrantyModal, setOpenWarrantyModal] = useState(false);
   const [openInsertPreAuthorizationModal, setOpenInsertPreAuthorizationModal] = useState(false);
+  const [openInsertClaimModal, setOpenInsertClaimModal] = useState(false);
+  const [openInsertServiceModal, setOpenInsertServiceModal] = useState(false);
 
   const router = useRouter();
 
@@ -275,6 +347,8 @@ export function MGDashboard({
           onOpenVehicleModal={() => setOpenVehicleModal(true)}
           onOpenWarrantyModal={() => setOpenWarrantyModal(true)}
           onOpenInsertPreAuthorizationModal={() => setOpenInsertPreAuthorizationModal(true)}
+          onOpenInsertClaimModal={() => setOpenInsertClaimModal(true)}
+          onOpenInsertServiceModal={() => setOpenInsertServiceModal(true)}
         />
 
         <SidebarInset className="flex flex-col flex-1 min-h-0">
@@ -366,6 +440,15 @@ export function MGDashboard({
         <InsertPreAuthorizationModal
           open={openInsertPreAuthorizationModal}
           onClose={() => setOpenInsertPreAuthorizationModal(false)}
+        />
+        <InsertClaimModal
+          open={openInsertClaimModal}
+          onClose={() => setOpenInsertClaimModal(false)}
+        />
+        {/* Modal para pre-autorización */}
+        <InsertServiceModal
+          open={openInsertServiceModal}
+          onClose={() => setOpenInsertServiceModal(false)}
         />
       </div>
     </SidebarProvider>

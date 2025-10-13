@@ -23,7 +23,6 @@ export default function ServiceModal({ order, onClose, onShowHistory }: ServiceM
         >
           ×
         </button>
-         {/* Id, fecha, or, vin, activacion, nro motor, modelo, servicio, km real , observaciones, foto chapa vin, foto or */}
         {/* Datos de la Orden */}
         <div className="mb-4 text-xs">
           <div className="grid grid-cols-[160px_1fr] gap-2 items-center">

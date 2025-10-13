@@ -104,7 +104,7 @@ Solo falta que filtre cuando yo toco el boton
 Realizar tests ordenes
 Manejo de imagenes
 Exportar ordenes 
-
+APROBAR Y RECHAZAR CON MENSAJES, Y TAMBIEN detallitos de cada estado interno
 
 Borradores: No abre modales porq no se que mierda del estado interno, UTILIZAR MODALES DE CREACION DE OREDENES DE 3 TIPOS PARA CADA UNO, por ejemplo el modal de detalles de un servicio deberia abrir un modal en el cual cree un servicio y asi con el resto, Si esta en borradores es necesario que traiga el modal con los datos ya cargados de ese servicio que se iba a crear antes y se dejo en borradores
 buscar al tocar el boton
@@ -156,5 +156,7 @@ Buscador de VIN: Desarrollar el detalle servicio
 
 
 Formularios de Carga, desarrollar todo lo posible
-Desarrollar pagina Borradores,
 Desarrollar FORMULARIO CARGA 3 TIPOS DE OREDENES.
+
+CARGA Y DESCARGA DE ARCHIVOS Y ORDENES Y GARANTIAS Y VEHICULOS
+CONFIGURACION DEL CORREO

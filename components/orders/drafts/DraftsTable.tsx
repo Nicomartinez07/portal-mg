@@ -1,15 +1,16 @@
+// src/app/ordenes/borradores/DraftTable.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { getDraftOrders } from "@/app/ordenes/borradores/actions";
 import { useDraft } from "@/contexts/DraftContext";
 import type { Draft } from "@/app/types";
-import PreAuthorizationModal from "@/components/orders/modals/PreAuthorizationModal";
-import ClaimModal from "@/components/orders/modals/ClaimModal";
-import ServiceModal from "@/components/orders/modals/ServiceModal";
+import InsertPreAuthorizationModal from "@/components/orders/modals/InsertPreAuthorizationModal";
+import InsertClaimModal from "@/components/orders/modals/InsertClaimModal";
+import InsertServiceModal from "@/components/orders/modals/InsertServiceModal";
 
 export const DraftTable = () => {
   const { filters } = useDraft();
-  const [drafts, setDrafts] = useState<Draft[]>([]); // Usa el tipo Draft
+  const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
   const [loading, setLoading] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -18,7 +19,7 @@ export const DraftTable = () => {
   const fetchDrafts = async () => {
     setLoading(true);
     const data = await getDraftOrders(filters);
-    setDrafts(data as Draft[]); // Asegúrate de que los datos coincidan con el tipo Draft
+    setDrafts(data as Draft[]);
     setLoading(false);
   };
 
@@ -35,14 +36,41 @@ export const DraftTable = () => {
       setShowHistoryModal(true);
     }
   };
+
   const getStatusClasses = (status: string) => {
-  switch (status) {
-    case 'AUTORIZADO':
-      return 'bg-green-500 text-white';
-    case 'RECHAZADO':
-      return 'bg-red-500 text-white';
-  }
-};
+    switch (status) {
+      case 'AUTORIZADO':
+        return 'bg-green-500 text-white';
+      case 'RECHAZADO':
+        return 'bg-red-500 text-white';
+      default:
+        return 'bg-gray-300 text-gray-700';
+    }
+  };
+
+  // Renderizar el modal correcto según el tipo
+  const renderModal = () => {
+    if (!selectedDraft) return null;
+
+    const commonProps = {
+      onClose: () => setSelectedDraft(null),
+      onShowHistory: () => handleShowHistory(selectedDraft),
+      open: true,
+      draft: selectedDraft,
+      isEditMode: true
+    };
+
+    switch (selectedDraft.type) {
+      case "PRE_AUTORIZACION":
+        return <InsertPreAuthorizationModal {...commonProps} />;
+      case "RECLAMO":
+        return <InsertClaimModal {...commonProps} />;
+      case "SERVICIO":
+        return <InsertServiceModal {...commonProps} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -70,10 +98,10 @@ export const DraftTable = () => {
                   <td className="px-4 py-2">{draft.type}</td>
                   <td className="px-4 py-2">{draft.id}</td>
                   <td className="px-4 py-2">{draft.orderNumber}</td>
-                  <td className="px-4 py-2">{draft.vehicle?.vin || "-"}</td>
+                  <td className="px-4 py-2">{draft.vehicle?.vin || draft.vin || "-"}</td>
                   <td className="px-4 py-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusClasses(draft.status)}`}>
-                      {draft.status}
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusClasses(draft.status || '')}`}>
+                      {draft.status || 'BORRADOR'}
                     </span>
                   </td>
                   <td className="px-4 py-2">{draft.user?.username || "-"}</td>
@@ -81,7 +109,7 @@ export const DraftTable = () => {
                     <button
                       onClick={() => setSelectedDraft(draft)}
                       className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
-                      data-testid={`detalles-${draft.id}`}   // 👈 identificador único
+                      data-testid={`detalles-${draft.id}`}
                     >
                       Detalles
                     </button>
@@ -90,8 +118,8 @@ export const DraftTable = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
-                  No se encontraron órdenes
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                  No se encontraron borradores
                 </td>
               </tr>
             )}
@@ -99,34 +127,10 @@ export const DraftTable = () => {
         </table>
       </div>
 
-      {/* Renderizado condicional de los modales */}
-      {selectedDraft && (
-        <>
-          {selectedDraft.type === "PRE_AUTORIZACION" && (
-            <PreAuthorizationModal
-              drafts={selectedDraft}
-              onClose={() => setSelectedDraft(null)}
-              onShowHistory={handleShowHistory}
-            />
-          )}
-          {selectedDraft.type === "RECLAMO" && (
-            <ClaimModal
-              drafts={selectedDraft}
-              onClose={() => setSelectedDraft(null)}
-              onShowHistory={handleShowHistory}
-            />
-          )}
-          {selectedDraft.type === "SERVICIO" && (
-            <ServiceModal
-              drafts={selectedDraft}
-              onClose={() => setSelectedDraft(null)}
-              onShowHistory={handleShowHistory}
-            />
-          )}
-        </>
-      )}
+      {/* Renderizar el modal correspondiente */}
+      {renderModal()}
 
-      {/* Modal del Historial de Estados (Este es común a todos) */}
+      {/* Modal del Historial (se mantiene igual) */}
       {showHistoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-1/3 max-h-[80vh] overflow-auto relative">

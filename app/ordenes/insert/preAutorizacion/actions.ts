@@ -4,18 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { CreateOrderData, CreateOrderResult } from "@/app/types";
 
 async function findOrCreateCustomer(customerName: string) {
-  // Si el modal manda un string (como "Juan Pérez"), lo separamos
   const [firstName, ...lastParts] = customerName.trim().split(" ");
   const lastName = lastParts.join(" ") || "Desconocido";
 
-  // Buscar cliente existente
   let customer = await prisma.customer.findFirst({
     where: {
       firstName: { equals: firstName },
       lastName: { equals: lastName },
     },
   });
-  // Crear si no existe
+
   if (!customer) {
     customer = await prisma.customer.create({
       data: {
@@ -33,9 +31,8 @@ async function findOrCreateCustomer(customerName: string) {
 }
 
 async function findOrCreatePart(partData: { code: string; description: string; companyId: number }) {
-  // Buscar parte existente
   let part = await prisma.part.findUnique({ where: { code: partData.code } });
-  // Si no existe, crearla
+  
   if (!part) {
     part = await prisma.part.create({
       data: {
@@ -54,7 +51,8 @@ export async function savePreAuthorization(
   orderData: CreateOrderData,
   companyId: number,
   userId?: number,
-  isDraft: boolean = false
+  isDraft: boolean = false,
+  draftId?: number  // 👈 Nuevo parámetro para identificar borrador existente
 ): Promise<CreateOrderResult> {
   try {
     // 🧱 Validaciones mínimas
@@ -73,92 +71,190 @@ export async function savePreAuthorization(
     // Buscar o crear cliente
     const customer = await findOrCreateCustomer(orderData.customerName);
 
-    // Determinar número de orden
-    let orderNumber = 99999;
-    if (!isDraft) {
-      const lastOrder = await prisma.order.findFirst({
-        orderBy: { orderNumber: "desc" },
-      });
-      orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
-    }
-
     // 🔒 Transacción para mantener consistencia
     const order = await prisma.$transaction(async (tx) => {
-      // Crear la orden
       
-      console.log("Datos del usuario:", { userId, companyId });
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          type: "PRE_AUTORIZACION",
-          creationDate: new Date(),
-          draft: isDraft,
-          customerId: customer.id,
-          vehicleVin: orderData.vin,
-          companyId,
-          userId,
-          status: isDraft ? "BORRADOR" : "PENDIENTE",
-          internalStatus: null,
-          actualMileage: Number(orderData.actualMileage) || 0,
-          diagnosis: orderData.diagnosis || "",
-          additionalObservations: orderData.additionalObservations || "",
-          statusHistory: {
-            create: [
-              {
-                status: isDraft ? "BORRADOR" : "PENDIENTE",
-                changedAt: new Date(),
-              },
-            ],
-          },
-        },
-      });
+      // 👇 SI EXISTE DRAFT ID, ACTUALIZAR EL BORRADOR EXISTENTE
+      if (draftId) {
+        console.log(`🔄 Actualizando borrador existente ID: ${draftId}, isDraft: ${isDraft}`);
+        
+        // 1. Primero eliminar las tareas y partes existentes
+        await tx.orderTaskPart.deleteMany({
+          where: {
+            orderTask: {
+              orderId: draftId
+            }
+          }
+        });
+        
+        await tx.orderTask.deleteMany({
+          where: {
+            orderId: draftId
+          }
+        });
 
-      // Crear las tareas y sus partes asociadas
-      for (const task of orderData.tasks || []) {
-        const createdTask = await tx.orderTask.create({
+        // 2. Actualizar la orden existente
+        const updatedOrder = await tx.order.update({
+          where: { id: draftId },
           data: {
-            description: task.description || "",
-            hoursCount: Number(task.hoursCount) || 0,
-            orderId: newOrder.id,
+            draft: isDraft,
+            customerId: customer.id,
+            vehicleVin: orderData.vin,
+            status: isDraft ? "BORRADOR" : "PENDIENTE",
+            actualMileage: Number(orderData.actualMileage) || 0,
+            diagnosis: orderData.diagnosis || "",
+            additionalObservations: orderData.additionalObservations || "",
           },
         });
 
-        for (const partItem of task.parts || []) {
-          const part = await findOrCreatePart({
-            code: partItem.part.code,
-            description: partItem.part.description,
-            companyId,
-          });
-
-          await tx.orderTaskPart.create({
+        // 3. Si se está convirtiendo de borrador a orden, agregar historial
+        if (!isDraft) {
+          await tx.orderStatusHistory.create({
             data: {
-              orderTaskId: createdTask.id,
-              partId: part.id,
-              quantity: 1,
-              description: part.description,
+              orderId: draftId,
+              status: "PENDIENTE",
+              changedAt: new Date(),
             },
           });
         }
-      }
 
-      // Devolver la orden con relaciones completas
-      return tx.order.findUnique({
-        where: { id: newOrder.id },
-        include: {
-          tasks: { include: { parts: { include: { part: true } } } },
-          customer: true,
-          vehicle: true,
-        },
-      });
+        // 4. Crear las nuevas tareas y partes
+        for (const task of orderData.tasks || []) {
+          const createdTask = await tx.orderTask.create({
+            data: {
+              description: task.description || "",
+              hoursCount: Number(task.hoursCount) || 0,
+              orderId: draftId,
+            },
+          });
+
+          for (const partItem of task.parts || []) {
+            const part = await findOrCreatePart({
+              code: partItem.part.code,
+              description: partItem.part.description,
+              companyId,
+            });
+
+            await tx.orderTaskPart.create({
+              data: {
+                orderTaskId: createdTask.id,
+                partId: part.id,
+                quantity: 1,
+                description: part.description,
+              },
+            });
+          }
+        }
+
+        // Devolver la orden actualizada
+        return tx.order.findUnique({
+          where: { id: draftId },
+          include: {
+            tasks: { include: { parts: { include: { part: true } } } },
+            customer: true,
+            vehicle: true,
+          },
+        });
+
+      } else {
+        // 👇 SI NO EXISTE DRAFT ID, CREAR NUEVA ORDEN (CÓDIGO ORIGINAL)
+        console.log("🆕 Creando nueva orden/borrador");
+
+        // Determinar número de orden solo para órdenes finales
+        let orderNumber = 99999;
+        if (!isDraft) {
+          const lastOrder = await tx.order.findFirst({
+            where: { draft: false },
+            orderBy: { orderNumber: "desc" },
+          });
+          orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
+        }
+
+        // Crear la nueva orden
+        const newOrder = await tx.order.create({
+          data: {
+            orderNumber,
+            type: "PRE_AUTORIZACION",
+            creationDate: new Date(),
+            draft: isDraft,
+            customerId: customer.id,
+            vehicleVin: orderData.vin,
+            companyId,
+            userId,
+            status: isDraft ? "BORRADOR" : "PENDIENTE",
+            internalStatus: null,
+            actualMileage: Number(orderData.actualMileage) || 0,
+            diagnosis: orderData.diagnosis || "",
+            additionalObservations: orderData.additionalObservations || "",
+            statusHistory: {
+              create: [
+                {
+                  status: isDraft ? "BORRADOR" : "PENDIENTE",
+                  changedAt: new Date(),
+                },
+              ],
+            },
+          },
+        });
+
+        // Crear las tareas y sus partes asociadas
+        for (const task of orderData.tasks || []) {
+          const createdTask = await tx.orderTask.create({
+            data: {
+              description: task.description || "",
+              hoursCount: Number(task.hoursCount) || 0,
+              orderId: newOrder.id,
+            },
+          });
+
+          for (const partItem of task.parts || []) {
+            const part = await findOrCreatePart({
+              code: partItem.part.code,
+              description: partItem.part.description,
+              companyId,
+            });
+
+            await tx.orderTaskPart.create({
+              data: {
+                orderTaskId: createdTask.id,
+                partId: part.id,
+                quantity: 1,
+                description: part.description,
+              },
+            });
+          }
+        }
+
+        // Devolver la orden con relaciones completas
+        return tx.order.findUnique({
+          where: { id: newOrder.id },
+          include: {
+            tasks: { include: { parts: { include: { part: true } } } },
+            customer: true,
+            vehicle: true,
+          },
+        });
+      }
     });
+
+    // Mensajes diferentes según la operación
+    let message = "";
+    if (draftId) {
+      message = isDraft 
+        ? "✅ Borrador actualizado correctamente" 
+        : "✅ Borrador convertido a orden exitosamente";
+    } else {
+      message = isDraft
+        ? "✅ Borrador guardado correctamente"
+        : "✅ Orden creada exitosamente";
+    }
 
     return {
       success: true,
       order,
-      message: isDraft
-        ? "✅ Borrador guardado correctamente"
-        : "✅ Orden creada exitosamente",
+      message,
     };
+
   } catch (error) {
     console.error("Error en savePreAuthorization:", error);
     return {

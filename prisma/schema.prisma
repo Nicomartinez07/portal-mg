@@ -159,8 +159,8 @@ model Order {
   type                   OrderType
   creationDate           DateTime
   draft                  Boolean?
-  customerId             Int
-  customer               Customer   @relation(fields: [customerId], references: [id])
+  customerId             Int?
+  customer               Customer?   @relation(fields: [customerId], references: [id])
   vehicleVin             String
   vehicle                Vehicle    @relation(fields: [vehicleVin], references: [vin])
   companyId              Int
@@ -168,10 +168,12 @@ model Order {
   userId                 Int?
   user                   User?     @relation(fields: [userId], references: [id])
   status                 OrderStatus
+  service                String? 
   internalStatus         InternalStatus?
   actualMileage          Int
   diagnosis              String?
   additionalObservations String?
+  preAuthorizationNumber  String? 
   tasks                  OrderTask[]
   photos                 OrderPhoto[]
   statusHistory          OrderStatusHistory[]
