@@ -111,6 +111,7 @@ export default function OrdersTable() {
               order={selectedOrder}
               onClose={() => setSelectedOrder(null)}
               onShowHistory={handleShowHistory}
+              onOrderUpdated={fetchOrders}
             />
           )}
           {selectedOrder.type === "RECLAMO" && (
@@ -118,6 +119,7 @@ export default function OrdersTable() {
               order={selectedOrder}
               onClose={() => setSelectedOrder(null)}
               onShowHistory={handleShowHistory}
+              onOrderUpdated={fetchOrders}
             />
           )}
           {selectedOrder.type === "SERVICIO" && (
@@ -132,7 +134,7 @@ export default function OrdersTable() {
 
       {/* Modal del Historial de Estados (Este es común a todos) */}
       {showHistoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-1/3 max-h-[80vh] overflow-auto relative">
             <h2 className="text-xl font-bold bg-white mb-4">Historial de Estados</h2>
             <button
@@ -146,6 +148,7 @@ export default function OrdersTable() {
                 <tr>
                   <th className="px-4 py-2 text-left text-sm">Estado</th>
                   <th className="px-4 py-2 text-left text-sm">Fecha</th>
+                  <th className="px-4 py-2 text-left text-sm">Observación</th>
                 </tr>
               </thead>
               <tbody>
@@ -161,6 +164,9 @@ export default function OrdersTable() {
                       </td>
                       <td className="px-4 py-2 text-xs">
                         {new Date(historyItem.changedAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 text-xs">
+                        {historyItem.observation || "-"}
                       </td>
                     </tr>
                   ))

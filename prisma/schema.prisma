@@ -167,7 +167,7 @@ model Order {
   company                Company    @relation(fields: [companyId], references: [id])
   userId                 Int?
   user                   User?     @relation(fields: [userId], references: [id])
-  status                 OrderStatus
+  status                 OrderStatus?
   service                String? 
   internalStatus         InternalStatus?
   actualMileage          Int
@@ -212,4 +212,5 @@ model OrderStatusHistory {
   order     Order        @relation(fields: [orderId], references: [id])
   status    OrderStatus
   changedAt DateTime     @default(now())
+  observation String?
 }

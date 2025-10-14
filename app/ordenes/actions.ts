@@ -58,6 +58,36 @@ export async function getOrders(filters: {
   });
 }
 
+export async function updateOrderStatus(orderId: number, newStatus: string, observation?: string) {
+  try {
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Actualizamos el estado de la orden
+      const order = await tx.order.update({
+        where: { id: orderId },
+        data: { status: newStatus as any },
+      });
+
+      // 2️⃣ Registramos el cambio en el historial
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          status: newStatus as any,
+          changedAt: new Date(),
+          observation: observation?.trim() || null, 
+        },
+      });
+
+
+      return order;
+    });
+
+    console.log(`✅ Estado de la orden ${orderId} actualizado a ${newStatus} y registrado en historial.`);
+    return { success: true, updatedOrder };
+  } catch (error) {
+    console.error("❌ Error updating order status:", error);
+    return { success: false, error: "Failed to update status" };
+  }
+}
 
 
 export async function updateOrderInternalStatus(orderId: number, newInternalStatus: string | null) {

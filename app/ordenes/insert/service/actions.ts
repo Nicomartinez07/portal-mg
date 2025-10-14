@@ -37,7 +37,7 @@ export async function saveService(
         // Actualizar orden existente
         const updateData: any = {
           draft: isDraft,
-          status: isDraft ? "BORRADOR" : "PENDIENTE",
+          status: isDraft ? "BORRADOR" : "COMPLETADO",
           actualMileage: validatedData.actualMileage || 0,
           additionalObservations: validatedData.additionalObservations || "",
           service: validatedData.service || null,
@@ -94,16 +94,18 @@ export async function saveService(
             vehicle: { connect: { vin: validatedData.vin } },
             company: { connect: { id: companyId } },
             user: userId ? { connect: { id: userId } } : undefined,
-            status: isDraft ? "BORRADOR" : "PENDIENTE",
+            status: isDraft ? "BORRADOR" : "COMPLETADO",
             internalStatus: null,
             actualMileage: validatedData.actualMileage || 0,
             additionalObservations: validatedData.additionalObservations || "",
-            statusHistory: {
-              create: [{
-                status: isDraft ? "BORRADOR" : "PENDIENTE",
-                changedAt: new Date(),
-              }],
-            },
+            statusHistory: isDraft
+              ? {
+                  create: [{
+                    status: "BORRADOR",
+                    changedAt: new Date(),
+                  }],
+                }
+              : undefined,
             service: validatedData.service || null,
           },
         });

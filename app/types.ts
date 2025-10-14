@@ -2,7 +2,7 @@
 
 // Primero, define los tipos base si los necesitas
 export type OrderType = "PRE_AUTORIZACION" | "RECLAMO" | "SERVICIO";
-export type OrderStatus = "PENDIENTE" | "AUTORIZADO" | "RECHAZADO" | "COMPLETADO" | "BORRADOR";
+export type OrderStatus = "PENDIENTE" | "AUTORIZADO" | "RECHAZADO" | "COMPLETADO" | "BORRADOR" | "";
 export type InternalStatus =
   | ""
   | "PENDIENTE DE RECLAMO"
@@ -70,6 +70,7 @@ export interface OrderStatusHistory {
   id: number;
   status: OrderStatus;
   changedAt: string | Date;
+  observation?: string;
 }
 
 // Interfaz principal de la Orden, reflejando la consulta de Prisma
