@@ -11,8 +11,196 @@ import {
 } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+// 🚨 NECESITAS ESTOS IMPORTS DE TUS SERVER ACTIONS
+import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/repuestos/importar/actions'; 
 
-// Componente del Modal
+// === TIPOS DE DATOS PARA EL FORMULARIO DE IMPORTACIÓN ===
+interface Company {
+    id: number;
+    name: string;
+}
+
+interface ReportError {
+    fila: number;
+    error: string;
+}
+
+interface ImportResult {
+    success: boolean;
+    message: string;
+    errors?: ReportError[];
+    totalRows?: number;
+    inserted?: number;
+}
+// ========================================================
+
+
+// === COMPONENTE DEL FORMULARIO DE IMPORTACIÓN (INTEGRADO) ===
+const ImportPartForm: React.FC<{ 
+    companies: Company[];
+    onClose: () => void; 
+}> = ({ companies, onClose }) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [report, setReport] = useState<ImportResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Manejador para el botón "Importar"
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    // Como el ID de la empresa es un string en el select, verificamos
+    if (!selectedFile || !selectedCompanyId || selectedCompanyId === '') {
+      alert('Debe seleccionar un archivo y una empresa.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('excelFile', selectedFile);
+    // Usamos el ID de la empresa, que está en el estado como string
+    formData.append('companyId', selectedCompanyId); 
+
+    setReport(null); 
+    
+    const result = await importarStockRepuestos(formData);
+    setReport(result);
+    setIsSubmitting(false);
+  };
+  
+  // Manejador para el enlace "Descargar archivo de ejemplo"
+  const handleDescargarEjemplo = async (e: React.MouseEvent) => {
+      e.preventDefault();
+      
+      const result = await descargarEjemploRepuestos();
+
+      if (result.success && result.fileBase64) {
+          // Lógica para convertir Base64 a Blob y forzar la descarga (CLIENT-SIDE JS)
+          const binaryString = atob(result.fileBase64);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = result.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+      } else {
+        alert('Error al generar la plantilla.');
+      }
+  };
+
+
+  return (
+    <div className="p-6 bg-white shadow-xl rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
+        <h2 className="text-2xl font-bold mb-4">Importación de Stock de Repuestos</h2>
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-xl font-bold text-gray-500 hover:text-gray-800"
+        >
+          ×
+        </button>
+
+        <form onSubmit={handleSubmit}>
+            {/* Selector de Empresa */}
+            <label className="block mb-4">
+              <span className="text-gray-700">Empresa a Importar:</span>
+              <select 
+                value={selectedCompanyId} 
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                required
+                className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Seleccione una empresa</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+
+            {/* Descargar Archivo de Ejemplo */}
+            <p className="mb-2 text-sm text-gray-600">
+              Seleccione un archivo para importar el stock de repuestos (.xlsx).
+              <br />
+              <a href="#" onClick={handleDescargarEjemplo} className="text-blue-600 hover:underline">
+                Descargar archivo de ejemplo
+              </a>
+            </p>
+
+            {/* Selector de Archivo */}
+            <div className="mb-6">
+              <input 
+                type="file" 
+                accept=".xlsx" 
+                onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                required
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+            </div>
+            
+            {/* Botones */}
+            <div className="flex justify-end gap-3">
+              <button 
+                type="button" 
+                className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400" 
+                onClick={onClose} // Cierra el modal
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+              >
+                {isSubmitting ? 'Importando...' : 'Importar'}
+              </button>
+            </div>
+        </form>
+
+        {/* Reporte de Resultados */}
+        {report && (
+          <div className={`mt-4 p-4 border rounded-lg ${report.success ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+            <p className="font-semibold text-lg mb-1">{report.success ? 'Importación Exitosa' : 'Importación con Errores'}</p>
+            <p className="text-sm">
+              {report.message}
+              {report.inserted !== undefined && report.inserted > 0 && <span> Insertados: **{report.inserted}**</span>}
+            </p>
+            
+            {report.errors && report.errors.length > 0 && (
+              <div className="mt-3 text-sm max-h-40 overflow-y-auto border-t pt-2 border-red-200">
+                <p className="font-medium text-red-700 mb-1">Detalles de Errores ({report.errors.length}):</p>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {report.errors.map((err, i) => (
+                    <li key={i} className="text-red-600">**Fila {err.fila}:** {err.error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Si la importación fue exitosa o tiene errores que no impiden continuar, mostrar un botón para cerrar */}
+            <div className="mt-4 flex justify-end">
+                <button 
+                    onClick={onClose} 
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                    Aceptar y Cerrar
+                </button>
+            </div>
+          </div>
+        )}
+    </div>
+  );
+};
+// ========================================================
+
+
+// Componente del Modal de Contacto (Mantengo tu versión original)
 const ContactModal = ({ contact, onClose }: { 
   contact: any; 
   onClose: () => void; 
@@ -29,7 +217,7 @@ const ContactModal = ({ contact, onClose }: {
         >
           ×
         </button>
-
+        {/* ... (Contenido de ContactModal) ... */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -111,6 +299,7 @@ const ContactModal = ({ contact, onClose }: {
 
 export default function RepuestosPage() {
   const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false); // 🚨 Nuevo estado para el modal de importación
 
   const [talleres, setTalleres] = useState<any[]>([]);
   const [repuestos, setRepuestos] = useState<any[]>([]);
@@ -138,7 +327,8 @@ export default function RepuestosPage() {
         ]);
         setTalleres(talleresData);
         setRepuestos(repuestosData);
-        setCompanies(companiesData);
+        // Aseguramos que companies tenga la estructura de Company[]
+        setCompanies(companiesData.map(c => ({ id: c.id, name: c.name })));
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -161,6 +351,7 @@ export default function RepuestosPage() {
       ? rep.model?.toLowerCase().includes(activeFilterModel.toLowerCase())
       : true;
 
+    // Aquí convertimos el filtro a número antes de comparar
     const matchCompany = activeFilterCompany
         ? rep.company?.id === parseInt(activeFilterCompany)
         : true;
@@ -182,10 +373,34 @@ export default function RepuestosPage() {
     );
   }
 
+  // Función para cerrar y potencialmente refrescar datos (opcional)
+  const handleCloseImportModal = () => {
+    setIsImportModalOpen(false);
+    // 💡 Opcional: Podrías querer refrescar los datos de repuestos aquí si la importación fue exitosa
+    // loadData(); // Tendrías que refactorizar loadData para que pueda llamarse fácilmente
+  }
+
   return (
     <MGDashboard>
       <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
-        <h1 className="text-3xl font-bold mb-6">Stock de Repuestos</h1>
+        
+        {/* === HEADER CON EL BOTÓN DE IMPORTACIÓN === */}
+        <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Stock de Repuestos</h1>
+            
+            {/* BOTÓN PARA ABRIR EL MODAL */}
+            <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="flex items-center gap-2 bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6-6m-6 6l-6-6M9 10h6" />
+                </svg>
+                Importar Stock
+            </button>
+        </div>
+        {/* =========================================== */}
+
         <Tabs defaultValue="talleres" className="w-full">
           <TabsList>
             <TabsTrigger value="talleres">Datos de Talleres</TabsTrigger>
@@ -195,6 +410,7 @@ export default function RepuestosPage() {
           {/* TAB DE TALLERES */}
           <TabsContent value="talleres">
             <div className="border rounded-lg overflow-x-auto">
+              {/* ... (Tabla de talleres) ... */}
               <table className="w-full min-w-[900px] border-collapse">
                 <thead className="bg-gray-50">
                   <tr>
@@ -374,11 +590,22 @@ export default function RepuestosPage() {
         </Tabs>
       </div>
 
-      {/* Modal de Contacto */}
+      {/* Modal de Contacto (El que ya existía) */}
       <ContactModal 
         contact={selectedContact} 
         onClose={() => setSelectedContact(null)} 
       />
+
+      {/* === MODAL DE IMPORTACIÓN (NUEVO) === */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center bg-black/50 z-[60]"> 
+            <ImportPartForm 
+                companies={companies} 
+                onClose={handleCloseImportModal}
+            />
+        </div>
+      )}
+      {/* ==================================== */}
     </MGDashboard>
   );
 }

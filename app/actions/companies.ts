@@ -103,8 +103,8 @@ export async function updateCompany(
     where: { id },
     data: {
       name: data.name,
-      address: data.address,
-      state: data.state,
+      address: data.address ?? undefined,
+      state: data.state ?? undefined,
       city: data.city,
       phone1: data.phone1,
       phone2: data.phone2,

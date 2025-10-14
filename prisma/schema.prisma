@@ -99,11 +99,11 @@ model Vehicle {
   engineNumber      String?
   type              String?
   year              Int?
-  certificateNumber String    @unique
+  certificateNumber String?    @unique
   saleDate          DateTime?
   importDate        DateTime?
   blocked           Boolean?
-  licensePlate      String
+  licensePlate      String?
   warranty          Warranty?
   orders            Order[]
   companyId         Int?
