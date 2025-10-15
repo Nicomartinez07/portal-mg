@@ -4,6 +4,7 @@ import { MGDashboard } from "@/components/mg-dashboard";
 import { WarrantyProvider, useWarranty } from "@/contexts/WarrantyContext";
 import { WarrantyFilters } from "@/components/warranty/WarrantyFilters";
 import { WarrantyTable } from "@/components/warranty/WarrantyTable";
+import { ExportButton } from "@/components/warranty/export/ExportButton";
 import { getFilteredWarranties } from "./actions";
 
 const GarantiasContent = () => {
@@ -23,10 +24,13 @@ const GarantiasContent = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm h-full p-6">
-      <h1 className="text-3xl font-bold mb-6">Gestión de Garantías</h1>
-      <WarrantyFilters onSearch={handleSearch} />
-      {loading ? <p>Cargando...</p> : <WarrantyTable />}
-    </div>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Gestión de Garantías</h1>
+                <ExportButton /> 
+            </div>
+            <WarrantyFilters onSearch={handleSearch} />
+            {loading ? <p>Cargando...</p> : <WarrantyTable />}
+        </div>
   );
 };
 
