@@ -60,7 +60,7 @@ export async function exportOrders(filters: OrderFilters): Promise<ExportResult>
 
             // Filtros anidados: Vehículo (por VIN)
             vehicle: filters.vin 
-                ? { vin: { contains: filters.vin, mode: 'insensitive' } } 
+                ? { vin: { contains: filters.vin } } 
                 : undefined,
 
             // Filtros de Fechas (creationDate)
@@ -76,8 +76,8 @@ export async function exportOrders(filters: OrderFilters): Promise<ExportResult>
             customer: filters.customerName
                 ? {
                     OR: [
-                        { firstName: { contains: filters.customerName, mode: 'insensitive' } },
-                        { lastName: { contains: filters.customerName, mode: 'insensitive' } },
+                        { firstName: { contains: filters.customerName  } },
+                        { lastName: { contains: filters.customerName } },
                     ],
                   }
                 : undefined,

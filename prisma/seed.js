@@ -41,16 +41,19 @@ async function main() {
   // --------------------------------------
   console.log("🏢 Inserting companies...");
   const companiesData = [
-    { name: "Southern Importer", address: "123 Evergreen Ave", state: "Buenos Aires", city: "La Plata", phone1: "123456789", companyType: "Importer" },
-    { name: "Northern Dealership", address: "456 Fake St", state: "Córdoba", city: "Córdoba", phone1: "1122334455", companyType: "Dealer" },
-    { name: "Central Workshop", address: "789 Central Ave", state: "Buenos Aires", city: "La Plata", phone1: "2233445566", companyType: "Workshop", manager: "Roberto García" },
-    { name: "Western Dealership", address: "101 West St", state: "Mendoza", city: "Mendoza", phone1: "3344556677", companyType: "Dealer" },
-    { name: "Eastern Importer", address: "202 East Ave", state: "Santa Fe", city: "Rosario", phone1: "4455667788", companyType: "Importer" },
-    { name: "Taller Mecánico Rápido", address: "Av. Siempre Viva 742", state: "Buenos Aires", city: "La Plata", phone1: "2214567890", companyType: "Workshop", manager: "Carlos Mendoza" },
-    { name: "AutoService Premium", address: "Calle Falsa 123", state: "Córdoba", city: "Córdoba", phone1: "3519876543", companyType: "Workshop", manager: "María López" },
-    { name: "Mecánica Express", address: "Ruta 8 Km 65", state: "Buenos Aires", city: "Mercedes", phone1: "2324455667", companyType: "Workshop", manager: "Juan Pérez" },
-    { name: "Taller del Sur", address: "Av. San Martín 567", state: "Santa Fe", city: "Rosario", phone1: "3412345678", companyType: "Workshop", manager: "Ana Rodríguez" },
-    { name: "Service Automotor", address: "Belgrano 890", state: "Mendoza", city: "Mendoza", phone1: "2613456789", companyType: "Workshop", manager: "Pedro González" }
+    { id: 1, name: "Eximar MG", address: "Av. del Libertador 1513", state: "Buenos Aires", city: "Vicente Lopez", phone1: "11 12345678", companyType: "Importer", manager: "Hernan Ponce" },
+    { id: 2, name: "Southern Importer", address: "123 Evergreen Ave", state: "Buenos Aires", city: "La Plata", phone1: "123456789", companyType: "Importer" },
+    { id: 3, name: "Northern Dealership", address: "456 Fake St", state: "Córdoba", city: "Córdoba", phone1: "1122334455", companyType: "Dealer" },
+    { id: 4, name: "Central Workshop", address: "789 Central Ave", state: "Buenos Aires", city: "La Plata", phone1: "2233445566", companyType: "Workshop", manager: "Roberto García" },
+    { id: 5, name: "Western Dealership", address: "101 West St", state: "Mendoza", city: "Mendoza", phone1: "3344556677", companyType: "Dealer" },
+    { id: 6, name: "Eastern Importer", address: "202 East Ave", state: "Santa Fe", city: "Rosario", phone1: "4455667788", companyType: "Importer" },
+    { id: 7, name: "Taller Mecánico Rápido", address: "Av. Siempre Viva 742", state: "Buenos Aires", city: "La Plata", phone1: "2214567890", companyType: "Workshop", manager: "Carlos Mendoza" },
+    { id: 8, name: "AutoService Premium", address: "Calle Falsa 123", state: "Córdoba", city: "Córdoba", phone1: "3519876543", companyType: "Workshop", manager: "María López" },
+    { id: 9, name: "Mecánica Express", address: "Ruta 8 Km 65", state: "Buenos Aires", city: "Mercedes", phone1: "2324455667", companyType: "Workshop", manager: "Juan Pérez" },
+    { id: 10, name: "Taller del Sur", address: "Av. San Martín 567", state: "Santa Fe", city: "Rosario", phone1: "3412345678", companyType: "Workshop", manager: "Ana Rodríguez" },
+    { id: 11, name: "Service Automotor", address: "Belgrano 890", state: "Mendoza", city: "Mendoza", phone1: "2613456789", companyType: "Workshop", manager: "Pedro González" },
+    { id: 12, name: "CITYDRIVE / GRUPO TAGLE", address: "Av.Circunsiviacion", state: "Cordoba", city: "Cordoba", phone1: "2613456789", companyType: "Workshop", manager: "Francisco Vernocchi" },
+
   ];
   
   const companies = [];
@@ -67,12 +70,21 @@ async function main() {
   console.log("👤 Inserting users...");
   const SALT_ROUNDS = 10;
   const usersData = [
-    { id: 1, username: "Admin", email: "admin@company.com", notifications: true, password: await bcrypt.hash("Admin123!", SALT_ROUNDS), companyId: companies[0].id },
-    { id: 2, username: "John Smith", email: "john@smith.com", notifications: true, password: await bcrypt.hash("John123!", SALT_ROUNDS), companyId: companies[1].id },
-    { id: 3, username: "Mary Johnson", email: "mary@johnson.com", notifications: false, password: await bcrypt.hash("Mary123!", SALT_ROUNDS), companyId: companies[2].id },
-    { id: 4, username: "Mati PEDAZO DE GIL", email: "marAy@johnson.com", notifications: false, password: await bcrypt.hash("Marya123!", SALT_ROUNDS), companyId: companies[2].id },
-    { id: 5, username: "Carlos Brown", email: "carlos@brown.com", notifications: false, password: await bcrypt.hash("Carlos123!", SALT_ROUNDS), companyId: companies[3].id },
-    { id: 6, username: "Laura Wilson", email: "laura@wilson.com", notifications: true, password: await bcrypt.hash("Laura123!", SALT_ROUNDS), companyId: companies[4].id }
+    { id: 1, username: "Admin", email: "admin@company.com", notifications: false, password: await bcrypt.hash("Admin123!", SALT_ROUNDS), companyId: companies[1].id },
+    { id: 2, username: "Alejandro Krzychowiec", email: "akrzychowiec@eximar.com.ar", notifications: false, password: await bcrypt.hash("akrzychowiec", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 3, username: "Carlos Martinez", email: "cmartinez@eximar.com.ar", notifications: false, password: await bcrypt.hash("cmartinez", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 4, username: "Fabio Summa", email: "fsumma@eximar.com.ar", notifications: false, password: await bcrypt.hash("fsumma", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 5, username: "Federico Paterno", email: "fpaterno@eximar.com.ar", notifications: false, password: await bcrypt.hash("fpaterno", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 6, username: "Gaston Santillan", email: "gsantillan@eximar.com.ar", notifications: false, password: await bcrypt.hash("gsantillan", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 7, username: "Hernan Ponce", email: "hponce@eximar.com.ar", notifications: false, password: await bcrypt.hash("hponce", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 8, username: "Maria Rodriguez", email: "mrodriguez@eximar.com.ar", notifications: false, password: await bcrypt.hash("mrodriguez", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 9, username: "Valentin Devries", email: "vdevries@eximar.com.ar", notifications: false, password: await bcrypt.hash("vdevries", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 10, username: "Zoe Baldrich", email: "zbaldrich@eximar.com.ar", notifications: false, password: await bcrypt.hash("zbaldrich", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 11, username: "Francisco Vernocchi", email: "francisco.vernocchi@autocity.com.ar", notifications: false, password: await bcrypt.hash("fvernocchi", SALT_ROUNDS), companyId: companies[11].id },
+    { id: 12, username: "Renzo Agustin Rolando", email: "renzo.rolando@autocity.com.ar", notifications: false, password: await bcrypt.hash("rrolando", SALT_ROUNDS), companyId: companies[11].id },
+    
+    
+
   ];
   const users = [];
   for (const u of usersData) {
@@ -90,9 +102,16 @@ async function main() {
       { userId: 1, roleId: roles["ADMIN"].id },
       { userId: 2, roleId: roles["IMPORTER"].id },
       { userId: 3, roleId: roles["IMPORTER"].id },
-      { userId: 4, roleId: roles["DEALER"].id },
-      { userId: 5, roleId: roles["WORKSHOP"].id },
-      { userId: 6, roleId: roles["WORKSHOP"].id }
+      { userId: 4, roleId: roles["IMPORTER"].id },
+      { userId: 5, roleId: roles["IMPORTER"].id },
+      { userId: 6, roleId: roles["IMPORTER"].id },
+      { userId: 7, roleId: roles["IMPORTER"].id },
+      { userId: 8, roleId: roles["IMPORTER"].id },
+      { userId: 9, roleId: roles["IMPORTER"].id },
+      { userId: 10, roleId: roles["IMPORTER"].id },
+      { userId: 11, roleId: roles["IMPORTER"].id },
+      { userId: 12, roleId: roles["WORKSHOP"].id },
+      { userId: 13, roleId: roles["WORKSHOP"].id },
     ]
   });
   console.log("✅ Roles assigned to users");
@@ -243,7 +262,9 @@ async function main() {
       diagnosis: "Problema eléctrico en luces delanteras. Se requiere cambio de batería.",
       additionalObservations: "La batería no está cubierta por la garantía."
     },
+    //BORRADOREEEEEES
     {
+      
       draft: true,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 0, 15),
