@@ -1,0 +1,229 @@
+Otra cosa que me olvide decirte que en el ordenes, tambien puede haber borradores porque un campo de la tabla es un booleano llamado draft
+
+ahi te paso el schema con todo lo relacionado a ordenes  
+
+
+// =============== ORDENES =================
+model Order {
+  id                     Int        @id @default(autoincrement())
+  orderNumber            Int @default(99999)
+  type                   OrderType
+  creationDate           DateTime
+  draft                  Boolean?
+  customerId             Int?
+  customer               Customer?   @relation(fields: [customerId], references: [id])
+  vehicleVin             String
+  vehicle                Vehicle    @relation(fields: [vehicleVin], references: [vin])
+  companyId              Int
+  company                Company    @relation(fields: [companyId], references: [id])
+  userId                 Int?
+  user                   User?     @relation(fields: [userId], references: [id])
+  status                 OrderStatus?
+  service                String? 
+  internalStatus         InternalStatus?
+  actualMileage          Int
+  diagnosis              String?
+  additionalObservations String?
+  preAuthorizationNumber  String? 
+  tasks                  OrderTask[]
+  photos                 OrderPhoto[]
+  statusHistory          OrderStatusHistory[]
+}
+
+model OrderTask {
+  id          Int            @id @default(autoincrement())
+  orderId     Int
+  order       Order          @relation(fields: [orderId], references: [id])
+  description String
+  hoursCount  Int
+  parts       OrderTaskPart[]
+}
+
+model OrderTaskPart {
+  id          Int      @id @default(autoincrement())
+  orderTaskId Int
+  partId      Int
+  quantity    Int
+  description String?
+  orderTask   OrderTask @relation(fields: [orderTaskId], references: [id])
+  part        Part      @relation(fields: [partId], references: [id])
+}
+
+model OrderPhoto {
+  id      Int    @id @default(autoincrement())
+  orderId Int
+  order   Order  @relation(fields: [orderId], references: [id])
+  type    String // ej: "license_plate", "vin_plate", "odometer", "extra"
+  url     String
+}
+
+model OrderStatusHistory {
+  id        Int          @id @default(autoincrement())
+  orderId   Int
+  order     Order        @relation(fields: [orderId], references: [id])
+  status    OrderStatus? 
+  changedAt DateTime     @default(now())
+  observation String?
+}
+
+
+A CONTINUACION TE MANDO EL ACTIONS DE INSERTAR UN SERVICIO
+
+// src/app/ordenes/insert/servicio/actions.ts
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { CreateServiceResult } from "@/app/types";
+import { serviceSchema, draftServiceSchema } from '@/schemas/service';
+import { z } from 'zod';
+
+// Guardar servicio (completo o borrador)
+export async function saveService(
+  serviceData: any,
+  companyId: number,
+  userId?: number,
+  isDraft: boolean = false,
+  draftId?: number
+): Promise<CreateServiceResult> {
+  try {
+    // 1. VALIDAR CON ZOD - schema diferente para borradores
+    const validatedData = isDraft 
+      ? draftServiceSchema.parse(serviceData)
+      : serviceSchema.parse(serviceData);
+
+    // 2. VALIDAR QUE EL VEHÍCULO EXISTA
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { vin: validatedData.vin },
+    });
+
+    if (!vehicle) {
+      return { success: false, message: "Vehículo no encontrado" };
+    }
+
+    // 🔒 TRANSACCIÓN
+    const service = await prisma.$transaction(async (tx) => {
+      if (draftId) {
+        console.log(`🔄 Actualizando borrador de servicio ID: ${draftId}, isDraft: ${isDraft}`);
+        
+        // Actualizar orden existente
+        const updateData: any = {
+          draft: isDraft,
+          status: isDraft ? "BORRADOR" : "COMPLETADO",
+          actualMileage: validatedData.actualMileage || 0,
+          additionalObservations: validatedData.additionalObservations || "",
+          service: validatedData.service || null,
+          type: "SERVICIO",
+        };
+        if (validatedData.vin) {
+          updateData.vehicle = { connect: { vin: validatedData.vin } };
+        }
+
+        const updatedOrder = await tx.order.update({
+          where: { id: draftId },
+          data: updateData,
+        });
+
+        // Agregar historial si se convierte a orden completa
+        if (!isDraft) {
+          await tx.orderStatusHistory.create({
+            data: {
+              orderId: draftId,
+              status: "PENDIENTE",
+              changedAt: new Date(),
+            },
+          });
+        }
+
+        return tx.order.findUnique({
+          where: { id: draftId },
+          include: {
+            customer: true,
+            vehicle: true,
+          },
+        });
+
+      } else {
+        // 👇 CREAR NUEVO SERVICIO
+        console.log("🆕 Creando nuevo servicio/borrador");
+
+        // Determinar número de orden (solo para servicios completos)
+        let orderNumber = 99999;
+        if (!isDraft) {
+          const lastOrder = await tx.order.findFirst({
+            where: { draft: false },
+            orderBy: { orderNumber: "desc" },
+          });
+          orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
+        }
+        // Crear nueva orden de servicio
+        const newOrder = await tx.order.create({
+          data: {
+            orderNumber,
+            type: "SERVICIO",
+            creationDate: new Date(),
+            draft: isDraft,
+            vehicle: { connect: { vin: validatedData.vin } },
+            company: { connect: { id: companyId } },
+            user: userId ? { connect: { id: userId } } : undefined,
+            status: isDraft ? "BORRADOR" : "COMPLETADO",
+            internalStatus: null,
+            actualMileage: validatedData.actualMileage || 0,
+            additionalObservations: validatedData.additionalObservations || "",
+            statusHistory: isDraft
+              ? {
+                  create: [{
+                    status: "BORRADOR",
+                    changedAt: new Date(),
+                  }],
+                }
+              : undefined,
+            service: validatedData.service || null,
+          },
+        });
+
+        return tx.order.findUnique({
+          where: { id: newOrder.id },
+          include: {
+            customer: true,
+            vehicle: true,
+          },
+        });
+      }
+    });
+
+    // Mensaje de éxito
+    let message = draftId
+      ? (isDraft 
+          ? "✅ Borrador de servicio actualizado correctamente" 
+          : "✅ Borrador convertido a servicio exitosamente")
+      : (isDraft
+          ? "✅ Borrador de servicio guardado correctamente"
+          : "✅ Servicio creado exitosamente");
+
+    return { success: true, service, message };
+
+  } catch (error) {
+    // Manejar errores de Zod
+    if (error instanceof z.ZodError) {
+      const errors: Record<string, string> = {};
+      error.issues.forEach(err => {
+        if (err.path && err.path[0]) {
+          const fieldName = err.path.join('.');
+          errors[fieldName] = err.message;
+        }
+      });
+      return {
+        success: false,
+        errors,
+        message: "❌ Errores de validación en el formulario"
+      };
+    }
+
+    console.error("Error en saveService:", error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "❌ Error interno del servidor",
+    };
+  }
+}
+

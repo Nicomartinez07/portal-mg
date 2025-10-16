@@ -78,7 +78,7 @@ export async function activateWarranty(data: unknown): Promise<{
 
     // ✅ 3. Buscar usuario por nombre
     const userRecord = await prisma.user.findFirst({
-      where: { name: user },
+      where: { username: user },
     });
 
     if (!userRecord) {

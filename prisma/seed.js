@@ -7,10 +7,10 @@ async function main() {
 
   // Delete tables in correct order due to FK constraints
   await prisma.userRole.deleteMany();
-  await prisma.orderTaskPart.deleteMany(); // Añadir esta línea
-  await prisma.orderTask.deleteMany(); // Añadir esta línea
-  await prisma.orderPhoto.deleteMany(); // Añadir esta línea
-  await prisma.orderStatusHistory.deleteMany(); // Añadir esta línea
+  await prisma.orderTaskPart.deleteMany(); 
+  await prisma.orderTask.deleteMany(); 
+  await prisma.orderPhoto.deleteMany();
+  await prisma.orderStatusHistory.deleteMany(); 
   await prisma.order.deleteMany();
   await prisma.warranty.deleteMany();
   await prisma.part.deleteMany();
@@ -109,9 +109,8 @@ async function main() {
       { userId: 8, roleId: roles["IMPORTER"].id },
       { userId: 9, roleId: roles["IMPORTER"].id },
       { userId: 10, roleId: roles["IMPORTER"].id },
-      { userId: 11, roleId: roles["IMPORTER"].id },
+      { userId: 11, roleId: roles["WORKSHOP"].id },
       { userId: 12, roleId: roles["WORKSHOP"].id },
-      { userId: 13, roleId: roles["WORKSHOP"].id },
     ]
   });
   console.log("✅ Roles assigned to users");
@@ -150,7 +149,8 @@ async function main() {
       saleDate: new Date(2020, (i % 12), 15),
       importDate: new Date(2019, (i % 12), 10),
       licensePlate: `ABC${i}XYZ`,
-      blocked: true
+      blocked: true,
+      companyId: 1,
     });
   }
   const vehicles = await prisma.$transaction(
@@ -192,12 +192,6 @@ async function main() {
     }))
   );
 
-  // Ahora que la transacción se completó, puedes usar 'createdParts'
-  // que es un array de los objetos de partes que acabas de crear.
-  // Si necesitas este array para otras partes del seed, úsalo aquí.
-  // Por ejemplo, para crear OrderTaskPart, necesitarás los IDs de estas partes.
-  // No necesitas un bucle forEach separado.
-
   console.log("✅ Parts inserted");
 
   // --------------------------------------
@@ -206,7 +200,7 @@ async function main() {
   console.log("📄 Inserting orders and related data...");
   const ordersToCreate = [
     {
-      id: 100,
+      id: 1,
       draft: false,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 0, 15),
@@ -221,6 +215,22 @@ async function main() {
       additionalObservations: "El cliente reporta chirrido al frenar a baja velocidad."
     },
     {
+      id: 3,
+      type: "SERVICIO",
+      draft: false,
+      creationDate: new Date(2025, 2, 10),
+      customerId: customers[2].id,
+      vehicleVin: vehicles[2].vin,
+      companyId: companies[3].id,
+      userId: users[3].id,
+      status: "COMPLETADO",
+      internalStatus: "CARGADO",
+      actualMileage: 50000,
+      diagnosis: "Revisión completa de la suspensión y alineación.",
+      additionalObservations: "El cliente reporta inestabilidad en la conducción."
+    },
+     {
+      id: 2,
       type: "RECLAMO",
       draft: false,
       creationDate: new Date(2025, 1, 20),
@@ -235,20 +245,7 @@ async function main() {
       additionalObservations: "Se recomienda cambiar el filtro y la junta."
     },
     {
-      type: "SERVICIO",
-      draft: false,
-      creationDate: new Date(2025, 2, 10),
-      customerId: customers[2].id,
-      vehicleVin: vehicles[2].vin,
-      companyId: companies[3].id,
-      userId: users[3].id,
-      status: "COMPLETADO",
-      internalStatus: "CARGADO",
-      actualMileage: 50000,
-      diagnosis: "Revisión completa de la suspensión y alineación.",
-      additionalObservations: "El cliente reporta inestabilidad en la conducción."
-    },
-    {
+      id: 4,
       draft: false,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 3, 5),
@@ -264,7 +261,7 @@ async function main() {
     },
     //BORRADOREEEEEES
     {
-      
+      id: 5,
       draft: true,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 0, 15),
@@ -279,6 +276,7 @@ async function main() {
       additionalObservations: "El cliente reporta chirrido al frenar a baja velocidad."
     },
     {
+      id: 6,
       draft: true,
       type: "RECLAMO",
       creationDate: new Date(2025, 1, 20),
@@ -293,6 +291,7 @@ async function main() {
       additionalObservations: "Se recomienda cambiar el filtro y la junta."
     },
     {
+      id: 7,
       draft: true,
       type: "SERVICIO",
       creationDate: new Date(2025, 2, 10),
@@ -307,6 +306,7 @@ async function main() {
       additionalObservations: "El cliente reporta inestabilidad en la conducción."
     },
     {
+      id: 8,
       draft: true,
       type: "PRE_AUTORIZACION",
       creationDate: new Date(2025, 3, 5),
@@ -319,7 +319,37 @@ async function main() {
       actualMileage: 22000,
       diagnosis: "Problema eléctrico en luces delanteras. Se requiere cambio de batería.",
       additionalObservations: "La batería no está cubierta por la garantía."
-    }
+    },
+    {
+      id: 9,
+      type: "RECLAMO",
+      draft: false,
+      creationDate: new Date(2025, 1, 20),
+      customerId: customers[1].id,
+      vehicleVin: vehicles[1].vin,
+      companyId: companies[6].id,
+      userId: users[2].id,
+      status: "PENDIENTE",
+      internalStatus: "PENDIENTE_RECLAMO",
+      actualMileage: 35000,
+      diagnosis: "Inspección de motor: se detecta fuga de aceite en el cárter.",
+      additionalObservations: "Se recomienda cambiar el filtro y la junta."
+    },
+    {
+      id: 10,
+      draft: false,
+      type: "PRE_AUTORIZACION",
+      creationDate: new Date(2025, 3, 5),
+      customerId: customers[0].id,
+      vehicleVin: vehicles[3].vin,
+      companyId: companies[8].id,
+      userId: users[4].id,
+      status: "PENDIENTE",
+      internalStatus: "PENDIENTE_RECLAMO",
+      actualMileage: 22000,
+      diagnosis: "Problema eléctrico en luces delanteras. Se requiere cambio de batería.",
+      additionalObservations: "La batería no está cubierta por la garantía."
+    },
   ];
 
   for (const orderData of ordersToCreate) {

@@ -222,7 +222,7 @@ export async function saveClaim(
             preAuthorizationNumber: validatedData.preAuthorizationNumber || null,
             statusHistory: {
               create: [{
-                status: isDraft ? "BORRADOR" : "PENDIENTE",
+                status: isDraft ? "BORRADOR" : null,
                 changedAt: new Date(),
               }],
             },

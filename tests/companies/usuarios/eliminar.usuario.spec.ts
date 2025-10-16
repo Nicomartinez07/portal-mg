@@ -7,7 +7,7 @@ test('test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
   await page.getByRole('button', { name: 'Login' }).click();
   await page.getByRole('link', { name: 'Empresas' }).click();
-  await page.getByRole('combobox').selectOption('Central Workshop');
+  await page.getByRole('combobox').selectOption('Eximar MG');
   await page.getByRole('button', { name: 'Usuarios' }).click();
   await expect(page.getByRole('cell', { name: 'Mary Johnson' })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Mati PEDAZO DE GIL' })).toBeVisible();

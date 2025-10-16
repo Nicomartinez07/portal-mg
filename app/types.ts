@@ -2,9 +2,9 @@
 
 // Primero, define los tipos base si los necesitas
 export type OrderType = "PRE_AUTORIZACION" | "RECLAMO" | "SERVICIO";
-export type OrderStatus = "PENDIENTE" | "AUTORIZADO" | "RECHAZADO" | "COMPLETADO" | "BORRADOR" | "";
+export type OrderStatus = "PENDIENTE" | "AUTORIZADO" | "RECHAZADO" | "COMPLETADO" | "BORRADOR" | null;
 export type InternalStatus =
-  | ""
+  |  null
   | "PENDIENTE DE RECLAMO"
   | "RECLAMADO EN ORIGEN"
   | "APROBADO EN ORIGEN"

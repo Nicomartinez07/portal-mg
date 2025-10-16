@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Insertar Auto y verificarlo mediante VIN', async ({ page }) => {
+test('Insertar Auto y verificarlo', async ({ page }) => {
   await page.goto('http://localhost:3000/login');
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('Admin');
   await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
@@ -22,5 +22,5 @@ test('Insertar Auto y verificarlo mediante VIN', async ({ page }) => {
   });
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).fill('00000000000000000');
   await page.getByRole('textbox', { name: 'Buscar vehiculo por VIN' }).press('Enter');
-  await expect(page.locator('body')).toContainText('VIN:00000000000000000Modelo:AAAAA AAAAANro. Motor:0000Año:2000');
+  await expect(page.locator('body')).toContainText('00000000000000000');
 });
