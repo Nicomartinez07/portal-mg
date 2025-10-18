@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
-test('Loguearme con credenciales incorrectas y verificar mensaje de error', async ({ page }) => {
+test('Loguearte con usuario carlos', async ({ page }) => {
   await page.goto('http://localhost:3000/');
   await page.getByRole('button', { name: 'Admin' }).click();
   await page.getByRole('menuitem', { name: 'Salir' }).click();
   await page.getByRole('textbox', { name: 'Nombre de usuario' }).click();
-  await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('Admin123!');
+  await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('Fabio Summa');
   await page.getByRole('textbox', { name: 'Contraseña' }).click();
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
+  await page.getByRole('textbox', { name: 'Contraseña' }).fill('fsumma');
   await page.getByRole('button', { name: 'Login' }).click();
-  await expect(page.getByText('Usuario o contraseña incorrectos')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bienvenido a la pagina de MG' })).toBeVisible();
 });

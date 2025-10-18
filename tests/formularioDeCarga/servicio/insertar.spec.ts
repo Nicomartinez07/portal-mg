@@ -1,12 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('Insertar Servicio', async ({ page }) => {
-  await page.goto('http://localhost:3000/login');
-  await page.getByRole('textbox', { name: 'Nombre de usuario' }).click();
-  await page.getByRole('textbox', { name: 'Nombre de usuario' }).fill('Admin');
-  await page.getByRole('textbox', { name: 'Contraseña' }).click();
-  await page.getByRole('textbox', { name: 'Contraseña' }).fill('Admin123!');
-  await page.getByRole('button', { name: 'Login' }).click();
+  await page.goto('http://localhost:3000');
   await page.getByRole('button', { name: 'Servicio' }).click();
   await page.getByRole('button', { name: 'Servicio' }).press('CapsLock');
   await page.getByRole('textbox', { name: 'Ingrese VIN del vehículo' }).click();

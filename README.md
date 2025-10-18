@@ -72,6 +72,9 @@ Para ejecutar los pruebas unitarias, correr el siguiente comando
 ```bash
 bun run tests
 ```
+ANTES DE CORRER LOS TESTS CORRER ESTE COMANDO: 
+
+npx prisma/test-seed.js
 
 ### Creación de nuevas pruebas
 

@@ -300,6 +300,7 @@ export default function ClaimModal({
                   onClick={() => handleStatusButtonClick("AUTORIZADO")}
                   className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                   disabled={isUpdating}
+                  name="Aprobar"
                 >
                   Aprobar
                 </button>
@@ -307,6 +308,7 @@ export default function ClaimModal({
                   onClick={() => handleStatusButtonClick("RECHAZADO")}
                   className="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 disabled:opacity-50"
                   disabled={isUpdating}
+                  name="Rechazar"
                 >
                   Rechazar
                 </button>

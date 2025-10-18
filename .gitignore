@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env
+prisma/.env.test
 
 # vercel
 .vercel
@@ -48,3 +49,7 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+tests/auth.json
+
+# PRISMA / SQLITE (Archivos de BD de Testing)
+prisma/test.db

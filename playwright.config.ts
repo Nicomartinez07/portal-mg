@@ -1,41 +1,41 @@
-import { defineConfig, devices } from '@playwright/test';
+// playwright.config.js
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+import { defineConfig, devices } from '@playwright/test';
+// 1. Importa 'path' y 'dotenv' si quieres usar la sintaxis de importación/carga al inicio,
+// aunque la carga dentro de globalSetup/Teardown es más segura.
+
+// const path = require('path');
+// require('dotenv').config({ path: path.resolve(__dirname, 'prisma/.env.test') }); 
+// → NOTA: Esto no es necesario si cargas el .env.test dentro del globalSetup/Teardown.
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
   testDir: './tests',
-  //Setup para los tests
-  globalSetup: "./tests/utils/global.setup.ts",
-  //Teardown para todos los tests
-  globalTeardown: "./tests/utils/global.teardown.ts",
+
+  // 2. AJUSTE: Cambia la ruta a los scripts que definimos en el paso anterior.
+  // Asumiendo que están en la raíz del proyecto.
+  globalSetup: "./tests/utils/globalSetup.js",
+  globalTeardown: "./tests/utils/globalTeardown.js",
+
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  //retries: process.env.CI === "no" ? 2 : 0,
-  // Cero reintentos - Si falla, que falle rápido
   retries: 0,
 
   /* Opt out of parallel tests on CI. */
-  //workers: process.env.CI === "no" ? 1 : undefined,
-   // Solo 1 worker - Prohibido paralelismo (consume mucha RAM/CPU)
-  workers: 1,
+  workers: 1, // Solo 1 worker - Prohibido paralelismo (consume mucha RAM/CPU)
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
+
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3000',
+    storageState: 'tests/auth.json',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -43,34 +43,21 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // {
-    //   name: 'chromium',
-    //   use: { ...devices['Desktop Chrome'] },
-    // },
-
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
     },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
+    // Puedes habilitar otros navegadores aquí si quieres
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    // 3. Importante: El servidor de Next.js (npm run dev)
+    // debe correr con sus variables de entorno normales (.env), 
+    // y el código de Next/Prisma usará la BD de TESTING 
+    // porque el globalSetup garantiza que la variable DATABASE_URL apunte a 'myproject_test'.
+    command: 'npm run dev', 
     url: 'http://localhost:3000',
-    //reuseExistingServer: process.env.CI !== "no",
-    // NO reutilizar el server - Cerramos todo después de cada test
-    reuseExistingServer: false,
+    reuseExistingServer: false, // NO reutilizar el server - Cerramos todo después de cada test
   },
 });
