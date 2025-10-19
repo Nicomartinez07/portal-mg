@@ -46,18 +46,18 @@ async function main() {
   // --------------------------------------
   console.log("🏢 Inserting companies...");
   const companiesData = [
-    { id: 1, name: "Eximar MG", address: "Av. del Libertador 1513", state: "Buenos Aires", city: "Vicente Lopez", phone1: "11 12345678", companyType: "Importer", manager: "Hernan Ponce" },
+    { id: 1, name: "Eximar MG", address: "Av. del Libertador 1513", state: "Buenos Aires", city: "Vicente Lopez", phone1: "11 12345678", companyType: "Importer", manager: "Hernan Ponce", showInParts: true },
     { id: 2, name: "Southern Importer", address: "123 Evergreen Ave", state: "Buenos Aires", city: "La Plata", phone1: "123456789", companyType: "Importer" },
     { id: 3, name: "Northern Dealership", address: "456 Fake St", state: "Córdoba", city: "Córdoba", phone1: "1122334455", companyType: "Dealer" },
-    { id: 4, name: "Central Workshop", address: "789 Central Ave", state: "Buenos Aires", city: "La Plata", phone1: "2233445566", companyType: "Workshop", manager: "Roberto García" },
+    { id: 4, name: "Central Workshop", address: "789 Central Ave", state: "Buenos Aires", city: "La Plata", phone1: "2233445566", companyType: "Workshop", manager: "Roberto García", showInParts: true },
     { id: 5, name: "Western Dealership", address: "101 West St", state: "Mendoza", city: "Mendoza", phone1: "3344556677", companyType: "Dealer" },
     { id: 6, name: "Eastern Importer", address: "202 East Ave", state: "Santa Fe", city: "Rosario", phone1: "4455667788", companyType: "Importer" },
     { id: 7, name: "Taller Mecánico Rápido", address: "Av. Siempre Viva 742", state: "Buenos Aires", city: "La Plata", phone1: "2214567890", companyType: "Workshop", manager: "Carlos Mendoza" },
-    { id: 8, name: "AutoService Premium", address: "Calle Falsa 123", state: "Córdoba", city: "Córdoba", phone1: "3519876543", companyType: "Workshop", manager: "María López" },
-    { id: 9, name: "Mecánica Express", address: "Ruta 8 Km 65", state: "Buenos Aires", city: "Mercedes", phone1: "2324455667", companyType: "Workshop", manager: "Juan Pérez" },
-    { id: 10, name: "Taller del Sur", address: "Av. San Martín 567", state: "Santa Fe", city: "Rosario", phone1: "3412345678", companyType: "Workshop", manager: "Ana Rodríguez" },
-    { id: 11, name: "Service Automotor", address: "Belgrano 890", state: "Mendoza", city: "Mendoza", phone1: "2613456789", companyType: "Workshop", manager: "Pedro González" },
-    { id: 12, name: "CITYDRIVE / GRUPO TAGLE", address: "Av.Circunsiviacion", state: "Cordoba", city: "Cordoba", phone1: "2613456789", companyType: "Workshop", manager: "Francisco Vernocchi" },
+    { id: 8, name: "AutoService Premium", address: "Calle Falsa 123", state: "Córdoba", city: "Córdoba", phone1: "3519876543", companyType: "Workshop", manager: "María López", showInParts: true  },
+    { id: 9, name: "Mecánica Express", address: "Ruta 8 Km 65", state: "Buenos Aires", city: "Mercedes", phone1: "2324455667", companyType: "Workshop", manager: "Juan Pérez", showInParts: true  },
+    { id: 10, name: "Taller del Sur", address: "Av. San Martín 567", state: "Santa Fe", city: "Rosario", phone1: "3412345678", companyType: "Workshop", manager: "Ana Rodríguez", showInParts: true  },
+    { id: 11, name: "Service Automotor", address: "Belgrano 890", state: "Mendoza", city: "Mendoza", phone1: "2613456789", companyType: "Workshop", manager: "Pedro González", showInParts: true  },
+    { id: 12, name: "CITYDRIVE / GRUPO TAGLE", address: "Av.Circunvalacion", state: "Cordoba", city: "Cordoba", phone1: "2613456789", companyType: "Workshop", manager: "Francisco Vernocchi", showInParts: true },
 
   ];
   
@@ -77,10 +77,10 @@ async function main() {
   const usersData = [
     { id: 1, username: "Admin", email: "admin@company.com", notifications: false, password: await bcrypt.hash("Admin123!", SALT_ROUNDS), companyId: companies[1].id },
     { id: 2, username: "Alejandro Krzychowiec", email: "akrzychowiec@eximar.com.ar", notifications: false, password: await bcrypt.hash("akrzychowiec", SALT_ROUNDS), companyId: companies[0].id },
-    { id: 3, username: "Carlos Martinez", email: "cmartinez@eximar.com.ar", notifications: false, password: await bcrypt.hash("cmartinez", SALT_ROUNDS), companyId: companies[0].id },
-    { id: 4, username: "Fabio Summa", email: "fsumma@eximar.com.ar", notifications: false, password: await bcrypt.hash("fsumma", SALT_ROUNDS), companyId: companies[0].id },
-    { id: 5, username: "Federico Paterno", email: "fpaterno@eximar.com.ar", notifications: false, password: await bcrypt.hash("fpaterno", SALT_ROUNDS), companyId: companies[0].id },
-    { id: 6, username: "Gaston Santillan", email: "gsantillan@eximar.com.ar", notifications: false, password: await bcrypt.hash("gsantillan", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 3, username: "Carlos Martinez", email: "cmartinez@eximar.com.ar", notifications: true, password: await bcrypt.hash("cmartinez", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 4, username: "Fabio Summa", email: "fsumma@eximar.com.ar", notifications: true, password: await bcrypt.hash("fsumma", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 5, username: "Federico Paterno", email: "fpaterno@eximar.com.ar", notifications: true, password: await bcrypt.hash("fpaterno", SALT_ROUNDS), companyId: companies[0].id },
+    { id: 6, username: "Gaston Santillan", email: "gsantillan@eximar.com.ar", notifications: true, password: await bcrypt.hash("gsantillan", SALT_ROUNDS), companyId: companies[0].id },
     { id: 7, username: "Hernan Ponce", email: "hponce@eximar.com.ar", notifications: false, password: await bcrypt.hash("hponce", SALT_ROUNDS), companyId: companies[0].id },
     { id: 8, username: "Maria Rodriguez", email: "mrodriguez@eximar.com.ar", notifications: false, password: await bcrypt.hash("mrodriguez", SALT_ROUNDS), companyId: companies[0].id },
     { id: 9, username: "Valentin Devries", email: "vdevries@eximar.com.ar", notifications: false, password: await bcrypt.hash("vdevries", SALT_ROUNDS), companyId: companies[0].id },
@@ -296,7 +296,7 @@ async function main() {
       id: 6,
       draft: true,
       type: "RECLAMO",
-      creationDate: new Date(2025, 1, 21),
+      creationDate: new Date(2025, 1, 20),
       customerId: 2,
       vehicleVin: "VIN00002",
       companyId: 7,
@@ -356,7 +356,7 @@ async function main() {
       id: 10,
       draft: false,
       type: "PRE_AUTORIZACION",
-      creationDate: new Date(2025, 3, 6),
+      creationDate: new Date(2025, 3, 5),
       customerId: 1,
       vehicleVin: "VIN00004",
       companyId: 9,
