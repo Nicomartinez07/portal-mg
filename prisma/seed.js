@@ -57,7 +57,7 @@ async function main() {
     { id: 9, name: "Mecánica Express", address: "Ruta 8 Km 65", state: "Buenos Aires", city: "Mercedes", phone1: "2324455667", companyType: "Workshop", manager: "Juan Pérez" },
     { id: 10, name: "Taller del Sur", address: "Av. San Martín 567", state: "Santa Fe", city: "Rosario", phone1: "3412345678", companyType: "Workshop", manager: "Ana Rodríguez" },
     { id: 11, name: "Service Automotor", address: "Belgrano 890", state: "Mendoza", city: "Mendoza", phone1: "2613456789", companyType: "Workshop", manager: "Pedro González" },
-    { id: 12, name: "CITYDRIVE / GRUPO TAGLE", address: "Av.Circunsiviacion", state: "Cordoba", city: "Cordoba", phone1: "2613456789", companyType: "Workshop", manager: "Francisco Vernocchi" },
+    { id: 12, name: "CITYDRIVE / GRUPO TAGLE", address: "Av.Circunvalacion", state: "Cordoba", city: "Cordoba", phone1: "2613456789", companyType: "Workshop", manager: "Francisco Vernocchi" },
 
   ];
   

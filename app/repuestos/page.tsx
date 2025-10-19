@@ -11,8 +11,21 @@ import {
 } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-// 🚨 NECESITAS ESTOS IMPORTS DE TUS SERVER ACTIONS
 import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/repuestos/importar/actions'; 
+
+
+// === TIPOS DE DATOS PARA LOS TALLERES ===
+interface Workshop {
+    id: number;
+    name: string;
+    manager: string | null;
+    managerEmail: string | null; // <-- ¡El campo que agregaste!
+    address: string;
+    state: string;
+    city: string | null;
+    phone1: string | null;
+    email: string | null; // El email de la compañía, no del manager
+}
 
 // === TIPOS DE DATOS PARA EL FORMULARIO DE IMPORTACIÓN ===
 interface Company {
@@ -33,13 +46,14 @@ interface ImportResult {
     inserted?: number;
 }
 // ========================================================
-
-
-// === COMPONENTE DEL FORMULARIO DE IMPORTACIÓN (INTEGRADO) ===
-const ImportPartForm: React.FC<{ 
+interface ImportPartFormProps { 
     companies: Company[];
     onClose: () => void; 
-}> = ({ companies, onClose }) => {
+    eximarId: number | null; // <-- Nueva prop
+}
+
+// === COMPONENTE DEL FORMULARIO DE IMPORTACIÓN (INTEGRADO) ===
+const ImportPartForm: React.FC<ImportPartFormProps> = ({ companies, onClose, eximarId }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [report, setReport] = useState<ImportResult | null>(null);
@@ -48,17 +62,21 @@ const ImportPartForm: React.FC<{
   // Manejador para el botón "Importar"
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // Como el ID de la empresa es un string en el select, verificamos
     if (!selectedFile || !selectedCompanyId || selectedCompanyId === '') {
       alert('Debe seleccionar un archivo y una empresa.');
       return;
     }
 
+    // 💡 3. Calcular la bandera 'isEximar'
+    const isEximar = eximarId ? parseInt(selectedCompanyId, 10) === eximarId : false;
+
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('excelFile', selectedFile);
-    // Usamos el ID de la empresa, que está en el estado como string
-    formData.append('companyId', selectedCompanyId); 
+    formData.append('companyId', selectedCompanyId);
+    
+    // 💡 4. ENVIAR la bandera isEximar al Server Action
+    formData.append('isEximar', isEximar.toString()); 
 
     setReport(null); 
     
@@ -200,7 +218,7 @@ const ImportPartForm: React.FC<{
 // ========================================================
 
 
-// Componente del Modal de Contacto (Mantengo tu versión original)
+// Componente del Modal de Contacto
 const ContactModal = ({ contact, onClose }: { 
   contact: any; 
   onClose: () => void; 
@@ -299,7 +317,7 @@ const ContactModal = ({ contact, onClose }: {
 
 export default function RepuestosPage() {
   const [selectedContact, setSelectedContact] = useState<any>(null);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false); // 🚨 Nuevo estado para el modal de importación
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [talleres, setTalleres] = useState<any[]>([]);
   const [repuestos, setRepuestos] = useState<any[]>([]);
@@ -318,17 +336,17 @@ export default function RepuestosPage() {
 
   // 🔹 Cargar datos iniciales
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [talleresData, repuestosData, companiesData] = await Promise.all([
-          getTalleres(),
-          getRepuestos(),
-          getCompanies(),
-        ]);
-        setTalleres(talleresData);
-        setRepuestos(repuestosData);
-        // Aseguramos que companies tenga la estructura de Company[]
-        setCompanies(companiesData.map(c => ({ id: c.id, name: c.name })));
+  async function loadData() {
+    try {
+      const [talleresData, repuestosData, companiesData] = await Promise.all([
+        getTalleres(),
+        getRepuestos(),
+        getCompanies(),
+      ]);
+      // Forzar el tipo aquí si no está tipado en `useState`
+      setTalleres(talleresData as Workshop[]); 
+      setRepuestos(repuestosData);
+      setCompanies(companiesData.map(c => ({ id: c.id, name: c.name })));
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -407,11 +425,13 @@ export default function RepuestosPage() {
             <TabsTrigger value="repuestos">Listado de Repuestos</TabsTrigger>
           </TabsList>
 
+       
           {/* TAB DE TALLERES */}
           <TabsContent value="talleres">
             <div className="border rounded-lg overflow-x-auto">
-              {/* ... (Tabla de talleres) ... */}
-              <table className="w-full min-w-[900px] border-collapse">
+              {/* SOLUCIÓN AL ERROR DE HIDRATACIÓN: 
+                  Juntamos el div y el table en la misma línea para eliminar el whitespace. */}
+              <table className="w-full min-w-[1000px] border-collapse">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left">Nombre</th>
@@ -420,12 +440,12 @@ export default function RepuestosPage() {
                     <th className="px-4 py-3 text-left">Provincia</th>
                     <th className="px-4 py-3 text-left">Localidad</th>
                     <th className="px-4 py-3 text-left">Teléfono</th>
-                    <th className="px-4 py-3 text-left">Email</th>
+                    <th className="px-4 py-3 text-left">Email </th>
                     <th className="px-4 py-3 text-left">Documentación</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {talleres.map((t) => (
+                  {talleres.map((t: Workshop) => (
                     <tr key={t.id} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-3 font-semibold">{t.name}</td>
                       <td className="px-4 py-3">{t.manager || "-"}</td>
@@ -433,19 +453,23 @@ export default function RepuestosPage() {
                       <td className="px-4 py-3">{t.state || "-"}</td>
                       <td className="px-4 py-3">{t.city || "-"}</td>
                       <td className="px-4 py-3">{t.phone1 || "-"}</td>
-                      <td className="px-4 py-3">{t.email || "-"}</td>
+                      <td className="px-4 py-3">{t.managerEmail || "-"}</td> 
                       <td className="px-4 py-3">
-                        <Link 
-                          href="/archivos/talleres .pdf" 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-sm"
-                        >
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Descargar
-                        </Link>
+                        {t.name === "Eximar MG" ? (
+                          <Link 
+                            href="/api/descargarRepuestos"
+                            target="_blank"
+                            rel="noopener noreferrer"                           
+                            className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-1">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Descargar
+                          </Link>
+                        ) : (
+                          <span className="text-gray-400 italic"></span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -602,6 +626,7 @@ export default function RepuestosPage() {
             <ImportPartForm 
                 companies={companies} 
                 onClose={handleCloseImportModal}
+                eximarId={companies.find((c) => c.name === "Eximar MG")?.id ?? null}
             />
         </div>
       )}

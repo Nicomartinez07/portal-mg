@@ -4,6 +4,10 @@ import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/repuest
 // --- 2.1 Componente Contenedor (Server Component) ---
 export default async function ImportPartModal() {
     const companies = await getCompanies();
+    
+    // 💡 PASO 1: Obtener la ID de Eximar MG
+    const eximarCompany = companies.find(c => c.name === "Eximar MG");
+    const eximarId = eximarCompany ? eximarCompany.id : null; // Si no existe, es null
 
     if (companies.length === 0) {
         return (
@@ -13,11 +17,12 @@ export default async function ImportPartModal() {
         );
     }
     
-    return <ImportPartForm companies={companies} />;
+    // 💡 PASO 2: Pasar la ID de Eximar al componente cliente
+    return <ImportPartForm companies={companies} eximarId={eximarId} />;
 }
-
 // --- 2.2 Componente de Formulario (Client Component) ---
 // El 'use client' es necesario para manejar el estado, los archivos y la descarga.
+
 'use client'; 
 
 import { useState } from 'react';
@@ -31,6 +36,10 @@ interface Company {
 interface ReportError {
     fila: number;
     error: string;
+}
+interface ImportPartFormProps { 
+    companies: Company[];
+    eximarId: number | null; // <--- AGREGAR ESTO
 }
 
 interface ImportResult {
@@ -50,7 +59,7 @@ interface DescargarEjemploResult {
   }
 
 
-const ImportPartForm: React.FC<{ companies: Company[] }> = ({ companies }) => {
+const ImportPartForm: React.FC<ImportPartFormProps> = ({ companies, eximarId }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [report, setReport] = useState<ImportResult | null>(null);
@@ -64,11 +73,17 @@ const ImportPartForm: React.FC<{ companies: Company[] }> = ({ companies }) => {
       return;
     }
 
-    setIsSubmitting(true);
+   setIsSubmitting(true);
+    
+    // 💡 PASO 3: Determinar si la empresa seleccionada es Eximar
+    const isEximar = eximarId ? parseInt(selectedCompanyId, 10) === eximarId : false;
+
     const formData = new FormData();
     formData.append('excelFile', selectedFile);
     formData.append('companyId', selectedCompanyId);
-
+    // 💡 PASO 4: Agregar la bandera al FormData
+    formData.append('isEximar', isEximar.toString()); 
+    
     setReport(null); 
     
     const result = await importarStockRepuestos(formData);

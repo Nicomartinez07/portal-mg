@@ -26,7 +26,8 @@ export function ActivationModal({
     type: "",
     year: "",
     licensePlate: "",
-    company: "",
+    companyName: "",
+    companyId: "",
     user: "",
     clientName: "",
     clientSurname: "",
@@ -111,7 +112,8 @@ export function ActivationModal({
       type: "",
       year: "",
       licensePlate: "",
-      company: "",
+      companyName: "",
+      companyId: "",
       user: "",
       clientName: "",
       clientSurname: "",
@@ -143,7 +145,8 @@ export function ActivationModal({
         type: v.type || "",
         year: v.year?.toString() || "",
         licensePlate: v.licensePlate || "",
-        company: v.company?.name || "",
+        companyName: v.company?.name || "",
+        companyId: v.company?.id.toString() || "", 
       }));
     } else {
       alert(result.message);
@@ -202,6 +205,7 @@ export function ActivationModal({
                   />
                   <button
                     type="button"
+                    data-testid="search-vehicle-button" 
                     onClick={handleSearchVehicle}
                     className="bg-green-600 text-white px-3 rounded hover:bg-green-700"
                   >
@@ -296,6 +300,7 @@ export function ActivationModal({
                   readOnly
                 />
               </div>
+
               {/* Empresa */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -303,14 +308,21 @@ export function ActivationModal({
                 </label>
                 <input
                   type="text"
-                  name="licensePlate"
-                  value={formData.company}
+                  name="companyName" // Nombre para mostrar el valor
+                  value={formData.companyName}
                   className="border px-3 py-2 w-full rounded bg-gray-100"
                   readOnly
                 />
                 
-                {errors.company && (
-                  <p className="text-red-500 text-xs mt-1">{errors.company}</p>
+                {/* Campo oculto con el ID */}
+                <input
+                  type="hidden" // Escondido, pero su valor será enviado en el submit
+                  name="companyId" 
+                  value={formData.companyId}
+                />
+
+                {errors.companyId && ( 
+                  <p className="text-red-500 text-xs mt-1">{errors.companyId}</p>
                 )}
               </div>
 

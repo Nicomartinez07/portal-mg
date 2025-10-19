@@ -25,7 +25,7 @@ export async function activateWarranty(data: unknown): Promise<{
     const {
       date,
       vin,
-      company,
+      companyId,
       user,
       clientName,
       clientSurname,
@@ -89,24 +89,12 @@ export async function activateWarranty(data: unknown): Promise<{
     }
 
 
-    // ✅ 4. Buscar empresa por nombre
-    const companyRecord = await prisma.company.findFirst({
-      where: { name: company },
-    });
-
-    if (!companyRecord) {
-      return {
-        success: false,
-        errors: { company: "La empresa especificada no existe." },
-      };
-    }
-
     // ✅ 5. Crear la Warranty vinculada a Vehicle, Customer y Company
     const newWarranty = await prisma.warranty.create({
     data: {
       activationDate: new Date(date),
       vehicleVin: vin,
-      companyId: companyRecord.id,
+      companyId: companyId,
       customerId: customer.id,
       userId: userRecord.id,
     },

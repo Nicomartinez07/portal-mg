@@ -2,6 +2,8 @@
 
 import * as XLSX from 'xlsx';
 import { prisma } from '@/lib/prisma'; 
+import * as fs from 'fs/promises'; 
+import * as path from 'path';
 
 // === TIPOS DE DATOS ===
 
@@ -38,7 +40,16 @@ interface PartData {
 export async function importarStockRepuestos(formData: FormData): Promise<ImportResult> {
     const file = formData.get('excelFile') as File | null;
     const companyIdStr = formData.get('companyId') as string;
+    const isEximarStr = formData.get('isEximar') as string; 
+    
     const companyId = parseInt(companyIdStr, 10);
+    const isEximar = isEximarStr === 'true'; 
+
+    console.log("--- Diagnóstico de Importación ---");
+    console.log(`Company ID recibida: ${companyId}`);
+    console.log(`isEximar string recibida: ${isEximarStr}`);
+    console.log(`isEximar booleano calculado: ${isEximar}`);
+    console.log("----------------------------------");
 
     // 1. Validaciones Iniciales
     if (!file || file.size === 0) {
@@ -77,13 +88,13 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
     if (!rawData || rawData.length <= 1) {
         return { success: false, message: 'El archivo Excel está vacío o no tiene datos.', totalRows: 0 };
     }
-
+    
+    // ... (Mapeo y validación de cabeceras y filas)
     const headers = rawData[0]; 
     const dataRows = rawData.slice(1); 
     const validParts: PartData[] = [];
     const errors: ReportError[] = [];
     
-    // Mapeo de cabeceras
     const headerMap: Record<string, number> = {
         "Codigo": headers.findIndex(h => h && h.trim() === 'Codigo'),
         "Descripcion": headers.findIndex(h => h && h.trim() === 'Descripcion'),
@@ -108,7 +119,6 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
         const salePriceStr = getValue("Precio de venta");
         const missingFields: string[] = [];
         
-        // Validación de campos obligatorios
         if (!codeStr) missingFields.push('Codigo');
         if (!descriptionStr) missingFields.push('Descripcion');
         if (!stockStr) missingFields.push('Cantidad en stock');
@@ -123,7 +133,6 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
         let stock: number | null = null;
         let salePrice: number | null = null;
         
-        // Validación y conversión de tipos
         stock = parseInt(stockStr!, 10);
         if (isNaN(stock) || stock < 0) {
             errors.push({ fila: rowNumber, error: `Error de formato: 'Cantidad en stock' debe ser un número entero positivo.` });
@@ -136,7 +145,6 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
             isValid = false;
         }
         
-        // Agregar a la lista de inserción potencial
         if (isValid) {
             validParts.push({
                 code: codeStr!,
@@ -151,15 +159,33 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
         }
     });
 
-    // --- 4. SEPARACIÓN DE NUEVOS vs. EXISTENTES ---
+    // --- 4. LÓGICA CONDICIONAL: GUARDAR EL ARCHIVO EXCEL DE EXIMAR ---
+    if (isEximar) {
+        try {
+            const publicDir = path.join(process.cwd(), 'public');
+            // La ruta final es repuestosEximar.pdf para mantener el enlace fijo
+            const targetPath = path.join(publicDir, 'archivos', 'repuestosEximar.xlsx'); 
+            
+            // Convertir File a Buffer
+            const fileBuffer = Buffer.from(arrayBuffer);
+            
+            // Escribir el archivo, REEMPLAZANDO el anterior
+            await fs.writeFile(targetPath, fileBuffer);
+            console.log(`[INFO] Archivo de Eximar MG (XLSX) guardado en: ${targetPath}`);
+
+        } catch (fileError) {
+            console.error("Error al guardar el archivo de Eximar. El proceso de DB continuará.", fileError);
+            // El proceso de DB continúa aunque falle el guardado del archivo.
+        }
+    }
+    
+    // --- 5. SEPARACIÓN DE NUEVOS vs. EXISTENTES ---
     let partsToInsert: PartData[] = [];
     let partsToUpdate: PartData[] = [];
     
     if (validParts.length > 0) {
-        // Códigos únicos para buscar en la BD
         const codesFromFile = Array.from(new Set(validParts.map(p => p.code)));
 
-        // Buscar qué códigos ya existen
         const existingParts = await prisma.part.findMany({
             where: { code: { in: codesFromFile } },
             select: { code: true },
@@ -167,7 +193,6 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
 
         const existingCodes = new Set(existingParts.map(p => p.code));
 
-        // Separar la lista
         validParts.forEach(p => {
             if (existingCodes.has(p.code)) {
                 partsToUpdate.push(p);
@@ -177,12 +202,11 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
         });
     }
 
-    // --- 5. EJECUTAR INSERCIÓN Y ACTUALIZACIÓN ---
+    // --- 6. EJECUTAR INSERCIÓN Y ACTUALIZACIÓN ---
     let insertedCount = 0;
     let updatedCount = 0;
 
     try {
-        // 5a. INSERCIÓN MASIVA DE NUEVOS REGISTROS
         if (partsToInsert.length > 0) {
             const result = await prisma.part.createMany({
                 data: partsToInsert,
@@ -190,10 +214,7 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
             insertedCount = result.count;
         }
 
-        // 5b. ACTUALIZACIÓN INDIVIDUAL DE REGISTROS EXISTENTES
         if (partsToUpdate.length > 0) {
-            // Utilizamos una transacción para asegurar que si falla una actualización, falle el lote
-            // y Promise.all para concurrencia.
             const updatePromises = partsToUpdate.map(async (part) => {
                 await prisma.part.update({
                     where: { code: part.code },
@@ -202,8 +223,7 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
                         model: part.model,
                         stock: part.stock,
                         salePrice: part.salePrice,
-                        loadDate: new Date(), // Actualizamos la fecha de última carga
-                        // companyId y contactId no se modifican, se asumen permanentes
+                        loadDate: new Date(),
                     },
                 });
                 updatedCount++;
@@ -221,7 +241,7 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
         };
     }
 
-    // --- 6. Devolver el Reporte Final ---
+    // --- 7. Devolver el Reporte Final ---
     const totalProcessed = dataRows.length;
     const finalSuccess = insertedCount > 0 || updatedCount > 0;
     
@@ -229,14 +249,13 @@ export async function importarStockRepuestos(formData: FormData): Promise<Import
         success: finalSuccess,
         message: finalSuccess
             ? `Importación finalizada. Insertados: ${insertedCount}. Actualizados: ${updatedCount}. Total filas: ${totalProcessed}.`
-            : `No se insertó ni se actualizó ningún registro. ${partsToUpdate.length} duplicados sin cambios o ${totalProcessed - partsToUpdate.length} con errores de formato.`,
+            : `No se insertó ni se actualizó ningún registro. Revise si hay ${dataRows.length - errors.length} filas duplicadas o ${errors.length} errores de formato.`,
         totalRows: totalProcessed,
         inserted: insertedCount,
         updated: updatedCount,
         errors: errors,
     };
 }
-
 
 export async function descargarEjemploRepuestos() {
     // 1. Definir los encabezados requeridos en el Excel
@@ -270,6 +289,6 @@ export async function descargarEjemploRepuestos() {
     return {
         success: true,
         fileBase64: excelBase64,
-        filename: "plantilla_repuestos.xlsx",
+        filename: "EjemploRepuestos.xlsx",
     };
 }
