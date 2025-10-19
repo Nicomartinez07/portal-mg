@@ -96,25 +96,14 @@ bun run create:test:e2e
 LISTADO DE CADA PAGINA Y COSAS POR HACER: 
 --------------------------------------------------------------------------------------------------------------------------
 
-Garantias: Descarga de certificado, boton para exportar 
-
-Activar garantia: Desarrollar tests
+Garantias: Descarga de certificado
 
 --------------------------------------------------------------------------------------------------------------------------
  
 Ordenes:
 Solo falta que filtre cuando yo toco el boton 
-Realizar tests ordenes
+detallitos de cada estado interno
 Manejo de imagenes
-Exportar ordenes 
-APROBAR Y RECHAZAR CON MENSAJES, Y TAMBIEN detallitos de cada estado interno
-
-Borradores: No abre modales porq no se que mierda del estado interno, UTILIZAR MODALES DE CREACION DE OREDENES DE 3 TIPOS PARA CADA UNO, por ejemplo el modal de detalles de un servicio deberia abrir un modal en el cual cree un servicio y asi con el resto, Si esta en borradores es necesario que traiga el modal con los datos ya cargados de ese servicio que se iba a crear antes y se dejo en borradores
-buscar al tocar el boton
-
-Ingreso de Pre-autorizacion
-Ingreso de Reclamo
-Ingreso de servicio 
 
 --------------------------------------------------------------------------------------------------------------------------
 
@@ -127,39 +116,29 @@ Desarrollar story users
 Empresa: Mostrar en repuestos para facilitar la busqueda de empresas en la seccion de repuestos
 Tengo que modificar tanto el schema como los datos como la logica de los repuestos
 
-
-
 --------------------------------------------------------------------------------------------------------------------------
 
 Pagina certificados: filtros. -Empadronamiento: fecha activacion de garantia
                               -F. Importacion: Cuando el auto llego al pais
-
                     Testing
                     Descargar certificado, 
                     Logica de Garantia y bloqueado,
                     Arreglar las 4 fechas
                     Importar certificados
-                    paginado
+                   
 
 --------------------------------------------------------------------------------------------------------------------------
-Repuestos: Cargar stock de repuestos 
-            link a Catalogo de repuestos de origen
-            Que solo cargue los talleres
-            Descargar repuesto de TU empresa
+Repuestos: 
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Cargar Auto: cargar empresa desde aca, modificar schema, y modificar el traer los datos
+Cargar Auto:
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Buscador de VIN: Desarrollar el detalle servicio 
+Buscador de VIN: 
 
 --------------------------------------------------------------------------------------------------------------------------
 
-
-Formularios de Carga, desarrollar todo lo posible
-Desarrollar FORMULARIO CARGA 3 TIPOS DE OREDENES.
-
-CARGA Y DESCARGA DE ARCHIVOS Y ORDENES Y GARANTIAS Y VEHICULOS
+Paginado a todas las paginas
 CONFIGURACION DEL CORREO
