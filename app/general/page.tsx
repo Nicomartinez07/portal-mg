@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MGDashboard } from "../../components/mg-dashboard";
 import { FaInfoCircle, FaTrashAlt, FaPlus, FaUpload } from "react-icons/fa";
-import { getUsers, deleteUser } from "../general/actions";
+import { getUsers, deleteUser, updateUser } from "../general/actions";
 import { NewUserModal } from "../../components/general/users/NewUserModal";
 import { EditUserModal } from "../../components/general/users/EditUserModal";
 
@@ -52,7 +52,6 @@ export default function UsuariosPage() {
     }
   };
 
-  // 📌 Cargar usuarios
   const loadUsers = async () => {
     setLoading(true);
     const data = await getUsers();
@@ -86,6 +85,29 @@ export default function UsuariosPage() {
     loadUsers();
   }
 
+  const handleToggleNotifications = async (user: User) => {
+    const newValue = !user.notifications;
+
+    // Actualización optimista: Cambia el estado local al instante
+    setUsuarios((prevUsuarios) =>
+      prevUsuarios.map((u) =>
+        u.id === user.id ? { ...u, notifications: newValue } : u
+      )
+    );
+
+    // Llamada al servidor en segundo plano
+    try {
+      await updateUser(user.id, {
+        notifications: newValue,
+      });
+    } catch (error) {
+      console.error("Error al actualizar notificaciones:", error);
+      alert("Error al actualizar ❌");
+      // Si falla, revierte el cambio
+      loadUsers();
+    }
+  };
+
   return (
     <MGDashboard>
       <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
@@ -114,6 +136,9 @@ export default function UsuariosPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">
                     Email
                   </th>
+                  <th className="px-4 py-3 text-center font-semibold text-gray-700">
+                    Notificaciones
+                  </th>
                   <th className="px-4 py-3 text-right font-semibold text-gray-700"></th>
                 </tr>
               </thead>
@@ -122,6 +147,14 @@ export default function UsuariosPage() {
                   <tr key={usuario.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">{usuario.username}</td>
                     <td className="px-4 py-3">{usuario.email}</td>
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={usuario.notifications}
+                        onChange={() => handleToggleNotifications(usuario)}
+                        className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end items-center space-x-2">
                         <button

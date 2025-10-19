@@ -4,53 +4,33 @@ import { useState, useEffect } from "react";
 import { getCompanies } from "@/app/actions/companies";
 
 export const OrderFilters = () => {
-  const { filters, setFilters } = useOrder();
+  const { filters: appliedFilters, setFilters: setAppliedFilters } = useOrder();
   const [open, setOpen] = useState(false);
   const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+  const [localFilters, setLocalFilters] = useState(appliedFilters);
 
   // Obtener empresas al cargar el componente
   useEffect(() => {
     getCompanies().then(setCompanies);
   }, []);
 
-  // Función para obtener el primer día del mes actual en formato YYYY-MM-DD
-  const getFirstDayOfMonth = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    return `${year}-${month.toString().padStart(2, '0')}-01`;
-  };
 
-  // Función para obtener el último día del mes actual en formato YYYY-MM-DD
-  const getLastDayOfMonth = () => {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const lastDay = new Date(year, month, 0).getDate();
-    return `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
-  };
-
-  // Establecer valores por defecto al cargar el componente
-  useEffect(() => {
-    if (!filters.fromDate) {
-      setFilters({ ...filters, fromDate: getFirstDayOfMonth() });
-    }
-    if (!filters.toDate) {
-      setFilters({ ...filters, toDate: getLastDayOfMonth() });
-    }
-  }, []);
-
+  // handleSearch AHORA ES EL QUE ACTUALIZA EL ESTADO GLOBAL
   const handleSearch = () => {
-    console.log("Búsqueda ejecutada");
+    // Pasa el estado LOCAL al estado GLOBAL
+    setAppliedFilters(localFilters);
+    console.log("Búsqueda ejecutada con filtros:", localFilters);
   };
 
+  // 5. handleChange AHORA ACTUALIZA EL ESTADO LOCAL
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+    // Actualiza 'localFilters', no el global 'setFilters'
+    setLocalFilters({ ...localFilters, [name]: value });
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow border mb-4"> {/* Fondo blanco, borde y sombra */}
+    <div className="p-4 bg-white rounded-lg shadow border mb-4">
       {/* Botón solo visible en mobile */}
       <button
         onClick={() => setOpen(!open)}
@@ -66,13 +46,14 @@ export const OrderFilters = () => {
           open ? "block" : "hidden md:grid"
         }`}
       >
+        
         {/* Campo Desde */}
         <div className="flex flex-col">
           <label className="text-sm text-gray-600 mb-1">Desde</label>
           <input
             type="date"
             name="fromDate" 
-            value={filters.fromDate || getFirstDayOfMonth()}
+            value={localFilters.fromDate || ''}
             onChange={handleChange}
             className="border rounded px-2 py-1 w-full"
           />
@@ -84,7 +65,7 @@ export const OrderFilters = () => {
           <input
             type="date"
             name="toDate" 
-            value={filters.toDate || getLastDayOfMonth()}
+            value={localFilters.toDate || ''}
             onChange={handleChange}
             className="border rounded px-2 py-1 w-full"
           />
@@ -95,8 +76,8 @@ export const OrderFilters = () => {
           <label className="text-sm text-gray-800 mb-1">Tipo</label>
           <select
             name="type"
-            value={filters.type || ""}
-            onChange={handleChange}
+            value={localFilters.type || ""} // Lee de localFilters
+            onChange={handleChange} // Actualiza localFilters
             className="border rounded px-2 py-1 w-full"
           >
             <option value=""></option>
@@ -111,8 +92,8 @@ export const OrderFilters = () => {
           <label className="text-sm text-gray-800 mb-1">Número</label>
           <input
             name="orderNumber"
-            value={filters.orderNumber || ""}
-            onChange={handleChange}
+            value={localFilters.orderNumber || ""} // Lee de localFilters
+            onChange={handleChange} // Actualiza localFilters
             className="border rounded px-2 py-1 w-full"
           />
         </div>
@@ -122,8 +103,8 @@ export const OrderFilters = () => {
           <label className="text-sm text-gray-800 mb-1">VIN</label>
           <input
             name="vin"
-            value={filters.vin || ""}
-            onChange={handleChange}
+            value={localFilters.vin || ""} // Lee de localFilters
+            onChange={handleChange} // Actualiza localFilters
             className="border rounded px-2 py-1 w-full"
           />
         </div>
@@ -133,8 +114,8 @@ export const OrderFilters = () => {
           <label className="text-sm text-gray-800 mb-1">Estado</label>
           <select
             name="status"
-            value={filters.status || ""}
-            onChange={handleChange}
+            value={localFilters.status || ""} // Lee de localFilters
+            onChange={handleChange} // Actualiza localFilters
             className="border rounded px-2 py-1 w-full"
           >
             <option value=""></option>
@@ -149,8 +130,8 @@ export const OrderFilters = () => {
           <label className="text-sm text-gray-800 mb-1">Estado Interno</label>
           <select
             name="internalStatus"
-            value={filters.internalStatus || ""}
-            onChange={handleChange}
+            value={localFilters.internalStatus || ""} // Lee de localFilters
+            onChange={handleChange} // Actualiza localFilters
             className="border rounded px-2 py-1 w-full"
           >
             <option value=""></option>
@@ -163,17 +144,17 @@ export const OrderFilters = () => {
           </select>
         </div>
 
-        {/* Campo Empresa */}
         <div className="flex flex-col">
           <label className="text-sm text-gray-800 mb-1">Empresa</label>
           <select
-            value={filters.companyId || ""}
+            value={localFilters.companyId || ""} // Esto ya es un string
             onChange={(e) =>
-                setFilters({ ...filters, companyId: Number(e.target.value) })
+                // QUITAR LA CONVERSIÓN A Number()
+                setLocalFilters({ ...localFilters, companyId: e.target.value })
               }
               className="border rounded px-2 py-1 w-full"
             >
-              <option value=""></option>
+              <option value=""></option> 
               {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -185,7 +166,7 @@ export const OrderFilters = () => {
         {/* Botón de búsqueda */}
         <div className="flex items-end">
           <button
-            onClick={handleSearch}
+            onClick={handleSearch} // 7. ESTE ES EL TRIGGER
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full"
           >
             Buscar

@@ -429,8 +429,6 @@ export default function RepuestosPage() {
           {/* TAB DE TALLERES */}
           <TabsContent value="talleres">
             <div className="border rounded-lg overflow-x-auto">
-              {/* SOLUCIÓN AL ERROR DE HIDRATACIÓN: 
-                  Juntamos el div y el table en la misma línea para eliminar el whitespace. */}
               <table className="w-full min-w-[1000px] border-collapse">
                 <thead className="bg-gray-50">
                   <tr>

@@ -96,7 +96,7 @@ bun run create:test:e2e
 LISTADO DE CADA PAGINA Y COSAS POR HACER: 
 --------------------------------------------------------------------------------------------------------------------------
 
-Garantias: Descarga de certificado
+Garantias: 
 
 --------------------------------------------------------------------------------------------------------------------------
  
@@ -113,8 +113,7 @@ Desarrollar story users
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Empresa: Mostrar en repuestos para facilitar la busqueda de empresas en la seccion de repuestos
-Tengo que modificar tanto el schema como los datos como la logica de los repuestos
+Empresa: 
 
 --------------------------------------------------------------------------------------------------------------------------
 
@@ -140,5 +139,7 @@ Buscador de VIN:
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Paginado a todas las paginas
 CONFIGURACION DEL CORREO
+Inicio de sesion : CONFIGURAR EMAIL QUE VA A ENVIAR MAILS DE RECUPERAR CONTRASEÑA
+
+Paginado a todas las paginas

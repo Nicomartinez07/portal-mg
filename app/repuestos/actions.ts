@@ -18,8 +18,7 @@ export async function getTalleres() {
   const allCompanies = await prisma.company.findMany({
     where: {
       OR: [
-        { companyType: "Workshop" },
-        { name: "Eximar MG" }
+        { showInParts: true }
       ]
     },
     orderBy: { name: "asc" }

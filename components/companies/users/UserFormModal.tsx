@@ -50,8 +50,8 @@ export function UserFormModal({
         password: "",
         confirmPassword: "",
         roles: {
-          taller: userRoles.includes("Taller"),
-          concesionario: userRoles.includes("Concesionario"),
+          taller: userRoles.includes("WORKSHOP"),
+          concesionario: userRoles.includes("DEALER"),
         },
         notifications: user.notifications, // Corrected from user.emailNotifications
       });
@@ -86,8 +86,8 @@ export function UserFormModal({
     const dataToSend = {
       username: form.username,
       email: form.email,
-      roles: form.roles, // Enviamos el objeto de roles
-      emailNotifications: form.notifications,
+      roles: form.roles, 
+      notifications: form.notifications,
       ...(form.password && { password: form.password }),
     };
 
@@ -165,6 +165,23 @@ export function UserFormModal({
                   Concesionario
                 </label>
               </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-2 border rounded">
+              <input
+                type="checkbox"
+                id="notifications"
+                name="notifications"
+                checked={form.notifications}
+                onChange={handleChange}
+                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="notifications"
+                className="font-medium text-gray-700"
+              >
+                Recibir notificaciones
+              </label>
             </div>
             {/* Contraseña fields */}
             <div>

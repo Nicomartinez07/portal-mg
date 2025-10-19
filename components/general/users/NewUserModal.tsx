@@ -22,7 +22,8 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
     email: "",
     password: "",
     confirmPassword: "",
-    companyId: "", // 👈 nuevo campo
+    companyId: "", 
+    notifications: false, 
   });
 
   useEffect(() => {
@@ -33,14 +34,26 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
     fetchCompanies();
   }, []);
 
+ 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const { name, value, type } = e.target;
+
+    // Si es un checkbox, usamos 'checked'. Si no, 'value'.
+    if (type === 'checkbox' && e.target instanceof HTMLInputElement) {
+      // Al hacer 'instanceof', TypeScript ya sabe que e.target es un HTMLInputElement
+      setForm((prev) => ({
+        ...prev,
+        [name]: e.target.checked,
+      }));
+    } else {
+      // Esto funciona para <input type="text">, <input type="email">, y <select>
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +70,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
         email: form.email,
         password: form.password,
         companyId: Number(form.companyId), 
-        notifications: true, 
+        notifications: form.notifications,
       });
       alert("Usuario creado correctamente ✅");
       onSuccess();
@@ -89,6 +102,23 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
                 required
                 className="border rounded w-full p-2"
               />
+            </div>
+            {/* ⬅️ CHECKBOX DE NOTIFICACIONES AÑADIDO */}
+            <div className="flex items-center gap-3 p-2 border rounded">
+              <input
+                type="checkbox"
+                id="notifications"
+                name="notifications"
+                checked={form.notifications}
+                onChange={handleChange}
+                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="notifications"
+                className="font-medium text-gray-700"
+              >
+                Recibir notificaciones por email
+              </label>
             </div>
             <div>
               <label className="block font-medium mb-1">Email</label>

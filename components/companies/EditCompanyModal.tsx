@@ -15,14 +15,16 @@ type Company = {
   phone1?: string | null;
   phone2?: string | null;
   email?: string | null;
+  showInParts?: boolean | null; 
 };
 
 interface EditCompanyModalProps {
   companyId: number;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
-export function EditCompanyModal({ companyId, onClose }: EditCompanyModalProps) {
+export function EditCompanyModal({ companyId, onClose, onSuccess }: EditCompanyModalProps) {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<Partial<Company>>({});
   const [isSaving, setIsSaving] = useState(false); // Nuevo estado para el botón
@@ -45,6 +47,7 @@ export function EditCompanyModal({ companyId, onClose }: EditCompanyModalProps) 
             phone1: companyData.phone1,
             phone2: companyData.phone2,
             email: companyData.email,
+            showInParts: companyData.showInParts,
           });
         }
       } catch (error) {
@@ -56,22 +59,26 @@ export function EditCompanyModal({ companyId, onClose }: EditCompanyModalProps) 
     fetchCompany();
   }, [companyId]);
 
+  // CORREGIDO: Manejador de cambios para todos los inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+
     setForm((prevForm) => ({
       ...prevForm,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value, // <-- Lógica para checkbox
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
+
     try {
+      // Asegúrate que 'updateCompany' acepte 'showInParts'
       await updateCompany(companyId, form);
       alert("Empresa actualizada correctamente ✅");
-      onClose(); // Cierra la modal si la actualización fue exitosa
+      onSuccess(); // <-- Llama a onSuccess para recargar
+      onClose();
     } catch (error) {
       console.error("Error al actualizar la empresa:", error);
       alert("Error al actualizar la empresa ❌");
@@ -140,6 +147,25 @@ export function EditCompanyModal({ companyId, onClose }: EditCompanyModalProps) 
               onChange={handleChange}
               className="border rounded w-full p-2"
             />
+
+            {/* --- CHECKBOX CORREGIDO --- */}
+            <div className="flex items-center gap-3 p-2 border rounded">
+              <input
+                type="checkbox"
+                id="showInParts" 
+                name="showInParts"
+                checked={form.showInParts || false}
+                onChange={handleChange}
+                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="showInParts"
+                className="font-medium text-gray-700"
+              >
+                Mostrar en repuestos
+              </label>
+            </div>
+            {/* --- FIN CHECKBOX CORREGIDO --- */}
 
             <label className="block font-medium mb-1">Dirección</label>
             <input

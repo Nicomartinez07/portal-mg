@@ -56,6 +56,7 @@ model Company {
   email        String?
   companyType  String
   manager      String?
+  showInParts  Boolean?  @default(false)
   users        User[]
   parts        Part[]
   warranties   Warranty[]
@@ -75,6 +76,18 @@ model User {
   notifications Boolean  @default(false)
   warranties   Warranty[]
   orders       Order[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expires   DateTime
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
 }
 
 model Role {

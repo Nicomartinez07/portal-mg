@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
-// 📌 Listar un usuario por ID
+// Listar un usuario por ID
 export async function getUserById(id: number) {
   return prisma.user.findUnique({
     where: { id },
@@ -49,6 +49,8 @@ export async function getUsers() {
     orderBy: { username: "asc" },
   });
 }
+
+// Crear Usuario
 export async function createUser(data: {
   username: string;
   email: string;
@@ -86,7 +88,7 @@ export async function createUser(data: {
 
 
 
-// 📌 Actualizar usuario
+// Actualizar usuario
 export async function updateUser(
   id: number,
   data: {
@@ -131,7 +133,7 @@ export async function updateUser(
   });
 }
 
-// 📌 Eliminar usuario (limpiando relaciones)
+// Eliminar usuario (limpiando relaciones)
 export async function deleteUser(id: number) {
   await prisma.warranty.updateMany({
     where: { userId: id },
@@ -150,4 +152,32 @@ export async function deleteUser(id: number) {
   return prisma.user.delete({
     where: { id },
   });
+}
+
+
+export async function getImporterEmailsForNotification() {
+  // Es mejor usar el nombre del rol que un ID hardcodeado
+  const ROLE_NAME = "IMPORTER"; 
+
+  const users = await prisma.user.findMany({
+    where: {
+      // 1. Solo usuarios que SÍ quieran notificaciones
+      notifications: true, 
+      
+      // 2. Y que tengan el rol de IMPORTADOR
+      roles: {
+        some: {
+          role: {
+            name: ROLE_NAME,
+          },
+        },
+      },
+    },
+    select: {
+      email: true, // Solo queremos el email
+    },
+  });
+
+  // Devuelve un array simple de strings: ['user1@mail.com', 'user2@mail.com']
+  return users.map(u => u.email);
 }

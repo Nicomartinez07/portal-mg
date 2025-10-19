@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { CreateOrderData, CreateOrderResult } from "@/app/types";
+import { triggerNewOrderNotification } from "@/lib/email";
 
 async function findOrCreateCustomer(customerName: string) {
   const [firstName, ...lastParts] = customerName.trim().split(" ");
@@ -70,6 +71,16 @@ export async function savePreAuthorization(
 
     // Buscar o crear cliente
     const customer = await findOrCreateCustomer(orderData.customerName);
+
+    // Buscar Creador de orden
+    let creatorUsername = "Sistema"; // Default
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true }
+      });
+      if (user) creatorUsername = user.username;
+    }
 
     // 🔒 Transacción para mantener consistencia
     const order = await prisma.$transaction(async (tx) => {
@@ -236,6 +247,15 @@ export async function savePreAuthorization(
         });
       }
     });
+
+    if (order && !isDraft) {
+      triggerNewOrderNotification(
+        order.orderNumber, 
+        order.vehicle.vin,
+        creatorUsername,   // El nombre que buscamos arriba
+        "PRE_AUTORIZACION" // El tipo
+      );
+    }
 
     // Mensajes diferentes según la operación
     let message = "";

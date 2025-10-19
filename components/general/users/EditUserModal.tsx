@@ -16,6 +16,7 @@ export function EditUserModal({ userId, onClose }: EditUserModalProps) {
     email: "",
     password: "",
     confirmPassword: "",
+    notifications: false, 
   });
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +28,7 @@ export function EditUserModal({ userId, onClose }: EditUserModalProps) {
         setForm({
           username: user.username,
           email: user.email,
+          notifications: user.notifications || false,
           password: "",
           confirmPassword: "",
         });
@@ -55,6 +57,7 @@ export function EditUserModal({ userId, onClose }: EditUserModalProps) {
     const dataToSend = {
       username: form.username,
       email: form.email,
+      notifications: form.notifications,
       ...(form.password && { password: form.password }),
     };
 
@@ -100,6 +103,25 @@ export function EditUserModal({ userId, onClose }: EditUserModalProps) {
                 className="border rounded w-full p-2"
               />
             </div>
+            
+            <div className="flex items-center gap-3 p-2 border rounded">
+              <input
+                type="checkbox"
+                id="notifications"
+                name="notifications"
+                checked={form.notifications}
+                onChange={handleChange}
+                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="notifications"
+                className="font-medium text-gray-700"
+              >
+                Notificaciones por email
+              </label>
+            </div>
+
+
             <div>
               <label className="block font-medium mb-1">Email</label>
               <input

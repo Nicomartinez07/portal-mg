@@ -18,7 +18,7 @@ export default function OrdersTable() {
   const fetchOrders = async () => {
     setLoading(true);
     const data = await getOrders(filters);
-    setOrders(data as Order[]); // Asegúrate de que los datos coincidan con el tipo Order
+    setOrders(data as Order[]); 
     setLoading(false);
   };
 
@@ -35,14 +35,22 @@ export default function OrdersTable() {
       setShowHistoryModal(true);
     }
   };
-  const getStatusClasses = (status: string) => {
-  switch (status) {
-    case 'AUTORIZADO':
-      return 'bg-green-500 text-white';
-    case 'RECHAZADO':
-      return 'bg-red-500 text-white';
-  }
-};
+ const getStatusClasses = (status: string | null | undefined) => {
+    // Si no hay status, devuelve una clase gris por defecto
+    if (!status) {
+      return 'text-black';
+    }
+
+    switch (status) {
+      case 'AUTORIZADO':
+        return 'bg-green-500 text-white';
+      case 'RECHAZADO':
+        return 'bg-red-500 text-white';
+      // Añade un 'default' para cualquier otro estado (ej. "PENDIENTE")
+      default:
+        return 'text-black'; // O la clase que prefieras
+    }
+  };
 
   return (
     <>
@@ -75,7 +83,7 @@ export default function OrdersTable() {
                   <td className="px-4 py-2">{order.vehicle?.vin || "-"}</td>
                   <td className="px-4 py-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusClasses(order.status)}`}>
-                      {order.status}
+                      {order.status || 'SIN ESTADO'}
                     </span>
                   </td>
                   <td className="px-4 py-2">{order.internalStatus}</td>

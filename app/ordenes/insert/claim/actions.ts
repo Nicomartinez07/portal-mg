@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { CreateOrderResult } from "@/app/types";
 import { claimSchema, draftClaimSchema } from '@/schemas/claim';
 import { z } from 'zod';
+import { triggerNewOrderNotification } from "@/lib/email";
 
 // Reutilizamos las mismas funciones auxiliares
 async function findOrCreateCustomer(customerName: string) {
@@ -47,6 +48,16 @@ export async function saveClaim(
     const validatedData = isDraft 
       ? draftClaimSchema.parse(orderData)  // Schema flexible para borradores
       : claimSchema.parse(orderData);      // Schema estricto para reclamos
+
+    // Buscar Creador de orden
+    let creatorUsername = "Sistema"; // Default
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true }
+      });
+      if (user) creatorUsername = user.username;
+    }
 
     // 2. VALIDAR QUE EL VEHÍCULO EXISTA (solo si hay VIN)
     if (validatedData.vin && validatedData.vin.trim() !== "") {
@@ -274,6 +285,17 @@ export async function saveClaim(
         });
       }
     });
+
+    // Disparar evento, Lo hacemos *después* de que la transacción fue exitosa
+    // y SÓLO si NO es un borrador.
+    if (order && !isDraft) {
+      triggerNewOrderNotification(
+        order.orderNumber, 
+        order.vehicle.vin, 
+        creatorUsername,   // El nombre que buscamos arriba
+        "RECLAMO"          // El tipo de orden
+      );
+    }
 
     // Mensaje de éxito
     let message = draftId

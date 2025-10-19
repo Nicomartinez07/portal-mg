@@ -11,9 +11,8 @@ interface User {
   id: number;
   username: string;
   email: string;
-  taller: boolean;
-  concesionario: boolean;
-  emailNotifications: boolean;
+  roles: { role: { name: string } }[]; // Arreglo de roles
+  notifications: boolean;
 }
 
 interface UsersModalProps {

@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, startTransition } from 'react';
 import { loginUser } from '@/app/login/actions';
 import { Eye, EyeOff } from 'lucide-react';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 const LoginForm = () => {
   const router = useRouter();
   const [state, formAction] = React.useActionState(loginUser, { error: '', success: false });
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   // Efecto para chequear cuando el login fue exitoso, pushea al login si fue exitosox
   useEffect(() => {
@@ -19,6 +21,7 @@ const LoginForm = () => {
   }, [state, router]);
 
   return (
+    <>  
     <div
       className="relative flex items-center justify-center min-h-screen bg-cover bg-center px-4 sm:px-6"
       style={{ backgroundImage: "url('/fotito.png')" }}
@@ -116,15 +119,30 @@ const LoginForm = () => {
           </div>
 
           {/* Mensaje final */}
-          <div className="text-center text-gray-300 text-sm">
-            <p>
-              Si no tienes cuenta o olvidaste tu contraseña contacta a Soporte
-              técnico.
-            </p>
-          </div>
+          {/* --- SECCIÓN MODIFICADA --- */}
+            <div className="text-center text-gray-300 text-sm">
+              <p>
+                ¿Te olvidaste de tu contraseña?
+                <br />
+                No te preocupes, hacé clic{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="font-bold text-teal-400 hover:text-teal-300 underline"
+                >
+                  aquí
+                </button>
+                {' '}para resetearla.
+              </p>
+            </div>
         </form>
       </div>
     </div>
+    {/* --- MODAL (FUERA DEL DIV PRINCIPAL) --- */}
+      {showForgotModal && (
+        <ForgotPasswordModal onClose={() => setShowForgotModal(false)} />
+      )}
+     </>
   );
 };
 

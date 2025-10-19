@@ -9,18 +9,28 @@ import {
   FaTrashAlt,
   FaFileDownload,
 } from "react-icons/fa";
-import { getCompanies, deleteCompany } from "../actions/companies";
+import { getCompanies, deleteCompany, updateCompany} from "../actions/companies";
 import { NewCompanyModal } from "../../components/companies/NewCompanyModal";
 import { EditCompanyModal } from "../../components/companies/EditCompanyModal";
 import { UsersModal } from "../../components/companies/users/UsersModal"; 
 
+type CompanyEntry = {
+  id: number;
+  name: string;
+  showInParts: boolean | null;
+};
+
 export default function EmpresasPage() {
-  const [empresas, setEmpresas] = useState<{ id: number; name: string }[]>([]);
+  // USA EL NUEVO TIPO
+  const [empresas, setEmpresas] = useState<CompanyEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewModal, setShowNewModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null);
-  const [showUsersModal, setShowUsersModal] = useState<{ id: number; name: string } | null>(null); // ⬅️ Estado para el modal de usuarios
+  const [showUsersModal, setShowUsersModal] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   function handleEdit(id: number) {
     setEditingCompanyId(id);
@@ -30,11 +40,11 @@ export default function EmpresasPage() {
     setEditingCompanyId(null);
   }
 
-  function handleShowUsers(id: number, name: string) { // ⬅️ Nueva función para abrir el modal de usuarios
+  function handleShowUsers(id: number, name: string) {
     setShowUsersModal({ id, name });
   }
 
-  function handleCloseUsersModal() { // ⬅️ Nueva función para cerrar el modal de usuarios
+  function handleCloseUsersModal() {
     setShowUsersModal(null);
   }
 
@@ -44,6 +54,7 @@ export default function EmpresasPage() {
 
   const loadCompanies = async () => {
     setLoading(true);
+    // Asegúrate que tu server action 'getCompanies' devuelva 'showInParts'
     const data = await getCompanies();
     setEmpresas(data);
     setLoading(false);
@@ -63,6 +74,31 @@ export default function EmpresasPage() {
       alert(error.message || "Error al eliminar la empresa ❌");
     }
   }
+
+  // Maneja el clic en el checkbox de la tabla
+  const handleToggleShowInParts = async (company: CompanyEntry) => {
+    const newValue = !company.showInParts;
+
+    // Actualización optimista: actualiza la UI al instante
+    setEmpresas((prevEmpresas) =>
+      prevEmpresas.map((e) =>
+        e.id === company.id ? { ...e, showInParts: newValue } : e
+      )
+    );
+
+    try {
+      // Llama al server action en segundo plano
+      await updateCompany(company.id, {
+        showInParts: newValue,
+      });
+    } catch (error) {
+      console.error("Error al actualizar la empresa:", error);
+      alert("Error al actualizar ❌");
+      // Si falla, revierte el cambio
+      loadCompanies();
+    }
+  };
+
 
   const filteredEmpresas = empresas.filter((empresa) =>
     searchTerm === "" ? true : empresa.name === searchTerm
@@ -89,6 +125,7 @@ export default function EmpresasPage() {
             <EditCompanyModal
               companyId={editingCompanyId}
               onClose={handleCloseEditModal}
+              onSuccess={loadCompanies}
             />
           )}
         </div>
@@ -118,6 +155,11 @@ export default function EmpresasPage() {
                   <th className="px-4 py-3 text-left font-semibold text-gray-700">
                     Nombre
                   </th>
+                  {/* --- NUEVA COLUMNA --- */}
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 w-40">
+                    Mostrar Repuestos
+                  </th>
+                  {/* --- FIN NUEVA COLUMNA --- */}
                   <th className="px-4 py-3 text-left font-semibold text-gray-700"></th>
                 </tr>
               </thead>
@@ -125,10 +167,24 @@ export default function EmpresasPage() {
                 {filteredEmpresas.map((empresa) => (
                   <tr key={empresa.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-left">{empresa.name}</td>
+                    
+                    {/* --- NUEVA CELDA --- */}
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={empresa.showInParts || false}
+                        onChange={() => handleToggleShowInParts(empresa)}
+                        className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                    </td>
+                    {/* --- FIN NUEVA CELDA --- */}
+
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end items-center space-x-2">
                         <button
-                          onClick={() => handleShowUsers(empresa.id, empresa.name)} // ⬅️ Llama a la nueva función
+                          onClick={() =>
+                            handleShowUsers(empresa.id, empresa.name)
+                          }
                           className="bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 text-sm flex items-center gap-1"
                         >
                           <FaUser className="text-sm" /> Usuarios
@@ -152,7 +208,7 @@ export default function EmpresasPage() {
                 {filteredEmpresas.length === 0 && (
                   <tr>
                     <td
-                      colSpan={2}
+                      colSpan={3} 
                       className="px-4 py-3 text-center text-gray-500"
                     >
                       No se encontraron empresas

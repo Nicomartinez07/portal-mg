@@ -9,6 +9,7 @@ export async function getCompanies() {
     select: {
       id: true,
       name: true,
+      showInParts: true,
     },
     orderBy: { name: "asc" },
   });
@@ -25,6 +26,7 @@ export async function createCompany(data: {
   email?: string;
   companyType: string;
   manager?: string;
+  showInParts?: boolean;
 }) {
   return prisma.company.create({
     data: {
@@ -37,6 +39,7 @@ export async function createCompany(data: {
       email: data.email ?? null,
       companyType: data.companyType ?? "GENERAL",
       manager: data.manager ?? null,
+      showInParts: data.showInParts ?? false,
     },
   });
 }
@@ -61,11 +64,17 @@ export async function deleteCompany(id: number) {
 export async function getCompanyById(id: number) {
   return prisma.company.findUnique({
     where: { id },
-    include: {
-      users: true,
-      parts: true,
-      warranties: true,
-      orders: true,
+    select: {
+      id: true,
+      name: true,
+      manager: true,
+      address: true,
+      state: true,
+      city: true,
+      phone1: true,
+      phone2: true,
+      email: true,
+      showInParts: true, 
     },
   });
 }
@@ -78,6 +87,7 @@ export async function getUsersByCompany(companyId: number) {
       id: true,
       username: true,
       email: true,
+      notifications: true,
       roles: {
         include: { role: true },
       },
@@ -97,6 +107,7 @@ export async function updateCompany(
     phone2?: string | null;
     email?: string | null;
     manager?: string | null;
+    showInParts?: boolean | null;
   }
 ) {
   return prisma.company.update({
@@ -110,6 +121,7 @@ export async function updateCompany(
       phone2: data.phone2,
       email: data.email,
       manager: data.manager,
+      showInParts: data.showInParts, 
     },
   });
 }
@@ -205,14 +217,14 @@ export async function updateUser(
     if (data.roles.taller) {
       rolesToCreate.push({
         role: {
-          connect: { name: "Taller" },
+          connect: { name: "WORKSHOP" },
         },
       });
     }
     if (data.roles.concesionario) {
       rolesToCreate.push({
         role: {
-          connect: { name: "Concesionario" },
+          connect: { name: "DEALER" },
         },
       });
     }
