@@ -11,8 +11,8 @@ export type CertificateFilters = {
   importDateFrom?: string;
   importDateTo?: string;
   combinacion?: "AMBOS" | "NRO_CERTIFICADO" | "F_IMPORTACION" | "NINGUNO";
-  garantia?: "ACTIVA" | "NO_ACTIVA" | null; // <-- Cambia a null
-  blocked?: "BLOQUEADO" | "NO_BLOQUEADO" | null; // <-- Cambia a null
+  garantia?: "ACTIVA" | "NO_ACTIVA" | null; 
+  blocked?: "BLOQUEADO" | "NO_BLOQUEADO" | null; 
 };
 
 type CertificateContextType = {

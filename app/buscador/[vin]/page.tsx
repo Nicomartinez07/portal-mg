@@ -2,11 +2,12 @@
 
 import { MGDashboard } from "@/components/mg-dashboard";
 import { getVehicleDetails } from "./actions";
-import { VehicleDetailsClient } from "./VehicleDetailsClient"; // Importamos el componente de cliente
+import { VehicleDetailsClient } from "./VehicleDetailsClient";
 
-export default async function BuscadorPage({ params }: { params: { vin: string } }) {
-  const { vin } = params;
-
+export default async function BuscadorPage(props: { params: Promise<{ vin: string }> }) {
+  // Usando then() en lugar de await
+  const { vin } = await props.params;
+  
   try {
     const vehicleData = await getVehicleDetails(vin);
 
@@ -19,7 +20,6 @@ export default async function BuscadorPage({ params }: { params: { vin: string }
         );
     }
 
-    // Pasamos todos los datos necesarios al componente de cliente
     return (
       <MGDashboard>
         <VehicleDetailsClient vehicleData={vehicleData} />

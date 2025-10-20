@@ -1,12 +1,14 @@
-
+// app/api/certificates/[id]/route.ts
 import { NextResponse } from "next/server";
 import { generateCertificate } from "@/app/actions/certificate";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const warrantyId = parseInt(params.id);
+  const { id } = await params; // ¡Importante: await aquí!
+  const warrantyId = parseInt(id, 10);
+
   const buffer = await generateCertificate(warrantyId);
 
   return new NextResponse(buffer, {

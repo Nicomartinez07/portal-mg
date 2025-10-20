@@ -101,7 +101,7 @@ Garantias:
 --------------------------------------------------------------------------------------------------------------------------
  
 Ordenes:
-detallitos de cada estado interno
+Testing detallitos de cada estado interno
 Manejo de imagenes
 
 --------------------------------------------------------------------------------------------------------------------------
@@ -115,13 +115,16 @@ Empresa:
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Pagina certificados: filtros. -Empadronamiento: fecha activacion de garantia
-                              -F. Importacion: Cuando el auto llego al pais
-                    Testing
-                    Descargar certificado, 
-                    Logica de Garantia y bloqueado,
-                    Arreglar las 4 fechas
-                    Importar certificados
+Pagina certificados:
+-Empadronamiento: fecha activacion de garantia
+-F. Importacion: Cuando el auto llego al pais
+Logica de cambiar  Garantia y bloqueado,
+
+Testar filtros 
+
+
+Testing
+Verificar Importar certificados
                    
 
 --------------------------------------------------------------------------------------------------------------------------

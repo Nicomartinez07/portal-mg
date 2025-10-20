@@ -125,7 +125,7 @@ export async function updateCompany(
     },
   });
 }
-// 📌 Crear un usuario
+// 📌 Crear un usuario - VERSIÓN CORREGIDA
 export async function createUser(data: {
   username: string;
   email: string;
@@ -142,26 +142,20 @@ export async function createUser(data: {
   }
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
-
-  // Prepara la conexión de roles a crear
   const rolesToConnect = [];
+  
   if (data.roles.taller) {
     rolesToConnect.push({
       role: {
-        connectOrCreate: {
-          where: { name: "Taller" },
-          create: { name: "Taller" },
-        },
+        connect: { name: "WORKSHOP" } 
       },
     });
   }
+  
   if (data.roles.concesionario) {
     rolesToConnect.push({
       role: {
-        connectOrCreate: {
-          where: { name: "Concesionario" },
-          create: { name: "Concesionario" },
-        },
+        connect: { name: "DEALER" }
       },
     });
   }
@@ -174,7 +168,7 @@ export async function createUser(data: {
       companyId: data.companyId,
       notifications: data.notifications,
       roles: {
-        create: rolesToConnect, // Usa 'create' para crear las relaciones
+        create: rolesToConnect,
       },
     },
   });

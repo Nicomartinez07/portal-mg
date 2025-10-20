@@ -333,10 +333,8 @@ export async function saveClaim(
   }
 }
 
-// En tu actions.ts
 export async function getPreAuthorizationDetails(preAuthorizationId: string) {
   try {
-    // Convertir el string a número
     const id = parseInt(preAuthorizationId);
     
     if (isNaN(id)) {
@@ -373,12 +371,24 @@ export async function getPreAuthorizationDetails(preAuthorizationId: string) {
       };
     }
 
-    if (preAuthorization.status !== "AUTORIZADO" && preAuthorization.status !== "PENDIENTE") {
-  return {
-    success: false,
-    message: `❌ Pre-autorización ${preAuthorization.status.toLowerCase()} - debe estar PENDIENTE o AUTORIZADO`
-  };
-}
+    // Validar que tenga customer y vehicle
+    if (!preAuthorization.customer || !preAuthorization.vehicle) {
+      return {
+        success: false,
+        message: "❌ Pre-autorización incompleta - falta cliente o vehículo"
+      };
+    }
+
+    const currentStatus = preAuthorization.status;
+    
+    if (currentStatus !== "AUTORIZADO" && currentStatus !== "PENDIENTE") {
+      const statusText = currentStatus?.toLowerCase() || "sin estado definido";
+      
+      return {
+        success: false,
+        message: `❌ Pre-autorización ${statusText} - debe estar PENDIENTE o AUTORIZADO`
+      };
+    }
 
     return {
       success: true,
