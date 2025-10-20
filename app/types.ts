@@ -87,6 +87,10 @@ export interface Order {
   additionalObservations: string | null;
   service: string | null;
   
+  internalStatusObservation: string | null;
+  originClaimNumber: string | undefined;
+  laborRecovery: number | null;
+  partsRecovery: number | null;
 
   // Relaciones incluidas
   customer: Customer;

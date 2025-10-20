@@ -1,12 +1,6 @@
 // playwright.config.js
 
 import { defineConfig, devices } from '@playwright/test';
-// 1. Importa 'path' y 'dotenv' si quieres usar la sintaxis de importación/carga al inicio,
-// aunque la carga dentro de globalSetup/Teardown es más segura.
-
-// const path = require('path');
-// require('dotenv').config({ path: path.resolve(__dirname, 'prisma/.env.test') }); 
-// → NOTA: Esto no es necesario si cargas el .env.test dentro del globalSetup/Teardown.
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -52,12 +46,15 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    // 3. Importante: El servidor de Next.js (npm run dev)
-    // debe correr con sus variables de entorno normales (.env), 
-    // y el código de Next/Prisma usará la BD de TESTING 
-    // porque el globalSetup garantiza que la variable DATABASE_URL apunte a 'myproject_test'.
-    command: 'npm run dev', 
+    command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: false, // NO reutilizar el server - Cerramos todo después de cada test
+    reuseExistingServer: false,
+
+    env: {
+      DATABASE_URL: "file:./test.db",
+      JWT_SECRET: "contraseña_para_jwt", 
+      NODE_ENV: "test"
+    },
+    // ---------------------------------
   },
 });

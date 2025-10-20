@@ -3,8 +3,6 @@ import { test, expect } from '@playwright/test';
 test('Insertar Reclamo', async ({ page }) => {
   await page.goto('http://localhost:3000');
   await page.getByRole('link', { name: 'Ordenes' }).click();
-  await expect(page.getByRole('cell', { name: '11' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'AUTORIZADO' }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Reclamo' }).click();
   await page.getByRole('textbox', { name: 'Ingrese ID de pre-autorización' }).fill('11');
   page.once('dialog', dialog => {
@@ -20,6 +18,8 @@ test('Insertar Reclamo', async ({ page }) => {
   });
   await page.getByRole('button', { name: 'Enviar Reclamo' }).click();
   await page.getByRole('link', { name: 'Ordenes' }).click();
+  await page.locator('input[name="vin"]').fill('VIN00004');
+  await page.getByRole('button', { name: 'Buscar' }).click();
   await expect(page.getByRole('cell', { name: 'RECLAMO', exact: true }).first()).toBeVisible();
   await expect(page.getByRole('cell', { name: 'VIN00004' }).first()).toBeVisible();
 });

@@ -39,7 +39,6 @@ export default function UsuariosPage() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
-    // ⚠️ Tenés que crear una ruta de API en tu Next.js (ej: /api/upload-tarifario)
     const res = await fetch("/api/upload-tarifario", {
       method: "POST",
       body: formData,
@@ -49,6 +48,7 @@ export default function UsuariosPage() {
       alert("Tarifario actualizado ✅");
     } else {
       alert("Error al subir el tarifario ❌");
+      console.log(res.status)
     }
   };
 
@@ -195,7 +195,7 @@ export default function UsuariosPage() {
           {/* Subida de tarifario */}
           <div className="flex items-center gap-4 mb-4">
             <a
-            href="/archivos/tarifario.pdf"
+            href="/archivos/tarifario.xlsx"
             download
             target="_blank"
             rel="noopener noreferrer"
@@ -208,7 +208,7 @@ export default function UsuariosPage() {
               Seleccionar archivo
               <input
                 type="file"
-                accept="application/pdf"
+                accept="application/xlsx"
                 onChange={handleFileChange}
                 className="hidden"
               />

@@ -87,9 +87,6 @@ async function main() {
     { id: 10, username: "Zoe Baldrich", email: "zbaldrich@eximar.com.ar", notifications: false, password: await bcrypt.hash("zbaldrich", SALT_ROUNDS), companyId: companies[0].id },
     { id: 11, username: "Francisco Vernocchi", email: "francisco.vernocchi@autocity.com.ar", notifications: false, password: await bcrypt.hash("fvernocchi", SALT_ROUNDS), companyId: companies[11].id },
     { id: 12, username: "Renzo Agustin Rolando", email: "renzo.rolando@autocity.com.ar", notifications: false, password: await bcrypt.hash("rrolando", SALT_ROUNDS), companyId: companies[11].id },
-    
-    
-
   ];
   const users = [];
   for (const u of usersData) {
@@ -301,8 +298,8 @@ async function main() {
       vehicleVin: "VIN00002",
       companyId: 7,
       userId: 3,
-      status: "AUTORIZADO",
-      internalStatus: "APROBADO_EN_ORIGEN",
+      status: "PENDIENTE",
+      internalStatus: "CARGADO",
       actualMileage: 35000,
       diagnosis: "Inspección de motor: se detecta fuga de aceite en el cárter.",
       additionalObservations: "Se recomienda cambiar el filtro y la junta."
@@ -316,7 +313,7 @@ async function main() {
       vehicleVin: "VIN00003",
       companyId: 4,
       userId: 4,
-      status: "COMPLETADO",
+      status: "PENDIENTE",
       internalStatus: "CARGADO",
       actualMileage: 50000,
       diagnosis: "Revisión completa de la suspensión y alineación.",
@@ -331,8 +328,8 @@ async function main() {
       vehicleVin: "VIN00004",
       companyId: 9,
       userId: 5,
-      status: "RECHAZADO",
-      internalStatus: "RECHAZADO_EN_ORIGEN",
+      status: "PENDIENTE",
+      internalStatus: "PENDIENTE_RECLAMO",
       actualMileage: 22000,
       diagnosis: "Problema eléctrico en luces delanteras. Se requiere cambio de batería.",
       additionalObservations: "La batería no está cubierta por la garantía."

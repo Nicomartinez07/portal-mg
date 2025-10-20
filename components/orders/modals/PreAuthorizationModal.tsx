@@ -1,8 +1,14 @@
-// src/app/components/PreAuthorizationModal.tsx
-
 import React, { useState, useEffect } from "react";
+// 1. ASEGÚRATE de que tu tipo 'Order' en 'app/types' incluya los 4 campos nuevos
 import type { Order } from "@/app/types";
-import { updateOrderInternalStatus, updateOrderStatus } from "@/app/ordenes/actions";
+import {
+  updateOrderInternalStatus,
+  updateOrderStatus,
+  // 2. IMPORTA EL TIPO de la data que espera tu action (lo creamos en el paso anterior)
+  OrderInternalStatusUpdateData,
+} from "@/app/ordenes/actions";
+
+// 3. ASUMO que el tipo 'OrderInternalStatusUpdateData' existe en 'actions.ts'
 
 interface PreAuthorizationModalProps {
   order: Order;
@@ -17,29 +23,49 @@ export default function PreAuthorizationModal({
   onShowHistory,
   onOrderUpdated,
 }: PreAuthorizationModalProps) {
-  // Inicializa el estado con el valor del internalStatus de la orden. 
-  // Usa una cadena vacía si es null para que el selector funcione correctamente.
-  const [currentInternalStatus, setCurrentInternalStatus] = useState(order.internalStatus || "");
+  // Estado del selector (sin cambios)
+  const [currentInternalStatus, setCurrentInternalStatus] = useState(
+    order.internalStatus || ""
+  );
+
+  // Estados de los modales y botones (sin cambios)
   const [isUpdating, setIsUpdating] = useState(false);
   const [showObservationModal, setShowObservationModal] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
-  const [observation, setObservation] = useState(""); 
-  const [lastStatusObservation, setLastStatusObservation] = useState<string | null>(null); 
+  const [observation, setObservation] = useState("");
+  const [lastStatusObservation, setLastStatusObservation] = useState<
+    string | null
+  >(null);
 
-  // Efecto para obtener la observación del último cambio de estado
+  // --- NUEVO: Estados para los 4 campos condicionales ---
+  // Se inicializan con los valores que ya tiene la orden (si existen)
+  const [internalStatusObservation, setInternalStatusObservation] = useState(
+    order.internalStatusObservation || ""
+  );
+  const [originClaimNumber, setOriginClaimNumber] = useState(
+    order.originClaimNumber || ""
+  );
+  // Se manejan como 'string' para los inputs, aunque sean 'Decimal' o 'Float'
+  const [laborRecovery, setLaborRecovery] = useState(
+    order.laborRecovery ? String(order.laborRecovery) : ""
+  );
+  const [partsRecovery, setPartsRecovery] = useState(
+    order.partsRecovery ? String(order.partsRecovery) : ""
+  );
+
+  // useEffect para historial de observación (Sin cambios)
   useEffect(() => {
     if (order.statusHistory && order.statusHistory.length > 0) {
-      // Ordenar por fecha descendente y tomar el más reciente
       const sortedHistory = [...order.statusHistory].sort(
-        (a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()
+        (a, b) =>
+          new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()
       );
-      
-      // Buscar el último cambio a AUTORIZADO o RECHAZADO que tenga observación
       const lastStatusChange = sortedHistory.find(
-        history => (history.status === "AUTORIZADO" || history.status === "RECHAZADO") && 
-                   history.observation 
+        (history) =>
+          (history.status === "AUTORIZADO" ||
+            history.status === "RECHAZADO") &&
+          history.observation
       );
-      
       if (lastStatusChange) {
         setLastStatusObservation(lastStatusChange.observation ?? null);
       } else {
@@ -48,16 +74,15 @@ export default function PreAuthorizationModal({
     }
   }, [order.statusHistory]);
 
+  // Funciones de Aprobar/Rechazar (Sin cambios)
   const handleChangeStatus = async (newStatus: string, observation?: string) => {
     if (order.status === "AUTORIZADO" || order.status === "RECHAZADO") {
       alert("No se puede cambiar el estado, ya fue procesado.");
       return;
     }
-
     setIsUpdating(true);
     const result = await updateOrderStatus(order.id, newStatus, observation);
     setIsUpdating(false);
-
     if (result.success) {
       alert(`Orden ${newStatus.toLowerCase()} con éxito.`);
       onOrderUpdated();
@@ -78,28 +103,83 @@ export default function PreAuthorizationModal({
     }
     setShowObservationModal(false);
     setPendingStatus(null);
-    setObservation(""); // Limpiar la observación después de usar
+    setObservation("");
   };
 
   const handleObservationCancel = () => {
     setShowObservationModal(false);
     setPendingStatus(null);
-    setObservation(""); // Limpiar la observación al cancelar
+    setObservation("");
   };
 
+  // --- NUEVO: Manejador para limpiar campos al cambiar estado interno ---
+  // Se activa CADA VEZ que cambia el <select>
+  const handleInternalStatusChange = (newStatus: string) => {
+    setCurrentInternalStatus(newStatus);
+
+    // Limpia los estados de los campos que NO corresponden al nuevo estado
+    // Esto cumple tu requisito de "borrar" al cambiar
+    if (newStatus !== "RECLAMO_EN_ORIGEN") {
+      setOriginClaimNumber("");
+    }
+    if (newStatus !== "APROBADO_EN_ORIGEN" && newStatus !== "CARGADO") {
+      setLaborRecovery("");
+      setPartsRecovery("");
+    }
+    if (
+      newStatus !== "NO_RECLAMABLE" &&
+      newStatus !== "RECHAZADO_EN_ORIGEN"
+    ) {
+      setInternalStatusObservation("");
+    }
+  };
+
+  // --- MODIFICADO: Lógica para "Guardar cambios" ---
   const handleUpdateInternalStatus = async () => {
     setIsUpdating(true);
-    
-    // Si el valor del selector es una cadena vacía, mandá null a la base de datos
-    const statusToUpdate = currentInternalStatus === "" ? null : currentInternalStatus;
 
-    // Llama a la acción del servidor con el valor correcto
-    const result = await updateOrderInternalStatus(order.id, statusToUpdate);
-    
+    // 1. Construye el objeto de datos que espera la server action
+    const dataToUpdate: OrderInternalStatusUpdateData = {
+      internalStatus:
+        currentInternalStatus === "" ? null : currentInternalStatus,
+
+      // 2. Asigna el valor del campo SI el estado es el correcto.
+      //    Si no es el correcto, asigna NULL para borrarlo en la DB.
+      originClaimNumber:
+        currentInternalStatus === "RECLAMO_EN_ORIGEN"
+          ? originClaimNumber || null // Envía null si está vacío
+          : null, // Borra el campo si el estado no es el correcto
+
+      laborRecovery:
+        currentInternalStatus === "APROBADO_EN_ORIGEN" ||
+        currentInternalStatus === "CARGADO"
+          ? // Convierte el string del input a número
+            laborRecovery
+            ? parseFloat(laborRecovery)
+            : null
+          : null, // Borra el campo
+
+      partsRecovery:
+        currentInternalStatus === "APROBADO_EN_ORIGEN" ||
+        currentInternalStatus === "CARGADO"
+          ? partsRecovery
+            ? parseFloat(partsRecovery)
+            : null
+          : null, // Borra el campo
+
+      internalStatusObservation:
+        currentInternalStatus === "NO_RECLAMABLE" ||
+        currentInternalStatus === "RECHAZADO_EN_ORIGEN"
+          ? internalStatusObservation || null
+          : null, // Borra el campo
+    };
+
+    // 3. Llama a la server action MODIFICADA con el objeto de datos
+    const result = await updateOrderInternalStatus(order.id, dataToUpdate);
     setIsUpdating(false);
 
     if (result.success) {
-      alert("Estado interno actualizado con éxito!");
+      alert("Estado interno y campos adicionales actualizados con éxito");
       onOrderUpdated();
       onClose();
     } else {
@@ -107,7 +187,7 @@ export default function PreAuthorizationModal({
     }
   };
 
-  // Encuentra las URLs de las fotos por tipo
+  // Funciones de fotos (sin cambios)
   const getPhotoUrl = (type: string) =>
     order.photos?.find((p) => p.type === type)?.url || "-";
 
@@ -115,7 +195,9 @@ export default function PreAuthorizationModal({
     <>
       <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
         <div className="bg-white p-6 rounded-lg w-2/3 max-h-[80vh] overflow-auto relative">
-          <h2 className="text-2xl font-bold mb-4">Solicitud de Pre-autorización</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            Solicitud de Pre-autorización
+          </h2>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-xl font-bold"
@@ -126,17 +208,37 @@ export default function PreAuthorizationModal({
           {/* Datos de la Orden */}
           <div className="mb-4 text-xs">
             <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-              {/* Campos de la orden */}
+              {/* --- Campos ReadOnly (Sin cambios) --- */}
               <label className="text-gray-800">Id</label>
-              <input readOnly value={order.id} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.id}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Fecha de Creación</label>
-              <input readOnly value={new Date(order.creationDate).toLocaleDateString()} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={new Date(order.creationDate).toLocaleDateString()}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Empresa</label>
-              <input readOnly value={order.company?.name || "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.company?.name || "-"}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Usuario</label>
-              <input readOnly value={order.user?.username || "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.user?.username || "-"}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">OR Interna</label>
-              <input readOnly value={order.orderNumber} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.orderNumber}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <div className="flex items-center gap-0.5">
                 <label className="text-gray-800">Estado</label>
                 <button
@@ -146,25 +248,32 @@ export default function PreAuthorizationModal({
                   (historial)
                 </button>
               </div>
-              <input readOnly value={order.status} className="border rounded px-2 py-1 w-full bg-gray-100" />
-              
-              {/* Mostrar observación del estado si existe y la orden está autorizada/rechazada */}
-              {(order.status === "AUTORIZADO" || order.status === "RECHAZADO") && lastStatusObservation && (
-                <>
-                  <label className="text-gray-800">Observación del Estado</label>
-                  <textarea 
-                    readOnly 
-                    value={lastStatusObservation} 
-                    rows={3} 
-                    className="w-full border rounded px-2 py-1 bg-gray-100 resize-none" 
-                  />
-                </>
-              )}
+              <input
+                readOnly
+                value={order.status ?? "-"} // <-- LÍNEA CORREGIDA
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
+              {(order.status === "AUTORIZADO" ||
+                order.status === "RECHAZADO") &&
+                lastStatusObservation && (
+                  <>
+                    <label className="text-gray-800">
+                      Observación del Estado
+                    </label>
+                    <textarea
+                      readOnly
+                      value={lastStatusObservation}
+                      rows={3}
+                      className="w-full border rounded px-2 py-1 bg-gray-100 resize-none"
+                    />
+                  </>
+                )}
 
+              {/* --- CAMPO MODIFICADO --- */}
               <label className="text-gray-800">Estado interno</label>
               <select
                 value={currentInternalStatus}
-                onChange={(e) => setCurrentInternalStatus(e.target.value as any)}
+                onChange={(e) => handleInternalStatusChange(e.target.value)} // <-- MODIFICADO
                 className="border rounded px-2 py-1 w-full bg-white text-gray-800"
               >
                 <option value=""></option>
@@ -175,26 +284,129 @@ export default function PreAuthorizationModal({
                 <option value="CARGADO">Cobrada</option>
                 <option value="NO_RECLAMABLE">No reclamable</option>
               </select>
+
+              {/* --- NUEVO: CAMPOS CONDICIONALES --- */}
+
+              {/* 1. Numero de reclamo en ORIGEN */}
+              {currentInternalStatus === "RECLAMO_EN_ORIGEN" && (
+                <>
+                  <label className="text-gray-800">Nro. Reclamo Origen</label>
+                  <input
+                    type="text"
+                    value={originClaimNumber}
+                    onChange={(e) => setOriginClaimNumber(e.target.value)}
+                    className="border rounded px-2 py-1 w-full bg-white text-gray-800"
+                    placeholder="Ingrese el número"
+                  />
+                </>
+              )}
+
+              {/* 2. Recupero mano de obra y repuestos */}
+              {(currentInternalStatus === "APROBADO_EN_ORIGEN" ||
+                currentInternalStatus === "CARGADO") && (
+                <>
+                  <label className="text-gray-800">Recupero Mano de Obra</label>
+                  <input
+                    type="number"
+                    step="0.01" // Permite decimales
+                    value={laborRecovery}
+                    onChange={(e) => setLaborRecovery(e.target.value)}
+                    placeholder="0.00"
+                    className="border rounded px-2 py-1 w-full bg-white text-gray-800"
+                  />
+                  <label className="text-gray-800">Recupero Repuestos</label>
+                  <input
+                    type="number"
+                    step="0.01" // Permite decimales
+                    value={partsRecovery}
+                    onChange={(e) => setPartsRecovery(e.target.value)}
+                    placeholder="0.00"
+                    className="border rounded px-2 py-1 w-full bg-white text-gray-800"
+                  />
+                </>
+              )}
+
+              {/* 3. Observaciones de estado interno */}
+              {(currentInternalStatus === "NO_RECLAMABLE" ||
+                currentInternalStatus === "RECHAZADO_EN_ORIGEN") && (
+                <>
+                  <label className="text-gray-800">
+                    Observaciones Estado Interno
+                  </label>
+                  <textarea
+                    value={internalStatusObservation}
+                    onChange={(e) =>
+                      setInternalStatusObservation(e.target.value)
+                    }
+                    rows={3}
+                    className="w-full border rounded px-2 py-1 bg-white text-gray-800 resize-none"
+                    placeholder="Escriba aquí por qué no es reclamable o fue rechazado..."
+                  />
+                </>
+              )}
+              {/* --- FIN CAMPOS CONDICIONALES --- */}
+
+              {/* --- Resto de campos ReadOnly (Sin cambios) --- */}
               <label className="text-gray-800">Nombre Cliente</label>
-              <input readOnly value={`${order.customer?.firstName} ${order.customer?.lastName}`} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={`${order.customer?.firstName} ${order.customer?.lastName}`}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">VIN</label>
-              <input readOnly value={order.vehicle?.vin || "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.vehicle?.vin || "-"}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Activacion Garantia</label>
-              <input readOnly value={order.vehicle?.warranty?.activationDate ? new Date(order.vehicle.warranty.activationDate).toLocaleDateString() : "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={
+                  order.vehicle?.warranty?.activationDate
+                    ? new Date(
+                        order.vehicle.warranty.activationDate
+                      ).toLocaleDateString()
+                    : "-"
+                }
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Nro. Motor</label>
-              <input readOnly value={order.vehicle?.engineNumber || "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.vehicle?.engineNumber || "-"}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Modelo</label>
-              <input readOnly value={order.vehicle?.model || "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.vehicle?.model || "-"}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Kilometraje real</label>
-              <input readOnly value={order.actualMileage || "-"} className="border rounded px-2 py-1 w-full bg-gray-100" />
+              <input
+                readOnly
+                value={order.actualMileage || "-"}
+                className="border rounded px-2 py-1 w-full bg-gray-100"
+              />
               <label className="text-gray-800">Diagnóstico</label>
-              <textarea readOnly value={order.diagnosis || ""} rows={4} className="w-full border rounded px-2 py-1 bg-gray-100 resize-none" />
+              <textarea
+                readOnly
+                value={order.diagnosis || ""}
+                rows={4}
+                className="w-full border rounded px-2 py-1 bg-gray-100 resize-none"
+              />
               <label className="text-gray-800">Observaciones adicionales</label>
-              <textarea readOnly value={order.additionalObservations || ""} rows={4} className="w-full border rounded px-2 py-1 bg-gray-100 resize-none" />
+              <textarea
+                readOnly
+                value={order.additionalObservations || ""}
+                rows={4}
+                className="w-full border rounded px-2 py-1 bg-gray-100 resize-none"
+              />
             </div>
           </div>
 
-          {/* Tareas */}
+         {/* Tareas */}
          <div className="text-xs mt-4">
             <h3 className="font-semibold mb-2">Tareas</h3>
             {order.tasks && order.tasks.length > 0 ? (
@@ -269,23 +481,22 @@ export default function PreAuthorizationModal({
           </div>
 
           {/* Botones */}
-         <div className="mt-4 flex justify-end gap-2">
-            {/* Botón cerrar */}
+          <div className="mt-4 flex justify-end gap-2">
             <button
               onClick={onClose}
               className="bg-gray-300 px-2 py-1 rounded hover:bg-gray-400 sm:px-4 sm:py-2"
             >
               Cerrar
             </button>
-            {/* Botón guardar estado interno */}
             <button
-              onClick={handleUpdateInternalStatus}
+              onClick={handleUpdateInternalStatus} // <-- MODIFICADO (ahora envía todo)
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isUpdating}
             >
               {isUpdating ? "Guardando..." : "Guardar cambios"}
             </button>
-            {/* Botones especiales si está Pendiente */}
+
+            {/* Botones Aprobar/Rechazar (Sin cambios) */}
             {order.status === "PENDIENTE" && (
               <>
                 <button
@@ -307,7 +518,6 @@ export default function PreAuthorizationModal({
           </div>
         </div>
       </div>
-
       {/* Modal de Observación */}
       {showObservationModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[60]">

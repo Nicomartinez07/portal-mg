@@ -3,7 +3,20 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+// Agregué revalidatePath que es necesario para refrescar la UI
+import { revalidatePath } from "next/cache";
 
+// --- 1. TIPO DE DATOS ---
+// Esto define la "forma" del objeto que envían los modales
+export type OrderInternalStatusUpdateData = {
+  internalStatus: string | null;
+  internalStatusObservation: string | null;
+  originClaimNumber: string | null
+  laborRecovery: number | null;
+  partsRecovery: number | null;
+};
+
+// --- 2. Tu función getOrders (SIN CAMBIOS) ---
 export async function getOrders(filters: {
   orderNumber?: string;
   vin?: string;
@@ -11,7 +24,7 @@ export async function getOrders(filters: {
   status?: string;
   type?: string;
   internalStatus?: string;
-  companyId?: string; 
+  companyId?: string;
   fromDate?: string;
   toDate?: string;
 }) {
@@ -19,13 +32,13 @@ export async function getOrders(filters: {
     where: {
       draft: false,
       ...(filters.orderNumber && { orderNumber: Number(filters.orderNumber) }),
-      vehicle: filters.vin
-        ? { vin: { contains: filters.vin } }
-        : undefined,
+      vehicle: filters.vin ? { vin: { contains: filters.vin } } : undefined,
 
       ...(filters.status && { status: filters.status as any }),
       ...(filters.type && { type: filters.type as any }),
-      ...(filters.internalStatus && { internalStatus: filters.internalStatus as any }),
+      ...(filters.internalStatus && {
+        internalStatus: filters.internalStatus as any,
+      }),
       ...(filters.companyId && { companyId: Number(filters.companyId) }),
 
       creationDate: {
@@ -58,7 +71,12 @@ export async function getOrders(filters: {
   });
 }
 
-export async function updateOrderStatus(orderId: number, newStatus: string, observation?: string) {
+// --- 3. Tu función updateOrderStatus (Le agregué revalidatePath) ---
+export async function updateOrderStatus(
+  orderId: number,
+  newStatus: string,
+  observation?: string
+) {
   try {
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // 1️⃣ Actualizamos el estado de la orden
@@ -73,15 +91,17 @@ export async function updateOrderStatus(orderId: number, newStatus: string, obse
           orderId,
           status: newStatus as any,
           changedAt: new Date(),
-          observation: observation?.trim() || null, 
+          observation: observation?.trim() || null,
         },
       });
-
 
       return order;
     });
 
-    console.log(`✅ Estado de la orden ${orderId} actualizado a ${newStatus} y registrado en historial.`);
+    console.log(
+      `✅ Estado de la orden ${orderId} actualizado a ${newStatus} y registrado en historial.`
+    );
+    revalidatePath("/ordenes"); // <-- Agregado: Refresca la data en la UI
     return { success: true, updatedOrder };
   } catch (error) {
     console.error("❌ Error updating order status:", error);
@@ -90,19 +110,31 @@ export async function updateOrderStatus(orderId: number, newStatus: string, obse
 }
 
 
-export async function updateOrderInternalStatus(orderId: number, newInternalStatus: string | null) {
+
+export async function updateOrderInternalStatus(
+  orderId: number,
+  data: OrderInternalStatusUpdateData 
+) {
   try {
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
-        internalStatus: newInternalStatus as any,
+        ...data,
+        internalStatus: data.internalStatus as any, 
       },
     });
 
-    console.log(`Estado interno de la orden ${orderId} actualizado a ${newInternalStatus}`);
+    console.log(
+      `✅ Estado interno y campos de la orden ${orderId} actualizados.`
+    );
+    revalidatePath("/ordenes");
     return { success: true, updatedOrder };
   } catch (error) {
     console.error("Error updating order internal status:", error);
-    return { success: false, error: "Failed to update internal status" };
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to update internal status";
+    return { success: false, error: errorMessage };
   }
 }

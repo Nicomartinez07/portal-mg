@@ -54,7 +54,7 @@ const navigationItems = [
   {
     name: "Tarifario",
     icon: DollarSign,
-    href: "/archivos/tarifario.pdf",
+    href: "/archivos/tarifario.xlsx",
     download: true,
   },
   {

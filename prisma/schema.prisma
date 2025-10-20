@@ -184,6 +184,12 @@ model Order {
   status                 OrderStatus?
   service                String? 
   internalStatus         InternalStatus?
+
+  internalStatusObservation String?
+  originClaimNumber         String?
+  laborRecovery             Int?
+  partsRecovery             Int?
+  
   actualMileage          Int
   diagnosis              String?
   additionalObservations String?

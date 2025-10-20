@@ -70,6 +70,7 @@ export const WarrantyTable = () => {
                 <button
                   onClick={() => setSelected(w)}
                   className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                  name="Detalles"
                 >
                   Detalles
                 </button>
