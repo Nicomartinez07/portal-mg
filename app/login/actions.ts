@@ -6,7 +6,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken"; 
 
 // Interface de respuesta de login
-interface LoginResponse {
+// --- MODIFICACIÓN 1: Se exporta la interfaz ---
+export interface LoginResponse {
   token: string;
   user: { 
     id: string; 
@@ -17,9 +18,14 @@ interface LoginResponse {
   };
   success: boolean;
   error?: string;
+  isPending?: boolean;
 }
 
-export async function loginUser(_: any, formData: FormData): Promise<LoginResponse> {
+// --- MODIFICACIÓN 2: Se tipa el primer argumento como LoginResponse ---
+export async function loginUser(
+  prevState: LoginResponse, 
+  formData: FormData
+): Promise<LoginResponse> {
   const username = formData.get("username") as string;
   const password = formData.get("password") as string;
 

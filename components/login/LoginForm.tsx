@@ -2,13 +2,31 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, startTransition } from 'react';
-import { loginUser } from '@/app/login/actions';
+// --- MODIFICACIÓN: Importar el tipo y la action ---
+import { loginUser, type LoginResponse } from '@/app/login/actions';
 import { Eye, EyeOff } from 'lucide-react';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 
+// --- MODIFICACIÓN: Definir el estado inicial completo ---
+const initialState: LoginResponse = {
+  error: '',
+  success: false,
+  token: '',
+  user: {
+    id: '',
+    username: '',
+    email: '',
+    role: '',
+    companyId: 0,
+  },
+};
+
 const LoginForm = () => {
   const router = useRouter();
-  const [state, formAction] = React.useActionState(loginUser, { error: '', success: false });
+  
+  // --- MODIFICACIÓN: Usar el initialState completo ---
+  const [state, formAction] = React.useActionState(loginUser, initialState);
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 

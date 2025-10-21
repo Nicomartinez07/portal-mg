@@ -35,26 +35,23 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
   }, []);
 
  
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target;
+  // For text/email/select inputs
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setForm((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
-    // Si es un checkbox, usamos 'checked'. Si no, 'value'.
-    if (type === 'checkbox' && e.target instanceof HTMLInputElement) {
-      // Al hacer 'instanceof', TypeScript ya sabe que e.target es un HTMLInputElement
-      setForm((prev) => ({
-        ...prev,
-        [name]: e.target.checked,
-      }));
-    } else {
-      // Esto funciona para <input type="text">, <input type="email">, y <select>
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+// For checkboxes
+const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, checked } = e.target;
+  setForm((prev) => ({
+    ...prev,
+    [name]: checked,
+  }));
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +95,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
                 type="text"
                 name="username"
                 value={form.username}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
                 className="border rounded w-full p-2"
               />
@@ -110,7 +107,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
                 id="notifications"
                 name="notifications"
                 checked={form.notifications}
-                onChange={handleChange}
+                onChange={handleCheckboxChange}
                 className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label
@@ -126,7 +123,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
                 type="email"
                 name="email"
                 value={form.email}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
                 className="border rounded w-full p-2"
               />
@@ -138,7 +135,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
               <select
                 name="companyId"
                 value={form.companyId}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
                 className="border rounded w-full p-2"
               >
@@ -157,7 +154,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
                 type="password"
                 name="password"
                 value={form.password}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
                 className="border rounded w-full p-2"
               />
@@ -170,7 +167,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
                 type="password"
                 name="confirmPassword"
                 value={form.confirmPassword}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
                 className="border rounded w-full p-2"
               />

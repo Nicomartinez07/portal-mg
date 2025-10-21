@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-// 🚨 Asegúrate de que esta ruta sea correcta para tu OrderContext
 import { useOrder } from "@/contexts/OrdersContext"; 
-import { exportOrders, ExportResult } from "@/app/ordenes/export/actions"; // 🚨 Cambiar al nuevo action
+import { exportOrders, ExportResult, OrderFilters } from "@/app/ordenes/export/actions";
 
 export const ExportOrdersButton = () => {
-    // 🚨 Usar el hook del contexto de Órdenes
     const { filters } = useOrder(); 
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -16,11 +14,16 @@ export const ExportOrdersButton = () => {
         setMessage('Generando archivo de órdenes...');
         
         try {
-            // 2. Llamada: Llamar al Server Action con los filtros actuales
-            const result: ExportResult = await exportOrders(filters);
+            // Convertir los filtros al tipo esperado por el servidor
+            const serverFilters: OrderFilters = {
+                ...filters,
+                companyId: filters.companyId ? parseInt(filters.companyId) : undefined
+            };
+
+            const result: ExportResult = await exportOrders(serverFilters);
 
             if (result.success && result.fileBase64 && result.filename && result.mimeType) {
-                // Decodificación y Descarga: Base64 a Blob (binario)
+                // ... resto del código igual
                 const binaryString = atob(result.fileBase64);
                 const len = binaryString.length;
                 const bytes = new Uint8Array(len);
@@ -29,7 +32,6 @@ export const ExportOrdersButton = () => {
                 }
                 const blob = new Blob([bytes], { type: result.mimeType });
                 
-                // Forzar Descarga
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
@@ -37,7 +39,6 @@ export const ExportOrdersButton = () => {
                 document.body.appendChild(a);
                 a.click();
                 
-                // Limpieza
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 

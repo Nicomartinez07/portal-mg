@@ -70,12 +70,15 @@ export default function InsertPreAuthorizationModal({
     if (open && draft) {
       console.log("Cargando draft:", draft);
       
+      // --- CORRECCIÓN 1 ---
       // Convertir tasks del draft al formato del formulario
-      const draftTasks = draft.tasks?.length > 0 
+      const draftTasks = (draft.tasks && draft.tasks.length > 0) 
         ? draft.tasks.map(task => ({
             description: task.description || "",
             hoursCount: task.hoursCount?.toString() || "",
-            parts: task.parts?.length > 0 
+            
+            // --- CORRECCIÓN 2 ---
+            parts: (task.parts && task.parts.length > 0) 
               ? task.parts.map(part => ({
                   part: {
                     code: part.part?.code || "",
@@ -107,6 +110,7 @@ export default function InsertPreAuthorizationModal({
         milagePhoto: null,
         aditionalPartsPhoto: null,
         orPhoto: null,
+        
       };
 
       setFormData(draftFormData);

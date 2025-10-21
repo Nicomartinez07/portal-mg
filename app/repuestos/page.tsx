@@ -49,7 +49,7 @@ interface ImportResult {
 interface ImportPartFormProps { 
     companies: Company[];
     onClose: () => void; 
-    eximarId: number | null; // <-- Nueva prop
+    eximarId: number | null; 
 }
 
 // === COMPONENTE DEL FORMULARIO DE IMPORTACIÓN (INTEGRADO) ===
@@ -235,7 +235,6 @@ const ContactModal = ({ contact, onClose }: {
         >
           ×
         </button>
-        {/* ... (Contenido de ContactModal) ... */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
