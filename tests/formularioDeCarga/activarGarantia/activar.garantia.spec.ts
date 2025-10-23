@@ -1,27 +1,39 @@
 import { test, expect } from '@playwright/test';
 
-test('Insertar Auto y activarle la garantia', async ({ page }) => {
-  await page.goto('http://localhost:3000');
+test('Insertar auto y activarle garantia', async ({ page }) => {
+  await page.goto('http://localhost:3000/');
   await page.getByRole('button', { name: 'Cargar Auto' }).click();
-  await page.locator('input[name="vin"]').fill('00000000000000002');
+  await page.locator('input[name="vin"]').click();
+  await page.locator('input[name="vin"]').fill('00000000000000003');
+  await page.locator('input[name="brand"]').click();
   await page.locator('input[name="brand"]').press('CapsLock');
-  await page.locator('input[name="brand"]').fill('AAAAAA');
+  await page.locator('input[name="brand"]').fill('AAAAA');
+  await page.locator('input[name="model"]').click();
+  await page.locator('input[name="model"]').fill('AAAAA');
+  await page.locator('input[name="licensePlate"]').click();
   await page.locator('input[name="model"]').fill('AAAAAA');
-  await page.locator('input[name="licensePlate"]').fill('AAAAAA');
+  await page.locator('input[name="licensePlate"]').fill('AAAAA');
+  await page.locator('input[name="licensePlate"]').click();
+  await page.getByRole('spinbutton').click();
   await page.getByRole('spinbutton').fill('2025');
-  await page.locator('input[name="engineNumber"]').fill('2025');
-  await page.locator('input[name="type"]').fill('AAAAAA');
-  await page.locator('input[name="certificateNumber"]').fill('202020');
-  await page.locator('input[name="saleDate"]').fill('2025-01-01');
-  await page.locator('input[name="importDate"]').fill('2025-01-02');
+  await page.locator('input[name="engineNumber"]').click();
+  await page.locator('input[name="engineNumber"]').fill('AAAAA');
+  await page.locator('input[name="type"]').click();
+  await page.locator('input[name="type"]').fill('AAAAA');
+  await page.locator('input[name="certificateNumber"]').click();
+  await page.locator('input[name="certificateNumber"]').fill('2021');
+  await page.locator('input[name="saleDate"]').fill('2025-10-16');
+  await page.locator('input[name="importDate"]').fill('2025-10-17');
   await page.getByRole('combobox').selectOption('1');
+  await page.getByRole('button', { name: 'Guardar' }).click();
   page.once('dialog', dialog => {
     console.log(`Dialog message: ${dialog.message()}`);
-    dialog.dismiss().catch(() => {});
+    dialog.dismiss().catch(() => { });
   });
-  await page.getByRole('button', { name: 'Guardar' }).click();
+  await page.goto('http://localhost:3000/');
   await page.getByRole('button', { name: 'Activar Garantia' }).click();
-  await page.locator('input[name="vin"]').fill('00000000000000002');
+  await page.locator('input[name="vin"]').click();
+  await page.locator('input[name="vin"]').fill('00000000000000003');
   await page.getByTestId('search-vehicle-button').click();
   await page.locator('input[name="user"]').fill('Fabio Summa');
   await page.locator('input[name="clientName"]').fill('cliente');
@@ -30,14 +42,17 @@ test('Insertar Auto y activarle la garantia', async ({ page }) => {
   await page.locator('input[name="clientPhone"]').fill('12345678');
   await page.locator('input[name="clientDirection"]').fill('cliente');
   await page.locator('select[name="clientProvince"]').selectOption('Buenos Aires');
-  await page.locator('select[name="clientLocality"]').selectOption('No Encontrada');
+  await page.locator('select[name="clientLocality"]').selectOption('Mar del Plata');
+  await page.getByRole('button', { name: 'Guardar' }).click();
   page.once('dialog', dialog => {
     console.log(`Dialog message: ${dialog.message()}`);
-    dialog.dismiss().catch(() => {});
+    dialog.dismiss().catch(() => { });
   });
   await page.getByRole('button', { name: 'Guardar' }).click();
+  await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Garantías' }).click();
+  await page.locator('div').filter({ hasText: /^Desde$/ }).getByRole('textbox').fill('2024-10-01');
+  await page.locator('div').filter({ hasText: /^VIN$/ }).getByRole('textbox').fill('00000000000000003');
   await page.getByRole('button', { name: 'Buscar' }).click();
-  await expect(page.getByRole('cell', { name: '00000000000000002' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Fabio Summa' }).first()).toBeVisible();
+  await expect(page.locator('tbody')).toContainText('00000000000000003');
 });

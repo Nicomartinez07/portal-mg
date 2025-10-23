@@ -8,5 +8,4 @@ test('Filtrar por estado AUTORIZADA Y VISUALIZAR', async ({ page }) => {
   await page.locator('input[name="vin"]').fill('VIN00001');
   await page.getByRole('button', { name: 'Buscar' }).click();
   await expect(page.getByText('PENDIENTE', { exact: true })).toBeVisible();
-
 });

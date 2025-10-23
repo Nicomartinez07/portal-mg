@@ -3,7 +3,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const { chromium } = require('@playwright/test');
 
-const authFile = 'tests/auth.json'; 
+const authFile = 'tests/auth.json';
 
 async function globalSetup(config) {
   console.log('✨ [SETUP] Configurando base de datos de testing (SQLite)...');
@@ -24,6 +24,9 @@ async function globalSetup(config) {
     console.error('❌ Error en Global Setup (DB):', error.message);
     process.exit(1);
   }
+
+  const DB_CREATED_PATH = path.resolve(process.cwd(), 'prisma/test.db');
+  console.log(`✅ [SETUP] BASE DE DATOS CREADA ${DB_CREATED_PATH}.`);
 
   // Login y storageState
   console.log('🤖 [SETUP] Realizando login para generar auth state...');

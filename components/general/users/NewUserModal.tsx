@@ -22,8 +22,8 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
     email: "",
     password: "",
     confirmPassword: "",
-    companyId: "", 
-    notifications: false, 
+    companyId: "",
+    notifications: false,
   });
 
   useEffect(() => {
@@ -34,24 +34,25 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
     fetchCompanies();
   }, []);
 
- 
   // For text/email/select inputs
-const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, value } = e.target;
-  setForm((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-// For checkboxes
-const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const { name, checked } = e.target;
-  setForm((prev) => ({
-    ...prev,
-    [name]: checked,
-  }));
-};
+  // For checkboxes
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +67,7 @@ const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         username: form.username,
         email: form.email,
         password: form.password,
-        companyId: Number(form.companyId), 
+        companyId: Number(form.companyId),
         notifications: form.notifications,
       });
       alert("Usuario creado correctamente ✅");
@@ -93,7 +94,7 @@ const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               <label className="block font-medium mb-1">Nombre</label>
               <input
                 type="text"
-                name="username"
+                name="name"
                 value={form.username}
                 onChange={handleInputChange}
                 required
