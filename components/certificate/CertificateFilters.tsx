@@ -43,16 +43,27 @@ export const CertificateFilters = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 border rounded-md shadow-sm bg-white">
-      {/* Botón solo visible en mobile */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="md:hidden bg-gray-200 px-4 py-2 rounded-lg w-full text-left flex justify-between items-center mb-3"
-      >
-        <span>Filtros</span>
-        <span>{open ? "▲" : "▼"}</span>
-      </button>
-      {/* --- PRIMERA FILA --- */}
+  <div className="flex flex-col gap-4 p-4 border rounded-md shadow-sm bg-white">
+    {/* Botón solo visible en mobile */}
+    <button
+      onClick={() => setOpen(!open)}
+      className="md:hidden bg-gray-200 px-4 py-2 rounded-lg w-full text-left flex justify-between items-center" 
+      // Quité el mb-3 para que el 'gap-4' del nuevo contenedor lo maneje
+    >
+      <span>Filtros</span>
+      <span>{open ? "▲" : "▼"}</span>
+    </button>
+    
+    {/* --- INICIO DE LA CORRECCIÓN ---
+      Este 'div' envuelve AMBAS filas de filtros y reacciona al estado 'open'.
+      - 'flex flex-col gap-4': Imita la estructura del 'div' padre para que las filas mantengan su espaciado.
+      - '${open ? "flex" : "hidden md:flex"}': Esta es la lógica de visibilidad.
+        - Si 'open' es true: se muestra ('flex').
+        - Si 'open' es false: se oculta ('hidden') PERO se muestra en desktop ('md:flex').
+    */}
+    <div className={`flex flex-col gap-4 ${open ? "flex" : "hidden md:flex"}`}>
+
+      {/* --- PRIMERA FILA (Ahora dentro del contenedor) --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-600 font-medium">Empadronamiento desde</label>
@@ -110,7 +121,7 @@ export const CertificateFilters = () => {
         </div>
       </div>
       
-      {/* --- SEGUNDA FILA --- */}
+      {/* --- SEGUNDA FILA (Ahora dentro del contenedor) --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-600 font-medium">F. Importación desde</label>
@@ -180,7 +191,7 @@ export const CertificateFilters = () => {
               <option value="BLOQUEADO">Bloqueado</option>
               <option value="NO_BLOQUEADO">No bloqueado</option>
             </select>
-           <button
+            <button
               onClick={handleSearch}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex-shrink-0"
             >
@@ -200,6 +211,10 @@ export const CertificateFilters = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+
+    </div> 
+    {/* --- FIN DE LA CORRECCIÓN --- */}
+
+  </div>
+);
 };

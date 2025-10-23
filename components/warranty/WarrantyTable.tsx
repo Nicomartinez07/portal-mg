@@ -42,8 +42,9 @@ export const WarrantyTable = () => {
 
   return (
     <>
-      <table className="w-full border rounded-lg overflow-hidden">
-        <thead className="bg-gray-50">
+    <div className="overflow-x-auto rounded-lg shadow">
+      <table className="min-w-full border border-gray-200 bg-white">
+          <thead className="bg-gray-100">
           <tr>
             <th className="px-4 py-3 text-left">Fecha</th>
             <th className="px-4 py-3 text-left">VIN</th>
@@ -52,33 +53,45 @@ export const WarrantyTable = () => {
             <th className="px-4 py-3 text-left">Cliente</th>
             <th className="px-4 py-3 text-left">Empresa</th>
             <th className="px-4 py-3 text-left">Usuario</th>
+            <th className="px-4 py-3 text-left"></th>
           </tr>
         </thead>
         <tbody>
-          {results.map((w) => (
-            <tr key={w.id} className="border-t">
-              <td className="px-4 py-3">{new Date(w.activationDate).toLocaleDateString()}</td>
-              <td className="px-4 py-3">{w.vehicle.vin}</td>
-              <td className="px-4 py-3">{w.vehicle.model}</td>
-              <td className="px-4 py-3">{w.vehicle.licensePlate}</td>
-              <td className="px-4 py-3">
-                {w.customer.firstName} {w.customer.lastName}
-              </td>
-              <td className="px-4 py-3">{w.company.name}</td>
-              <td className="px-4 py-3">{w.user.username}</td>
-              <td className="px-4 py-3">
-                <button
-                  onClick={() => setSelected(w)}
-                  className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
-                  name="Detalles"
-                >
-                  Detalles
-                </button>
+          {results.length > 0 ? (
+            results.map((w) => (
+              <tr key={w.id} className="border-t">
+                <td className="px-4 py-3">{new Date(w.activationDate).toLocaleDateString()}</td>
+                <td className="px-4 py-3">{w.vehicle.vin}</td>
+                <td className="px-4 py-3">{w.vehicle.model}</td>
+                <td className="px-4 py-3">{w.vehicle.licensePlate}</td>
+                <td className="px-4 py-3">
+                  {w.customer.firstName} {w.customer.lastName}
+                </td>
+                <td className="px-4 py-3">{w.company.name}</td>
+                <td className="px-4 py-3">{w.user.username}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => setSelected(w)}
+                    className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                    name="Detalles"
+                  >
+                    Detalles
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                No se encontraron garantías
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
+
       </table>
+
+      </div>
 
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">

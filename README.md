@@ -96,7 +96,8 @@ bun run create:test:e2e
 LISTADO DE CADA PAGINA Y COSAS POR HACER: 
 --------------------------------------------------------------------------------------------------------------------------
 
-Garantias: 
+Garantias: funciona todo
+
 
 --------------------------------------------------------------------------------------------------------------------------
  
@@ -104,14 +105,23 @@ Ordenes:
 Testing detallitos de cada estado interno
 Manejo de imagenes
 
+Borrador: ver q onda el client id preAutorization 
+
+PreAutorization: actualizar borrador y enviar pre orden
+Servicio: actualizar borrador ok, enviar servicio error
+Reclamo: actualizar borrador y enviar pre orden
+
+Filtros fijarme si quiero cambiar que busque al tocar el boton 
 --------------------------------------------------------------------------------------------------------------------------
 
 Pagina general: Testing 
 
+Crear usuario
 
---------------------------------------------------------------------------------------------------------------------------
+Upload tarifario me va a tirar error,
 
-Empresa: 
+En Vercel, no podés escribir archivos permanentemente dentro del proyecto (por ejemplo en /public, /var/task, /tmp, etc.).
+Tu código funciona en localhost porque en tu PC sí tenés un sistema de archivos de lectura y escritura, pero en Vercel los archivos del build están empaquetados en un entorno inmutable.
 
 --------------------------------------------------------------------------------------------------------------------------
 
@@ -125,6 +135,8 @@ Testar filtros
 
 Testing
 Verificar Importar certificados
+
+ESTETICA
                    
 
 --------------------------------------------------------------------------------------------------------------------------
@@ -132,7 +144,7 @@ Repuestos:
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Cargar Auto:
+Cargar Auto: id fallo, patente opcional , poder cargarla en el Activar Garantia
 
 --------------------------------------------------------------------------------------------------------------------------
 

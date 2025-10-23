@@ -23,9 +23,9 @@ const GarantiasContent = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm h-full p-6">
+    <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Gestión de Garantías</h1>
+            <h1 className="text-3xl font-bold">Gestión de Garantias</h1>
                 <ExportButton /> 
             </div>
             <WarrantyFilters onSearch={handleSearch} />

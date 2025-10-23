@@ -59,8 +59,9 @@ export const CertificateTable = () => {
 
   return (
     <>
-      <table className="w-full h-full border rounded-lg overflow-hidden">
-        <thead className="bg-gray-50">
+      <div className="overflow-x-auto rounded-lg shadow">
+        <table className="min-w-full border border-gray-200 bg-white">
+          <thead className="bg-gray-100">
           <tr>
             <th className="px-4 py-3 text-left">Bloqueado</th>
             <th className="px-4 py-3 text-left">VIN</th>
@@ -70,6 +71,8 @@ export const CertificateTable = () => {
             <th className="px-4 py-3 text-left">Garantia</th>
             <th className="px-4 py-3 text-left">Venta</th>
             <th className="px-4 py-3 text-left">Empresa</th>
+            <th className="px-4 py-2 text-left"></th>
+            <th className="px-4 py-2 text-left"></th>
           </tr>
         </thead>
         <tbody> 
@@ -119,7 +122,7 @@ export const CertificateTable = () => {
             ))}
           </tbody>
         </table>
-
+      </div>
       
       {/* Boton de garantia: TU MODAL IDÉNTICO, SOLO CAMBIAN LOS 'value' */}
       {/* 'selected' ahora es un VEHICLE */}

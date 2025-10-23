@@ -24,9 +24,9 @@ const CertificadosContent = () => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-sm h-full p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Consulta de Certificados</h1>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Consulta de Certificados</h1>
                 <CertificateImportModal onImportSuccess={handleImportSuccess} />
             </div>
             <CertificateFilters />

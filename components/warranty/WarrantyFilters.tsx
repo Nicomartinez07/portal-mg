@@ -44,7 +44,7 @@ export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
 
   
   return (
-    <div className="mb-4">
+    <div className="p-4 bg-white rounded-lg shadow border mb-4">
       {/* Botón solo visible en mobile */}
       <button
         onClick={() => setOpen(!open)}
