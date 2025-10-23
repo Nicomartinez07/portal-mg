@@ -76,35 +76,36 @@ export const CertificateTable = () => {
           </tr>
         </thead>
         <tbody> 
-        {results.map((w) => (
-        <tr key={w.id} className="border-t">
+          {results.length > 0 ? (
+              results.map((w) => (
+              <tr key={w.id} className="border-t">
                 <td className="px-4 py-3">
                   <input 
                     type="checkbox" 
-                    checked={w.blocked ?? false} /* CORREGIDO (antes w.vehicle.blocked) */
+                    checked={w.blocked ?? false} 
                     readOnly
                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                 </td>
-                <td className="px-4 py-3">{w.vin}</td> {/* CORREGIDO (antes w.vehicle.vin) */}
-                <td className="px-4 py-3">{w.model}</td> {/* CORREGIDO (antes w.vehicle.model) */}
-                <td className="px-4 py-3">{w.certificateNumber || 'N/A'}</td> {/* CORREGIDO (antes w.vehicle.certificateNumber) */}
-                <td className="px-4 py-3">{formatDate(w.importDate)}</td> {/* CORREGIDO (antes w.importDate y daba error) */}
+                <td className="px-4 py-3">{w.vin}</td> 
+                <td className="px-4 py-3">{w.model}</td>
+                <td className="px-4 py-3">{w.certificateNumber || 'N/A'}</td>
+                <td className="px-4 py-3">{formatDate(w.importDate)}</td>
                 <td className="px-4 py-3">
                   <input 
                     type="checkbox" 
-                    checked={!!w.warranty} /* CORREGIDO (revisa si w.warranty existe) */
+                    checked={!!w.warranty} 
                     readOnly
                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                 </td>
-                <td className="px-4 py-3">{formatDate(w.saleDate)}</td> {/* CORREGIDO (antes w.saleDate y daba error) */}
-                <td className="px-4 py-3">{w.warranty?.company?.name || 'N/A'}</td> {/* CORREGIDO (antes w.company.name) */}
+                <td className="px-4 py-3">{formatDate(w.saleDate)}</td> 
+                <td className="px-4 py-3">{w.warranty?.company?.name || 'N/A'}</td> 
                 
                 <td className="px-4 py-3">
                   <button
                     onClick={() => setSelected(w)}
-                    disabled={!w.warranty} // <-- IMPORTANTE: Deshabilita si no hay garantía
+                    disabled={!w.warranty} // <- Deshabilita si no hay garantía
                     className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 disabled:opacity-50"
                   >
                     Garantia
@@ -119,7 +120,14 @@ export const CertificateTable = () => {
                   </button>
                 </td>
               </tr>
-            ))}
+            ))
+            ) : (
+              <tr>
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                  No se encontraron Certificados
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -143,62 +151,50 @@ export const CertificateTable = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Fecha</label>
-                  {/* CORREGIDO: de 'selected.vehicle.date' a 'selected.date' */}
                   <input readOnly value={formatDate(selected.date)} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Vin</label>
-                  {/* CORREGIDO: de 'selected.vehicle.vin' a 'selected.vin' */}
                   <input readOnly value={selected.vin} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Marca</label>
-                  {/* CORREGIDO: de 'selected.vehicle.brand' a 'selected.brand' */}
                   <input readOnly value={selected.brand} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Modelo</label>
-                  {/* CORREGIDO: de 'selected.vehicle.model' a 'selected.model' */}
                   <input readOnly value={selected.model} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Nro. Motor</label>
-                  {/* CORREGIDO: de 'selected.vehicle.engineNumber' a 'selected.engineNumber' */}
                   <input readOnly value={selected.engineNumber || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Tipo</label>
-                  {/* CORREGIDO: de 'selected.vehicle.type' a 'selected.type' */}
                   <input readOnly value={selected.type || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Año</label>
-                  {/* CORREGIDO: de 'selected.vehicle.year' a 'selected.year' */}
                   <input readOnly value={selected.year || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Nro. Certificado</label>
-                  {/* CORREGIDO: de 'selected.vehicle.certificateNumber' a 'selected.certificateNumber' */}
                   <input readOnly value={selected.certificateNumber || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">F. Importación</label>
-                  {/* CORREGIDO: de 'selected.vehicle.importDate' a 'selected.importDate' */}
                   <input readOnly value={formatDate(selected.importDate)} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Empresa</label>
-                  {/* CORREGIDO: de 'selected.company.name' a 'selected.warranty.company.name' */}
                   <input readOnly value={selected.warranty?.company?.name || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Vendedor</label>
-                  {/* CORREGIDO: de 'selected.user.username' a 'selected.warranty.user.username' */}
                   <input readOnly value={selected.warranty?.user?.username || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Patente</label>
-                  {/* CORREGIDO: de 'selected.vehicle.licensePlate' a 'selected.licensePlate' */}
                   <input readOnly value={selected.licensePlate || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
               </div>
@@ -210,37 +206,30 @@ export const CertificateTable = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Nombre</label>
-                  {/* CORREGIDO: de 'selected.customer.firstName' a 'selected.warranty.customer.firstName' */}
                   <input readOnly value={selected.warranty?.customer?.firstName || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Apellido</label>
-                  {/* CORREGIDO: de 'selected.customer.lastName' a 'selected.warranty.customer.lastName' */}
                   <input readOnly value={selected.warranty?.customer?.lastName || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
-                  <label className="text-gray-800">Email</label>
-                  {/* CORREGIDO: de 'selected.customer.email' a 'selected.warranty.customer.email' */}
+                  <label className="text-gray-800">Email</label>   
                   <input readOnly value={selected.warranty?.customer?.email || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Teléfono</label>
-                  {/* CORREGIDO: de 'selected.customer.phone' a 'selected.warranty.customer.phone' */}
                   <input readOnly value={selected.warranty?.customer?.phone || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Dirección</label>
-                  {/* CORREGIDO: de 'selected.customer.address' a 'selected.warranty.customer.address' */}
                   <input readOnly value={selected.warranty?.customer?.address || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Provincia</label>
-                  {/* CORREGIDO: de 'selected.customer.state' a 'selected.warranty.customer.state' */}
                   <input readOnly value={selected.warranty?.customer?.state || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Localidad</label>
-                  {/* CORREGIDO: de 'selected.customer.city' a 'selected.warranty.customer.city' */}
                   <input readOnly value={selected.warranty?.customer?.city || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
               </div>
@@ -258,7 +247,7 @@ export const CertificateTable = () => {
               <button
                 onClick={async () => {
                   if (confirm("¿Seguro que querés anular esta garantía?")) {
-                    // CORREGIDO: de 'selected.id' a 'selected.warranty.id'
+                    
                     const res = await deleteWarranty(selected.warranty.id);
                     if (res.success) {
                       alert("Garantía anulada");
@@ -303,54 +292,44 @@ export const CertificateTable = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Vin</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.vin' a 'selectedVehicle.vin' */}
                   <input readOnly value={selectedVehicle.vin} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Marca</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.brand' a 'selectedVehicle.brand' */}
                   <input readOnly value={selectedVehicle.brand} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Modelo</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.model' a 'selectedVehicle.model' */}
                   <input readOnly value={selectedVehicle.model} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Nro. Motor</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.engineNumber' a 'selectedVehicle.engineNumber' */}
                   <input readOnly value={selectedVehicle.engineNumber || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Tipo</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.type' a 'selectedVehicle.type' */}
                   <input readOnly value={selectedVehicle.type || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Año</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.year' a 'selectedVehicle.year' */}
                   <input readOnly value={selectedVehicle.year || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Garantía</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.warranty' a '!!selectedVehicle.warranty' */}
                   <input readOnly value={selectedVehicle.warranty ? 'Sí' : 'No'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Nro. Certificado</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.certificateNumber' a 'selectedVehicle.certificateNumber' */}
                   <input readOnly value={selectedVehicle.certificateNumber || 'N/A'} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">F. Importación</label>
-                  {/* CORREGIDO: de 'selectedVehicle.vehicle.importDate' a 'selectedVehicle.importDate' */}
                   <input readOnly value={formatDate(selectedVehicle.importDate)} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Bloqueado</label>
                   <input
                     type="checkbox"
-                    // CORREGIDO: de 'selectedVehicle.vehicle.warranty' (??) a 'selectedVehicle.blocked'
                     checked={selectedVehicle.blocked ?? false}
                     readOnly
                     className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"

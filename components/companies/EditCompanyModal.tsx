@@ -108,146 +108,157 @@ export function EditCompanyModal({ companyId, onClose, onSuccess }: EditCompanyM
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-        {/* Header */}
-        <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
-          <h2 className="text-xl font-bold">Editar Empresa</h2>
-          <button onClick={onClose} className="text-white hover:text-gray-200">
-            &times;
-          </button>
+  /* Agregué 'p-4' al fondo oscuro para que el modal no toque los bordes en móviles */
+  <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4">
+    
+    {/* 1. Contenedor principal del modal:
+        - Añadido 'flex flex-col' para crear un layout vertical.
+        - Añadido 'max-h-[85vh]' (85% de la altura de la pantalla). Puedes cambiarlo a 80vh o 90vh si prefieres.
+    */}
+    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 flex flex-col max-h-[85vh]">
+      
+      {/* Header (sin cambios, pero 'flex-shrink-0' evita que se encoja) */}
+      <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center flex-shrink-0">
+        <h2 className="text-xl font-bold">Editar Empresa</h2>
+        <button onClick={onClose} className="text-white hover:text-gray-200">
+          &times;
+        </button>
+      </div>
+
+      {/* 2. Etiqueta <form>:
+          - Añadido 'flex flex-col' y 'overflow-hidden' para que maneje correctamente el 'overflow' de su hijo.
+      */}
+      <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden">
+        
+        {/* 3. Body (El contenedor de los campos):
+            - Añadido 'overflow-y-auto'. ESTA es la clave. 
+            - Ahora, si los campos no caben, aparecerá un scrollbar SÓLO en esta área.
+        */}
+        <div className="p-6 space-y-4 overflow-y-auto">
+          <div>
+            <label className="block font-medium mb-1">Nombre *</label>
+            <input
+              type="text"
+              name="name"
+              value={form.name || ""}
+              onChange={handleChange}
+              required
+              className="border rounded w-full p-2"
+            />
+          </div>
+
+          <h3 className="font-semibold text-gray-700">
+            Datos de Contacto de Taller
+          </h3>
+
+          <label className="block font-medium mb-1">Nombre Encargado</label>
+          <input
+            type="text"
+            name="manager"
+            placeholder="Nombre Encargado"
+            value={form.manager || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
+
+          <div className="flex items-center gap-3 p-2 border rounded">
+            <input
+              type="checkbox"
+              id="showInParts" 
+              name="showInParts"
+              checked={form.showInParts || false}
+              onChange={handleChange}
+              className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label
+              htmlFor="showInParts"
+              className="font-medium text-gray-700"
+            >
+              Mostrar en repuestos
+            </label>
+          </div>
+
+          <label className="block font-medium mb-1">Dirección</label>
+          <input
+            type="text"
+            name="address"
+            placeholder="Dirección"
+            value={form.address || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
+
+          <label className="block font-medium mb-1">Provincia</label>
+          <input
+            type="text"
+            name="state"
+            placeholder="Provincia"
+            value={form.state || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
+
+          <label className="block font-medium mb-1">Localidad</label>
+          <input
+            type="text"
+            name="city"
+            placeholder="Localidad"
+            value={form.city || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
+
+          <label className="block font-medium mb-1">Teléfono 1</label>
+          <input
+            type="text"
+            name="phone1"
+            placeholder="Teléfono 1"
+            value={form.phone1 || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
+
+          <label className="block font-medium mb-1">Teléfono 2</label>
+          <input
+            type="text"
+            name="phone2"
+            placeholder="Teléfono 2"
+            value={form.phone2 || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
+
+          <label className="block font-medium mb-1">Email</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email || ""}
+            onChange={handleChange}
+            className="border rounded w-full p-2"
+          />
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Body - Usa el diseño que ya tienes */}
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block font-medium mb-1">Nombre *</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name || ""}
-                onChange={handleChange}
-                required
-                className="border rounded w-full p-2"
-              />
-            </div>
-
-            <h3 className="font-semibold text-gray-700">
-              Datos de Contacto de Taller
-            </h3>
-
-            {/* Los siguientes campos se renderizan con los datos de `form` */}
-            <label className="block font-medium mb-1">Nombre Encargado</label>
-            <input
-              type="text"
-              name="manager"
-              placeholder="Nombre Encargado"
-              value={form.manager || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-
-            {/* --- CHECKBOX CORREGIDO --- */}
-            <div className="flex items-center gap-3 p-2 border rounded">
-              <input
-                type="checkbox"
-                id="showInParts" 
-                name="showInParts"
-                checked={form.showInParts || false}
-                onChange={handleChange}
-                className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label
-                htmlFor="showInParts"
-                className="font-medium text-gray-700"
-              >
-                Mostrar en repuestos
-              </label>
-            </div>
-            {/* --- FIN CHECKBOX CORREGIDO --- */}
-
-            <label className="block font-medium mb-1">Dirección</label>
-            <input
-              type="text"
-              name="address"
-              placeholder="Dirección"
-              value={form.address || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-
-            <label className="block font-medium mb-1">Provincia</label>
-            <input
-              type="text"
-              name="state"
-              placeholder="Provincia"
-              value={form.state || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-
-            <label className="block font-medium mb-1">Localidad</label>
-            <input
-              type="text"
-              name="city"
-              placeholder="Localidad"
-              value={form.city || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-
-            <label className="block font-medium mb-1">Teléfono 1</label>
-            <input
-              type="text"
-              name="phone1"
-              placeholder="Teléfono 1"
-              value={form.phone1 || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-
-            <label className="block font-medium mb-1">Teléfono 2</label>
-            <input
-              type="text"
-              name="phone2"
-              placeholder="Teléfono 2"
-              value={form.phone2 || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-
-            <label className="block font-medium mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={form.email || ""}
-              onChange={handleChange}
-              className="border rounded w-full p-2"
-            />
-          </div>
-
-          {/* Footer */}
-          <div className="bg-gray-100 px-4 py-3 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              disabled={isSaving} // Deshabilitar mientras se guarda
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              disabled={isSaving} // Deshabilitar mientras se guarda
-            >
-              {isSaving ? "Guardando..." : "Aceptar"}
-            </button>
-          </div>
-        </form>
-      </div>
+        {/* 4. Footer (Añadido 'flex-shrink-0' para evitar que se encoja) */}
+        <div className="bg-gray-100 px-4 py-3 flex justify-end gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            disabled={isSaving} // Deshabilitar mientras se guarda
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            disabled={isSaving} // Deshabilitar mientras se guarda
+          >
+            {isSaving ? "Guardando..." : "Aceptar"}
+          </button>
+        </div>
+      </form>
     </div>
-  );
+  </div>
+);
 }

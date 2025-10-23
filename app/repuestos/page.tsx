@@ -590,7 +590,7 @@ export default function RepuestosPage() {
                           onClick={() => setSelectedContact(rep.contact)}
                           className="bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300"
                         >
-                          contacto
+                          Contacto
                         </button>
                       </td>
                     </tr>

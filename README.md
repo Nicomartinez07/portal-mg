@@ -111,7 +111,6 @@ PreAutorization: actualizar borrador y enviar pre orden
 Servicio: actualizar borrador ok, enviar servicio error
 Reclamo: actualizar borrador y enviar pre orden
 
-Filtros fijarme si quiero cambiar que busque al tocar el boton 
 --------------------------------------------------------------------------------------------------------------------------
 
 Pagina general: Testing 
@@ -132,19 +131,15 @@ Logica de cambiar  Garantia y bloqueado,
 
 Testar filtros 
 
-
 Testing
-Verificar Importar certificados
-
-ESTETICA
-                   
+Verificar Importar certificados                   
 
 --------------------------------------------------------------------------------------------------------------------------
 Repuestos: 
 
 --------------------------------------------------------------------------------------------------------------------------
 
-Cargar Auto: id fallo, patente opcional , poder cargarla en el Activar Garantia
+Cargar Auto: id fallo, patente opcional en el modal, para poder cargarla en el Activar Garantia
 
 --------------------------------------------------------------------------------------------------------------------------
 
@@ -156,3 +151,9 @@ CONFIGURACION DEL CORREO
 Inicio de sesion : CONFIGURAR EMAIL QUE VA A ENVIAR MAILS DE RECUPERAR CONTRASEÑA
 
 Paginado a todas las paginas
+
+
+Ver en los modales, si queda mejor hacer el header fijo o si queda mejor el header desplzabale, ejemplos: 
+
+Header fijo: editar empresa
+Header desplazable: ingreso PreAutorizacion
