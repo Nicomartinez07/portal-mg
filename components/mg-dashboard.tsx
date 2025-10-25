@@ -7,7 +7,6 @@ import { ActivationModal } from "@/components/warranty/modal/WarrantyActivation"
 import InsertPreAuthorizationModal from "@/components/orders/modals/InsertPreAuthorizationModal";
 import InsertClaimModal from "@/components/orders/modals/InsertClaimModal";
 import InsertServiceModal from "@/components/orders/modals/InsertServiceModal";
-
 import {
   Home,
   Shield,
@@ -45,58 +44,58 @@ import { Menu, Transition } from "@headlessui/react";
 const navigationItems = [
   { name: "Inicio", icon: Home, href: "/" },
   { name: "Garantías", icon: Shield, href: "/garantias" },
+  { name: "Activar Garantia", icon: Shield, modal: "warranty", color: "text-yellow-500", fill: "yellow" },
   { name: "Ordenes", icon: ShoppingCart, href: "/ordenes" },
   { name: "Borradores", icon: ShoppingCart, href: "/ordenes/borradores" },
+  { name: "Pre-autorización", icon: Star, modal: "insertPreAuthorization", color: "text-yellow-500", fill: "yellow" },
+  { name: "Reclamo", icon: Star, modal: "insertClaim", color: "text-yellow-500", fill: "yellow" },
+  { name: "Servicio", icon: Star, modal: "insertService", color: "text-yellow-500", fill: "yellow" },
   { name: "General", icon: Settings, href: "/general" },
   { name: "Empresas", icon: Building2, href: "/empresas" },
   { name: "Certificados", icon: Award, href: "/certificados" },
   { name: "Repuestos", icon: Wrench, href: "/repuestos" },
-  {
-    name: "Tarifario",
-    icon: DollarSign,
-    href: "/archivos/tarifario.xlsx",
-    download: true,
-  },
-  {
-    name: "Info Técnica",
-    icon: FileText,
-    href: "https://drive.google.com/drive/folders/1unjLakNYCpBBbOorUzeuMp0N5jAs1qSt",
-    external: true,
-  },
+  { name: "Tarifario", icon: DollarSign, href: "/archivos/tarifario.xlsx", download: true },
+  { name: "Info Técnica", icon: FileText, href: "https://drive.google.com/drive/folders/1unjLakNYCpBBbOorUzeuMp0N5jAs1qSt", external: true },
   { name: "Cargar Auto", icon: Car, modal: "vehicle", color: "text-yellow-500", fill: "yellow" },
-  { name: "Activar Garantia", icon: Shield, modal: "warranty", color: "text-yellow-500", fill: "yellow" },
-  { name: "Pre-autorización", icon: Star, modal: "insertPreAuthorization", color: "text-yellow-500", fill: "yellow" },
-  {  name: "Reclamo", icon: Star, modal: "insertClaim", color: "text-yellow-500", fill: "yellow" },
-  {  name: "Servicio", icon: Star, modal: "insertService", color: "text-yellow-500", fill: "yellow" },
 ];
 
-const highlightedItems = ["Inicio", "Garantías", "Ordenes", "Configuración"];
-
-
-
+// Rutas visibles según rol
+const roleAccess: Record<string, string[]> = {
+  ADMIN: navigationItems.map((i) => i.name), // todo
+  IMPORTER: ["Inicio", "Garantías", "Ordenes", "General", "Empresas", "Certificados", "Repuestos", "Tarifario", "Info Técnica"],
+  DEALER: ["Inicio", "Garantías", "Activar Garantia", "Repuestos", "Tarifario", "Info Técnica"],
+  WORKSHOP: ["Inicio", "Ordenes", "Borradores", "Servicio", "Pre-autorización", "Reclamo",  "Repuestos", "Tarifario", "Info Técnica"],
+};
 type MGDashboardProps = {
   children?: React.ReactNode;
   defaultOpen?: boolean;
 };
 
-
-// Componente para la barra lateral
 function AppSidebar({
   onOpenVehicleModal,
   onOpenWarrantyModal,
   onOpenInsertPreAuthorizationModal,
   onOpenInsertClaimModal,
   onOpenInsertServiceModal,
+  role,
 }: {
   onOpenVehicleModal: () => void;
   onOpenWarrantyModal: () => void;
   onOpenInsertPreAuthorizationModal: () => void;
   onOpenInsertClaimModal: () => void;
   onOpenInsertServiceModal: () => void;
+  role: string;
 }) {
   const router = useRouter();
 
-  // Función de logout centralizada
+  // Filtrar items según rol
+  const allowedItems =
+    roleAccess[role?.toUpperCase()] || ["Inicio"]; // fallback si no hay rol
+
+  const filteredItems = navigationItems.filter((item) =>
+    allowedItems.includes(item.name)
+  );
+
   const handleLogout = async () => {
     await fetch("/api/logout");
     router.push("/login");
@@ -104,7 +103,7 @@ function AppSidebar({
 
   return (
     <Sidebar className="bg-[#424f63] text-white border-r-0">
-      <SidebarHeader className="border-b  bg-[#424f63] border-slate-600 p-4">
+      <SidebarHeader className="border-b bg-[#424f63] border-slate-600 p-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">MG</span>
@@ -119,24 +118,19 @@ function AppSidebar({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item, index) => {
+              {filteredItems.map((item, index) => {
                 const Icon = item.icon;
 
+                // --- tus botones modales y condicionales intactos ---
                 if (item.modal === "vehicle") {
                   return (
-                    <SidebarMenuItem key={`${item.name}-${index}`}>
+                    <SidebarMenuItem key={index}>
                       <SidebarMenuButton
                         asChild
                         className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                       >
-                        <button
-                          onClick={onOpenVehicleModal}
-                          className="flex items-center gap-3 w-full text-left"
-                        >
-                          <Icon 
-                            className={`w-5 h-5 ${item.color || "text-white"}`}
-                            fill={item.fill ? "currentColor" : "none"}
-                          />
+                        <button onClick={onOpenVehicleModal} className="flex items-center gap-3 w-full text-left">
+                          <Icon className={`w-5 h-5 ${item.color || "text-white"}`} fill={item.fill ? "currentColor" : "none"} />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -146,19 +140,10 @@ function AppSidebar({
 
                 if (item.modal === "warranty") {
                   return (
-                    <SidebarMenuItem key={`${item.name}-${index}`}>
-                      <SidebarMenuButton
-                        asChild
-                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
-                      >
-                        <button
-                          onClick={onOpenWarrantyModal}
-                          className="flex items-center gap-3 w-full text-left"
-                        >
-                          <Icon 
-                            className={`w-5 h-5 ${item.color || "text-white"}`}
-                            fill={item.fill ? "currentColor" : "none"}
-                          />
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton asChild className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600">
+                        <button onClick={onOpenWarrantyModal} className="flex items-center gap-3 w-full text-left">
+                          <Icon className={`w-5 h-5 ${item.color || "text-white"}`} fill={item.fill ? "currentColor" : "none"} />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -168,19 +153,10 @@ function AppSidebar({
 
                 if (item.modal === "insertPreAuthorization") {
                   return (
-                    <SidebarMenuItem key={`${item.name}-${index}`}>
-                      <SidebarMenuButton
-                        asChild
-                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
-                      >
-                        <button
-                          onClick={onOpenInsertPreAuthorizationModal}
-                          className="flex items-center gap-3 w-full text-left"
-                        >
-                         <Icon 
-                          className={`w-5 h-5 ${item.color || "text-white"}`}
-                          fill={item.fill ? "currentColor" : "none"}
-                        /> 
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton asChild className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600">
+                        <button onClick={onOpenInsertPreAuthorizationModal} className="flex items-center gap-3 w-full text-left">
+                          <Icon className={`w-5 h-5 ${item.color || "text-white"}`} fill={item.fill ? "currentColor" : "none"} />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -190,19 +166,10 @@ function AppSidebar({
 
                 if (item.modal === "insertClaim") {
                   return (
-                    <SidebarMenuItem key={`${item.name}-${index}`}>
-                      <SidebarMenuButton
-                        asChild
-                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
-                      >
-                        <button
-                          onClick={onOpenInsertClaimModal}
-                          className="flex items-center gap-3 w-full text-left"
-                        >
-                          <Icon 
-                            className={`w-5 h-5 ${item.color || "text-white"}`}
-                            fill={item.fill ? "currentColor" : "none"}
-                          />
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton asChild className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600">
+                        <button onClick={onOpenInsertClaimModal} className="flex items-center gap-3 w-full text-left">
+                          <Icon className={`w-5 h-5 ${item.color || "text-white"}`} fill={item.fill ? "currentColor" : "none"} />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -212,19 +179,10 @@ function AppSidebar({
 
                 if (item.modal === "insertService") {
                   return (
-                    <SidebarMenuItem key={`${item.name}-${index}`}>
-                      <SidebarMenuButton
-                        asChild
-                        className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
-                      >
-                        <button
-                          onClick={onOpenInsertServiceModal}
-                          className="flex items-center gap-3 w-full text-left"
-                        >
-                          <Icon 
-                            className={`w-5 h-5 ${item.color || "text-white"}`}
-                            fill={item.fill ? "currentColor" : "none"}
-                          />
+                    <SidebarMenuItem key={index}>
+                      <SidebarMenuButton asChild className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600">
+                        <button onClick={onOpenInsertServiceModal} className="flex items-center gap-3 w-full text-left">
+                          <Icon className={`w-5 h-5 ${item.color || "text-white"}`} fill={item.fill ? "currentColor" : "none"} />
                           <span className="text-sm">{item.name}</span>
                         </button>
                       </SidebarMenuButton>
@@ -232,52 +190,22 @@ function AppSidebar({
                   );
                 }
 
+                // --- enlaces normales ---
                 return (
-                  <SidebarMenuItem key={`${item.name}-${index}`}>
-                    <SidebarMenuButton
-                      asChild
-                      className={`text-white border-b border-slate-600 rounded-none h-12 justify-start ${
-                        highlightedItems.includes(item.name)
-                          ? "bg-[#424f63] hover:bg-[#505f78]"
-                          : "hover:bg-slate-600"
-                      }`}
-                    >
-                      {item.external ? (
-                        <a
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3"
-                        >
+                  <SidebarMenuItem key={index}>
+                    <SidebarMenuButton asChild className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600">
+                      <a href={item.href} target={item.external ? "_blank" : "_self"} download={item.download}>
+                        <div className="flex items-center gap-3">
                           <Icon className="w-5 h-5" />
                           <span className="text-sm">{item.name}</span>
-                        </a>
-                      ) : item.download ? (
-                        <a
-                          href={item.href}
-                          download
-                          className="flex items-center gap-3"
-                        >
-                          <Icon className="w-5 h-5" />
-                          <span className="text-sm">{item.name}</span>
-                        </a>
-                      ) : (
-                        <a href={item.href} className="flex items-center gap-3">
-                          <Icon className="w-5 h-5" />
-                          <span className="text-sm">{item.name}</span>
-                        </a>
-                      )}
+                        </div>
+                      </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
 
-              {/* Botón de logout */}
-              <SidebarMenuButton
-                asChild
-                onClick={handleLogout}
-                className="text-white hover:bg-slate-600 rounded-none h-12 justify-start"
-              >
+              <SidebarMenuButton asChild onClick={handleLogout} className="text-white hover:bg-slate-600 rounded-none h-12 justify-start">
                 <button className="flex items-center gap-3">
                   <LogOut className="w-5 h-5" />
                   <span className="text-sm">Salir</span>
@@ -291,13 +219,10 @@ function AppSidebar({
   );
 }
 
-// Componente principal del dashboard
-export function MGDashboard({
-  children,
-  defaultOpen = true,
-}: MGDashboardProps) {
+export function MGDashboard({ children, defaultOpen = true }: MGDashboardProps) {
   const [vin, setVin] = useState("");
   const [username, setUsername] = useState("Cargando...");
+  const [role, setRole] = useState(""); // 👈 nuevo
   const [openVehicleModal, setOpenVehicleModal] = useState(false);
   const [openWarrantyModal, setOpenWarrantyModal] = useState(false);
   const [openInsertPreAuthorizationModal, setOpenInsertPreAuthorizationModal] = useState(false);
@@ -306,31 +231,24 @@ export function MGDashboard({
 
   const router = useRouter();
 
-  // Función de logout centralizada
   const handleLogout = async () => {
     await fetch("/api/logout");
     router.push("/login");
   };
 
-  // Traer username del backend
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch("/api/me", {
-          method: "GET",
-          credentials: "include",
-        });
-
+        const res = await fetch("/api/me", { method: "GET", credentials: "include" });
         if (!res.ok) throw new Error("No autorizado");
 
         const data = await res.json();
         setUsername(data.username);
-      } catch (err) {
-        console.error(err);
+        setRole(data.role); 
+      } catch {
         setUsername("Usuario");
       }
     }
-
     fetchUser();
   }, []);
 
@@ -344,6 +262,7 @@ export function MGDashboard({
     <SidebarProvider defaultOpen={defaultOpen}>
       <div className="flex h-screen w-full">
         <AppSidebar
+          role={role}
           onOpenVehicleModal={() => setOpenVehicleModal(true)}
           onOpenWarrantyModal={() => setOpenWarrantyModal(true)}
           onOpenInsertPreAuthorizationModal={() => setOpenInsertPreAuthorizationModal(true)}

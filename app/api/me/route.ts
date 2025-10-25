@@ -13,12 +13,14 @@ export async function GET(request: NextRequest) {
       username: string; 
       companyId: number;
       email: string;
+      role: string;
     };
     return NextResponse.json({ 
       username: decoded.username,
       userId: decoded.id,    
       companyId: decoded.companyId,
-      email: decoded.email
+      email: decoded.email,
+      role: decoded.role
     });
   } catch (error) {
     console.error("❌ Error en /api/me:", error);
