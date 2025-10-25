@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { FaUser, FaInfoCircle, FaTrashAlt } from "react-icons/fa";
-import { getUsersByCompany, deleteUser } from "@/app/actions/companies";
+import { getUsersByCompany, deleteUser } from "@/app/(dashboard)/actions/companies";
 import { UserFormModal } from "./UserFormModal";
 
 // Define la estructura para el estado de los usuarios

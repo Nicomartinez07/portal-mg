@@ -1,6 +1,5 @@
 "use client";
 
-import { MGDashboard } from "@/components/mg-dashboard";
 import { CertificateProvider, useCertificate } from "@/contexts/CertificateContext";
 import { CertificateFilters } from "@/components/certificate/CertificateFilters";
 import { CertificateTable } from "@/components/certificate/CertificateTable";
@@ -38,10 +37,8 @@ const CertificadosContent = () => {
 
 export default function CertificadosPage() { 
     return (
-        <MGDashboard>
             <CertificateProvider>
                 <CertificadosContent />
             </CertificateProvider>
-        </MGDashboard>
     );
 }

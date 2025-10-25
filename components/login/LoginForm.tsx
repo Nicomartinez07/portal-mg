@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, startTransition } from 'react';
 // --- MODIFICACIÓN: Importar el tipo y la action ---
-import { loginUser, type LoginResponse } from '@/app/login/actions';
+import { loginUser, type LoginResponse } from '@/app/(auth)/login/actions';
 import { Eye, EyeOff } from 'lucide-react';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 

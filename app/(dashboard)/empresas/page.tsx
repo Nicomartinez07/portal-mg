@@ -2,17 +2,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MGDashboard } from "../../components/mg-dashboard";
 import {
   FaUser,
   FaInfoCircle,
   FaTrashAlt,
   FaFileDownload,
 } from "react-icons/fa";
-import { getCompanies, deleteCompany, updateCompany} from "../actions/companies";
-import { NewCompanyModal } from "../../components/companies/NewCompanyModal";
-import { EditCompanyModal } from "../../components/companies/EditCompanyModal";
-import { UsersModal } from "../../components/companies/users/UsersModal"; 
+import { getCompanies, deleteCompany, updateCompany} from "@/app/(dashboard)/actions/companies";
+import { NewCompanyModal } from "@/components/companies/NewCompanyModal";
+import { EditCompanyModal } from "@/components/companies/EditCompanyModal";
+import { UsersModal } from "@/components/companies/users/UsersModal"; 
 
 type CompanyEntry = {
   id: number;
@@ -105,8 +104,8 @@ export default function EmpresasPage() {
   );
 
   return (
-    <MGDashboard>
-      <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
+    <>
+    <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Configuración de Empresas</h1>
           <button
@@ -227,6 +226,6 @@ export default function EmpresasPage() {
           onClose={handleCloseUsersModal}
         />
       )}
-    </MGDashboard>
+    </>  
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect} from "react";
-import { createVehicle } from "@/app/vehiculos/actions";
-import { getCompanies } from "@/app/actions/companies";
+import { createVehicle } from "@/app/(dashboard)/vehiculos/actions";
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
 
 export function VehicleModal({
   open,

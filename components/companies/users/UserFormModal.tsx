@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createUser, updateUser } from "@/app/actions/companies";
+import { createUser, updateUser } from "@/app/(dashboard)/actions/companies";
 
 // Define la estructura de un usuario, incluyendo los roles
 interface User {

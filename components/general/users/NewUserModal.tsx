@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
-import { createUser } from "../../../app/general/actions";
-import { getCompanies } from "@/app/actions/companies";
+import { createUser } from "@/app/(dashboard)/general/actions";
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
 
 interface NewUserModalProps {
   onClose: () => void;

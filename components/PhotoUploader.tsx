@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { uploadOrderPhoto } from '@/app/ordenes/images/actions'; // Asume que 'uploadOrderPhoto' está aquí
+import { uploadOrderPhoto } from '@/app/(dashboard)/ordenes/images/actions'; // Asume que 'uploadOrderPhoto' está aquí
 
 interface PhotoUploaderProps {
   orderId: number;

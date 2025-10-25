@@ -1,7 +1,7 @@
 // src/app/ordenes/borradores/DraftTable.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { getDraftOrders } from "@/app/ordenes/borradores/actions";
+import { getDraftOrders } from "@/app/(dashboard)/ordenes/borradores/actions";
 import { useDraft } from "@/contexts/DraftContext";
 import type { Draft } from "@/app/types";
 import InsertPreAuthorizationModal from "@/components/orders/modals/InsertPreAuthorizationModal";

@@ -1,7 +1,7 @@
 "use client";
 import { useDraft } from "@/contexts/DraftContext";
 import { useState, useEffect } from "react";
-import { getCompanies } from "@/app/actions/companies";
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
 
 export const DraftFilters = () => {
   const { filters, setFilters } = useDraft();

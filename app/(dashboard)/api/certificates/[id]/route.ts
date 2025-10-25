@@ -1,6 +1,6 @@
 // app/api/certificates/[id]/route.ts
 import { NextResponse } from "next/server";
-import { generateCertificate } from "@/app/actions/certificate";
+import { generateCertificate } from "@/app/(dashboard)/actions/certificate";
 
 export async function GET(
   request: Request,

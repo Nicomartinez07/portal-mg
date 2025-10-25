@@ -1,8 +1,8 @@
 // src/app/components/InsertClaimModal.tsx
 import React, { useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
-import { getVehicleByVin } from "@/app/vehiculos/actions";
-import { saveClaim, getPreAuthorizationDetails } from "@/app/ordenes/insert/claim/actions";
+import { getVehicleByVin } from "@/app/(dashboard)/vehiculos/actions";
+import { saveClaim, getPreAuthorizationDetails } from "@/app/(dashboard)/ordenes/insert/claim/actions";
 import type { Draft } from "@/app/types";
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';

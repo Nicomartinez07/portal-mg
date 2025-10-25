@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createCompany } from "@/app/actions/companies";
+import { createCompany } from "@/app/(dashboard)/actions/companies";
 
 export const NewCompanyModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) => {
   const [form, setForm] = useState({

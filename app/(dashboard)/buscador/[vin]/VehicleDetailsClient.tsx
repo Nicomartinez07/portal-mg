@@ -78,8 +78,6 @@ export function VehicleDetailsClient({ vehicleData }: VehicleDetailsClientProps)
   return (
     <>
       <h1 className="text-2xl font-bold mb-6">Detalles del Vehículo</h1>
-      {/* ... (El resto de tu JSX: info vehículo, garantía, timelines) ... */}
-      {/* ... (Todo el <div> 'grid grid-cols-1 md:grid-cols-2 gap-6' va aquí) ... */}
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* --- Información del vehículo y Garantía --- */}

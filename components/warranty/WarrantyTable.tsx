@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useWarranty } from "../../contexts/WarrantyContext";
-import { deleteWarranty } from "../../app/garantias/actions";
+import { deleteWarranty } from "../../app/(dashboard)/garantias/actions";
 
 export const WarrantyTable = () => {
   const { results } = useWarranty();

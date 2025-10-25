@@ -6,7 +6,7 @@ import {
   updateOrderStatus,
   // 2. IMPORTA EL TIPO de la data que espera tu action (lo creamos en el paso anterior)
   OrderInternalStatusUpdateData,
-} from "@/app/ordenes/actions";
+} from "@/app/(dashboard)/ordenes/actions";
 
 
 interface ClaimModalProps {

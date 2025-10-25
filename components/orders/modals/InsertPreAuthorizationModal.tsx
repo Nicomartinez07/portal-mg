@@ -1,8 +1,8 @@
 // src/app/components/InsertPreAuthorizationModal.tsx
 import React, { useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
-import { getVehicleByVin } from "@/app/vehiculos/actions";
-import { savePreAuthorization } from "@/app/ordenes/insert/preAutorizacion/actions";
+import { getVehicleByVin } from "@/app/(dashboard)/vehiculos/actions";
+import { savePreAuthorization } from "@/app/(dashboard)/ordenes/insert/preAutorizacion/actions";
 import { useUser } from '@/hooks/useUser';
 import type { Draft } from "@/app/types";
 

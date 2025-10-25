@@ -1,40 +1,41 @@
 // app/vehiculos/buscador/[vin]/page.tsx
 
-import { MGDashboard } from "@/components/mg-dashboard";
 import { getVehicleDetails } from "./actions";
 import { VehicleDetailsClient } from "./VehicleDetailsClient";
 
-export default async function BuscadorPage(props: { params: Promise<{ vin: string }> }) {
-  // Usando then() en lugar de await
-  const { vin } = await props.params;
+export default async function BuscadorPage(props: { params: { vin: string } }) { // Simplifiqué los props
+  
+  const { vin } = props.params; // Acceso directo al vin
   
   try {
     const vehicleData = await getVehicleDetails(vin);
 
     if (!vehicleData) {
+        // Ya no se usa <MGDashboard>
         return (
-            <MGDashboard>
+            <>
                 <h1 className="text-2xl font-bold mb-6">Detalles del Vehículo</h1>
                 <p className="text-gray-500">No se encontró el vehículo con VIN: {vin}</p>
-            </MGDashboard>
+            </>
         );
     }
 
+    // Ya no se usa <MGDashboard>
     return (
-      <MGDashboard>
-        <VehicleDetailsClient vehicleData={vehicleData} />
-      </MGDashboard>
+      <VehicleDetailsClient vehicleData={vehicleData} />
     );
 
   } catch (error) {
     console.error("Error fetching vehicle data:", error);
+    
+    // Ya no se usa <MGDashboard>
     return (
-      <MGDashboard>
+      <>
         <h1 className="text-2xl font-bold mb-6">Detalles del Vehículo</h1>
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           <p>Error al cargar la información del vehículo. Por favor, intenta nuevamente.</p>
         </div>
-      </MGDashboard>
+      </>
     );
   }
 }

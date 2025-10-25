@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 // 🚨 Asegúrate de que las rutas a tus actions sean correctas
-import { importCertificates, downloadCertificateExample, ImportResult, DescargarEjemploResult } from "@/app/certificados/import/actions"; 
+import { importCertificates, downloadCertificateExample, ImportResult, DescargarEjemploResult } from "@/app/(dashboard)/certificados/import/actions"; 
 
 // --- Componente de Formulario ---
 const CertificateImportForm: React.FC<{ onImportSuccess: () => void }> = ({ onImportSuccess }) => {

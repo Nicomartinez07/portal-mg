@@ -1,7 +1,7 @@
 // lib/email.ts
 import { Resend } from 'resend';
 
-import { getImporterEmailsForNotification } from "@/app/general/actions"
+import { getImporterEmailsForNotification } from "@/app/(dashboard)/general/actions"
 // ... (tu const resend, baseUrl, y tu función sendPasswordResetEmail) ...
 const resend = new Resend(process.env.RESEND_API_KEY);
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';

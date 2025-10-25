@@ -1,6 +1,5 @@
 "use client";
 
-import { MGDashboard } from "@/components/mg-dashboard";
 import { WarrantyProvider, useWarranty } from "@/contexts/WarrantyContext";
 import { WarrantyFilters } from "@/components/warranty/WarrantyFilters";
 import { WarrantyTable } from "@/components/warranty/WarrantyTable";
@@ -36,10 +35,8 @@ const GarantiasContent = () => {
 
 export default function GarantiasPage() {
   return (
-    <MGDashboard>
       <WarrantyProvider>
         <GarantiasContent />
       </WarrantyProvider>
-    </MGDashboard>
   );
 }

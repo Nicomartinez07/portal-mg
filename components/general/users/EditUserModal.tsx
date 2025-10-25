@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
-import { getUserById, updateUser } from "@/app/general/actions" // 📌 Asegúrate de que estas acciones existen y funcionan
+import { getUserById, updateUser } from "@/app/(dashboard)/general/actions"
 
 interface EditUserModalProps {
   userId: number;

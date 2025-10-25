@@ -1,7 +1,7 @@
 "use client";
 import { useOrder } from "@/contexts/OrdersContext";
 import { useState, useEffect } from "react";
-import { getCompanies } from "@/app/actions/companies";
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
 
 export const OrderFilters = () => {
   const { filters: appliedFilters, setFilters: setAppliedFilters } = useOrder();

@@ -1,7 +1,7 @@
 "use client";
 import { useWarranty } from "@/contexts/WarrantyContext";
 import { useState, useEffect } from "react";
-import { getCompanies } from "@/app/actions/companies";
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
 
 export const WarrantyFilters = ({ onSearch }: { onSearch: () => void }) => {
   const { filters, setFilters } = useWarranty();

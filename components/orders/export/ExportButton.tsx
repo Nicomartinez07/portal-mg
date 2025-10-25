@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useOrder } from "@/contexts/OrdersContext"; 
-import { exportOrders, ExportResult, OrderFilters } from "@/app/ordenes/export/actions";
+import { exportOrders, ExportResult, OrderFilters } from "@/app/(dashboard)/ordenes/export/actions";
 
 export const ExportOrdersButton = () => {
     const { filters } = useOrder(); 

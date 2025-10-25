@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCompanyById, updateCompany } from "@/app/actions/companies"; // Asegúrate de que la ruta sea correcta
+import { getCompanyById, updateCompany } from "@/app/(dashboard)/actions/companies"; // Asegúrate de que la ruta sea correcta
 
 // Definir el tipo de datos de la empresa, puedes extenderlo si es necesario
 type Company = {

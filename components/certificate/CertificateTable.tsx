@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useCertificate } from "../../contexts/CertificateContext";
-import { deleteWarranty } from "../../app/garantias/actions";
+import { deleteWarranty } from "../../app/(dashboard)/garantias/actions";
 
 // Pequeña función helper para formatear fechas (evita errores si la fecha es null)
 const formatDate = (dateString: string | Date | null | undefined) => {

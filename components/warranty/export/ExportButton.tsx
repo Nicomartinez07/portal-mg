@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWarranty } from "@/contexts/WarrantyContext"; // Asumo esta ruta a tu contexto
-import { exportWarranties, ExportResult } from "@/app/garantias/export/actions"; // Asumo que el action está aquíx
+import { exportWarranties, ExportResult } from "@/app/(dashboard)/garantias/export/actions"; // Asumo que el action está aquíx
 
 export const ExportButton = () => {
     const { filters } = useWarranty(); // Obtener los filtros del estado global

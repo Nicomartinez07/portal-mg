@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getVehicleByVin } from "@/app/vehiculos/actions";
-import { activateWarranty } from "@/app/garantias/activate/actions";
+import { getVehicleByVin } from "@/app/(dashboard)/vehiculos/actions";
+import { activateWarranty } from "@/app/(dashboard)/garantias/activate/actions";
 import provinciasData from "@/data/provincias.json";
 
 export function ActivationModal({

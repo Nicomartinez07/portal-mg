@@ -1,8 +1,8 @@
 // src/app/components/InsertServiceModal.tsx
 import React, { useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
-import { saveService } from "@/app/ordenes/insert/service/actions";
-import { getVehicleByVin } from "@/app/vehiculos/actions";
+import { saveService } from "@/app/(dashboard)/ordenes/insert/service/actions";
+import { getVehicleByVin } from "@/app/(dashboard)/vehiculos/actions";
 import { useUser } from '@/hooks/useUser';
 import type { Draft } from "@/app/types";
 

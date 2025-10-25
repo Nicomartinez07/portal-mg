@@ -1,8 +1,8 @@
 'use client'; 
 
 import { useState, useEffect } from 'react';
-import { getCompanies } from '@/app/actions/companies'; 
-import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/repuestos/importar/actions'; 
+import { getCompanies } from '@/app/(dashboard)/actions/companies'; 
+import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/(dashboard)/repuestos/importar/actions'; 
 
 // --- Definición de Tipos ---
 interface Company {

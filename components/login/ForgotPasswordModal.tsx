@@ -3,7 +3,7 @@
 
 import React, { useState, startTransition } from 'react';
 // Importaremos la nueva action
-import { requestPasswordReset } from '@/app/login/password/actions'; 
+import { requestPasswordReset } from '@/app/(auth)/login/password/actions'; 
 import { ArrowLeft, Send } from 'lucide-react';
 
 interface ForgotPasswordModalProps {

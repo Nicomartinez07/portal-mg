@@ -1,8 +1,8 @@
 "use client";
 import { useCertificate } from "@/contexts/CertificateContext";
 import { useState, useEffect } from "react";
-import { getCompanies } from "@/app/actions/companies";
-import { getCertificate } from "@/app/certificados/actions"; // <-- 1. IMPORTA LA ACTION
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
+import { getCertificate } from "@/app/(dashboard)/certificados/actions"; // <-- 1. IMPORTA LA ACTION
 
 export const CertificateFilters = () => {
   const { filters, setFilters, setLoading, setResults } = useCertificate();

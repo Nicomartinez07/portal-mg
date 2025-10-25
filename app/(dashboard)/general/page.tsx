@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MGDashboard } from "../../components/mg-dashboard";
 import { FaInfoCircle, FaTrashAlt, FaPlus, FaUpload } from "react-icons/fa";
 import { getUsers, deleteUser, updateUser } from "../general/actions";
-import { NewUserModal } from "../../components/general/users/NewUserModal";
-import { EditUserModal } from "../../components/general/users/EditUserModal";
+import { NewUserModal } from "@/components/general/users/NewUserModal";
+import { EditUserModal } from "@/components/general/users/EditUserModal";
 
 interface User {
   id: number;
@@ -109,8 +108,8 @@ export default function UsuariosPage() {
   };
 
   return (
-    <MGDashboard>
-      <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
+    <>
+    <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Configuración de Administradores</h1>
@@ -240,6 +239,8 @@ export default function UsuariosPage() {
       {editingUserId !== null && (
         <EditUserModal userId={editingUserId} onClose={handleCloseEditModal} />
       )}
-    </MGDashboard>
+    </>
+      
+      
   );
 }

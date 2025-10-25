@@ -1,8 +1,7 @@
 "use client";
 
-import { MGDashboard } from "../../components/mg-dashboard";
 import { getTalleres, getRepuestos } from "./actions";
-import { getCompanies } from "@/app/actions/companies";
+import { getCompanies } from "@/app/(dashboard)/actions/companies";
 import {
   Tabs,
   TabsContent,
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/tabs";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/repuestos/importar/actions'; 
+import { importarStockRepuestos, descargarEjemploRepuestos } from '@/app/(dashboard)/repuestos/importar/actions'; 
 
 
 // === TIPOS DE DATOS PARA LOS TALLERES ===
@@ -381,12 +380,10 @@ export default function RepuestosPage() {
   });
 
   if (loading) {
-    return (
-      <MGDashboard>
+    return (  
         <div className="bg-white rounded-lg shadow-sm min-h-screen p-6 flex items-center justify-center">
           <p>Cargando...</p>
         </div>
-      </MGDashboard>
     );
   }
 
@@ -398,7 +395,7 @@ export default function RepuestosPage() {
   }
 
   return (
-    <MGDashboard>
+     <>
       <div className="bg-white rounded-lg shadow-sm min-h-screen p-6">
         
         {/* === HEADER CON EL BOTÓN DE IMPORTACIÓN === */}
@@ -627,7 +624,6 @@ export default function RepuestosPage() {
             />
         </div>
       )}
-      {/* ==================================== */}
-    </MGDashboard>
+      </>
   );
 }

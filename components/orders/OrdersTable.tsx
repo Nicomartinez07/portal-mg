@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getOrders } from "@/app/ordenes/actions";
+import { getOrders } from "@/app/(dashboard)/ordenes/actions";
 import { useOrder } from "@/contexts/OrdersContext";
 import type { Order } from "@/app/types";
 import PreAuthorizationModal from "@/components/orders/modals/PreAuthorizationModal";

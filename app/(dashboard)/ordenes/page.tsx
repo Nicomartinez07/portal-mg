@@ -2,11 +2,10 @@ import { OrderProvider } from "@/contexts/OrdersContext";
 import { OrderFilters } from "@/components/orders/OrdersFilters";
 import OrdersTable  from "@/components/orders/OrdersTable";
 import { ExportOrdersButton } from "@/components/orders/export/ExportButton";
-import { MGDashboard } from "@/components/mg-dashboard";
 
 export default function OrdersPage() {
   return (
-    <MGDashboard>
+
       <OrderProvider>
        <div className="p-6">
           <div className="flex justify-between items-center mb-6">
@@ -18,6 +17,6 @@ export default function OrdersPage() {
           <OrdersTable />
         </div>
       </OrderProvider>
-    </MGDashboard>
+
   );
 }
