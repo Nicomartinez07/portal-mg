@@ -3,7 +3,7 @@
 
 import React, { useState, startTransition, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { resetPassword } from '@/app/login/password/actions';
+import { resetPassword } from '@/app/(auth)/login/password/actions';
 import { Eye, EyeOff } from 'lucide-react';
 
 type ActionState = {
