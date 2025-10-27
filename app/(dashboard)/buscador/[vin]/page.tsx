@@ -3,15 +3,14 @@
 import { getVehicleDetails } from "./actions";
 import { VehicleDetailsClient } from "./VehicleDetailsClient";
 
-export default async function BuscadorPage(props: { params: { vin: string } }) { // Simplifiqué los props
-  
-  const { vin } = props.params; // Acceso directo al vin
+export default async function BuscadorPage(props: { params: Promise<{ vin: string }> }) {
+
+  const { vin } = await props.params;
   
   try {
     const vehicleData = await getVehicleDetails(vin);
 
     if (!vehicleData) {
-        // Ya no se usa <MGDashboard>
         return (
             <>
                 <h1 className="text-2xl font-bold mb-6">Detalles del Vehículo</h1>
@@ -20,15 +19,12 @@ export default async function BuscadorPage(props: { params: { vin: string } }) {
         );
     }
 
-    // Ya no se usa <MGDashboard>
     return (
       <VehicleDetailsClient vehicleData={vehicleData} />
     );
 
   } catch (error) {
     console.error("Error fetching vehicle data:", error);
-    
-    // Ya no se usa <MGDashboard>
     return (
       <>
         <h1 className="text-2xl font-bold mb-6">Detalles del Vehículo</h1>
