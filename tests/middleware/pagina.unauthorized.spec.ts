@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("Loguearte con usuario Fabio summa", async ({ page }) => {
+test("Ir a página indevida y verificar redireccióne porque no tengo permisos", async ({
+  page,
+}) => {
   await page.goto("http://localhost:3000/");
   await page.getByRole("button", { name: "Admin" }).click();
   await page.getByRole("menuitem", { name: "Salir" }).click();
@@ -11,7 +13,12 @@ test("Loguearte con usuario Fabio summa", async ({ page }) => {
   await page.getByRole("textbox", { name: "Contraseña" }).click();
   await page.getByRole("textbox", { name: "Contraseña" }).fill("fsumma");
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Bienvenido a la pagina de MG" })
-  ).toBeVisible();
+
+  // Intentar acceder a la URL restringida
+  await page.goto("http://localhost:3000/ordenes/borradores");
+
+  // Verificar que la URL cambia a 'unauthorized'
+  await expect(page).toHaveURL(
+    "http://localhost:3000/login?redirectBack=%2Fordenes%2Fborradores"
+  );
 });
