@@ -132,11 +132,9 @@ export const CertificateTable = () => {
         </table>
       </div>
       
-      {/* Boton de garantia: TU MODAL IDÉNTICO, SOLO CAMBIAN LOS 'value' */}
-      {/* 'selected' ahora es un VEHICLE */}
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg w-2/3 max-h-[80vh] overflow-auto relative">
+          <div className="bg-white p-6 rounded-lg max-w-md max-h-[80vh] overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Activación de Garantía</h2>
             <button
               onClick={() => setSelected(null)}
@@ -251,8 +249,8 @@ export const CertificateTable = () => {
                     const res = await deleteWarranty(selected.warranty.id);
                     if (res.success) {
                       alert("Garantía anulada");
-                      setSelected(null); // Cierra el modal
-                      // Aquí deberías volver a llamar a handleSearch() para refrescar la lista
+                      setSelected(null); 
+                      // Llamar a handleSearch() para refrescar la lista
                     } else {
                       alert("Error: " + res.error);
                     }
@@ -273,11 +271,9 @@ export const CertificateTable = () => {
         </div>
       )}
 
-      {/* Detalles del Vehículo (boton que dice certificado): TU MODAL IDÉNTICO */}
-      {/* 'selectedVehicle' ahora es un VEHICLE */}
       {selectedVehicle && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg w-2/3 max-h-[80vh] overflow-auto relative">
+          <div className="bg-white p-6 rounded-lg max-w-md max-h-[80vh] overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Detalles del Vehículo</h2>
             <button
               onClick={() => setSelectedVehicle(null)}

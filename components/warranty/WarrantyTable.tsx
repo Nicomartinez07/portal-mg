@@ -68,7 +68,7 @@ export const WarrantyTable = () => {
                   {w.customer.firstName} {w.customer.lastName}
                 </td>
                 <td className="px-4 py-3">{w.company.name}</td>
-                <td className="px-4 py-3">{w.user.username}</td>
+                <td className="px-4 py-3">{w.user?.username}</td>
                 <td className="px-4 py-3">
                   <button
                     onClick={() => setSelected(w)}
@@ -95,7 +95,7 @@ export const WarrantyTable = () => {
 
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg w-2/3 max-h-[80vh] overflow-auto relative">
+          <div className="bg-white p-6 rounded-lg w-2/3 max-w-md overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Activación de Garantía</h2>
             <button
               onClick={() => setSelected(null)}
@@ -150,7 +150,7 @@ export const WarrantyTable = () => {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Vendedor</label>
-                  <input readOnly value={selected.user.username} className="border rounded px-2 py-1 w-full bg-gray-100" />
+                  <input readOnly value={selected.user?.username} className="border rounded px-2 py-1 w-full bg-gray-100" />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Patente</label>

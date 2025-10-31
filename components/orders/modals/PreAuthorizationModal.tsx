@@ -194,7 +194,7 @@ export default function PreAuthorizationModal({
   return (
     <>
       <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-        <div className="bg-white p-6 rounded-lg w-2/3 max-h-[80vh] overflow-auto relative">
+        <div className ="bg-white p-6 rounded-lg max-w-md max-h-[80vh] overflow-auto relative">
           <h2 className="text-2xl font-bold mb-4">
             Solicitud de Pre-autorización
           </h2>
