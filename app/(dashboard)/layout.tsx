@@ -37,6 +37,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { Menu, Transition } from "@headlessui/react";
@@ -153,9 +154,18 @@ function AppSidebar({
   onOpenInsertClaimModal: () => void;
   onOpenInsertServiceModal: () => void;
   role: string;
+  // NOTA: Ya no recibimos 'onNavigate'
 }) {
   const router = useRouter();
 
+  const { setOpen } = useSidebar();
+  const phonePX = 500;
+
+  const handleNavigationClick = () => {
+    if (setOpen && window.innerWidth <= phonePX) {
+      setOpen(false);
+    }
+  };
   // Filtrar items según rol
   const allowedItems = roleAccess[role?.toUpperCase()] || ["Inicio"];
 
@@ -298,7 +308,7 @@ function AppSidebar({
                   );
                 }
 
-                // Si es un enlace EXTERNO o una DESCARGA, usamos <a href>
+                // Si es un enlace EXTERNO o una DESCARGA
                 if (item.external || item.download) {
                   return (
                     <SidebarMenuItem key={index}>
@@ -310,6 +320,7 @@ function AppSidebar({
                           href={item.href}
                           target={item.external ? "_blank" : "_self"}
                           download={item.download}
+                          onClick={handleNavigationClick} // <-- 4. APLICAMOS
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="w-5 h-5" />
@@ -320,15 +331,17 @@ function AppSidebar({
                     </SidebarMenuItem>
                   );
                 }
-
-                // Si es un enlace INTERNO, ¡USAMOS <Link>!
+                // Si es un enlace INTERNO
                 return (
                   <SidebarMenuItem key={index}>
                     <SidebarMenuButton
                       asChild
                       className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                     >
-                      <Link href={item.href!}>
+                      <Link
+                        href={item.href!}
+                        onClick={handleNavigationClick} 
+                      >
                         <div className="flex items-center gap-3">
                           <Icon className="w-5 h-5" />
                           <span className="text-sm">{item.name}</span>
@@ -338,6 +351,7 @@ function AppSidebar({
                   </SidebarMenuItem>
                 );
               })}
+
 
               {/* --- Botón de Salir (Sin cambios) --- */}
               <SidebarMenuButton

@@ -157,7 +157,7 @@ export function ActivationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[500px] max-h-[90vh] overflow-y-auto relative">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-y-auto relative">
         <h2 className="text-lg font-bold mb-4">Activar Garantia</h2>
         <button
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"

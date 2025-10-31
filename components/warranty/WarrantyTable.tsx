@@ -8,6 +8,19 @@ export const WarrantyTable = () => {
   const [selected, setSelected] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
 
+  function formatDateTime(dateString: string | Date | undefined): string {
+  if (!dateString) return "";
+  const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  return date.toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+
   const handleDownload = async () => {
     if (!selected) return;
 
@@ -95,7 +108,7 @@ export const WarrantyTable = () => {
 
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg w-2/3 max-w-md overflow-auto relative">
+          <div className="bg-white p-6 rounded-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Activación de Garantía</h2>
             <button
               onClick={() => setSelected(null)}
@@ -110,7 +123,11 @@ export const WarrantyTable = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Fecha</label>
-                  <input readOnly value={selected.vehicle.date} className="border rounded px-2 py-1 w-full bg-gray-100" />
+                  <input
+                    readOnly
+                    value={formatDateTime(selected.activationDate)}
+                    className="border rounded px-2 py-1 w-full bg-gray-100"
+                  />
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-2">
                   <label className="text-gray-800">Vin</label>

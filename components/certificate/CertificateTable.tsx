@@ -134,7 +134,7 @@ export const CertificateTable = () => {
       
       {selected && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md max-h-[80vh] overflow-auto relative">
+          <div className="bg-white p-6 rounded-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Activación de Garantía</h2>
             <button
               onClick={() => setSelected(null)}
@@ -273,7 +273,7 @@ export const CertificateTable = () => {
 
       {selectedVehicle && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md max-h-[80vh] overflow-auto relative">
+          <div className="bg-white p-6 rounded-lg w-[90%] sm:w-[70%] md:w-[500px] lg:w-[600px] max-h-[90vh] overflow-auto relative">
             <h2 className="text-2xl font-bold bg-white mb-4">Detalles del Vehículo</h2>
             <button
               onClick={() => setSelectedVehicle(null)}
