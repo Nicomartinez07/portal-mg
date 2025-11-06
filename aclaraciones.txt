@@ -1,0 +1,6 @@
+Inicio de sesion con email
+Header de formularios
+Observado de Reclamo y preAutorizacion
+Borrar todos los repuestos desde eximar 
+Imagenes y pdf en preAutorizacion Y reclamo
+Cada 50 paginado

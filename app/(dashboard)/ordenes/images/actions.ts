@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { uploadToS3 } from '@/lib/s3-uploader'; // Importa la función que acabamos de crear
 
 // Definimos los tipos de archivo permitidos y el tamaño máximo (ej: 10MB)
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5MB
 const ALLOWED_MIMES = [
   'image/jpeg', 
   'image/png', 

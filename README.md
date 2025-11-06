@@ -63,7 +63,8 @@ Para eliminar datos de prisma correr siguiente comando:
 node prisma/clean.js
 node prisma/seed.js
 ```
-
+Para ejecutar un seed en un entorno de docker 
+docker-compose exec app node prisma/seed.js
 
 ### Ejecución de pruebas
 

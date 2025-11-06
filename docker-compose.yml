@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Servicio 1: La base de datos MySQL
+  mysql-db:
+    image: mysql:8.0          # Usa una imagen oficial de MySQL
+    container_name: mysql-db  # Nombre del contenedor (opcional)
+    restart: always           # Siempre reiniciar si falla
+    environment:
+      MYSQL_DATABASE: portalmg_db
+      MYSQL_USER: nico
+      MYSQL_PASSWORD: nico
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      # Expone el puerto 3306 del contenedor al 3306 de tu máquina host
+      # Útil para conectarte con un cliente como DBeaver o TablePlus
+      - '3306:3306'
+    volumes:
+      # Crea un "volumen" para que los datos de la DB persistan
+      # incluso si eliminas el contenedor
+      - mysql-data:/var/lib/mysql
+
+  # Servicio 2: Tu aplicación Next.js
+  app:
+    build:
+      context: .            # Construye desde el directorio actual
+      dockerfile: Dockerfile # Usando este Dockerfile
+    container_name: next-app
+    restart: always
+    ports:
+      - '3000:3000'         # Expone el puerto 3000 de Next.js
+    env_file:
+      - .env                # Carga las variables de entorno desde .env
+    depends_on:
+      - mysql-db            # Le dice a Docker que inicie la DB *antes* que la app
+
+# Definición del volumen que usamos arriba
+volumes:
+  mysql-data:
+    driver: local
