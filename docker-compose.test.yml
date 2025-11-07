@@ -1,0 +1,32 @@
+# Este archivo define un entorno 100% aislado y desechable para los tests E2E
+
+services:
+  # 1. Una base de datos MySQL SÓLO para tests
+  mysql-test-db:
+    image: mysql:5.7
+    container_name: mysql-test-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: portal_test_db  # <-- Nombre de la BD de test
+      MYSQL_USER: test_user          # <-- Usuario de test
+      MYSQL_PASSWORD: test_pass      # <-- Pass de test
+    networks:
+      - test-network
+    # No necesitamos volumes, ¡queremos que se borre!
+
+  # 2. Una copia de tu app SÓLO para tests
+  app-test:
+    build: .
+    container_name: app-test
+    # Le pasamos una variable de entorno DIFERENTE
+    environment:
+      DATABASE_URL: "mysql://test_user:test_pass@mysql-test-db:3306/portal_test_db"
+    # Fíjate que NO exponemos el puerto 3000. No queremos
+    # que choque con la app original.
+    networks:
+      - test-network
+    depends_on:
+      - mysql-test-db
+
+networks:
+  test-network:

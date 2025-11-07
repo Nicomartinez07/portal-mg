@@ -1,0 +1,82 @@
+name: CI/CD - Test y Despliegue en VM
+
+on:
+  push:
+    branches:
+      - main  # <-- Ajusta esta rama si es necesario
+
+jobs:
+  # -----------------------------------------------------------------
+  # TRABAJO 1: CONSTRUIR Y TESTEAR (El "Entorno Lindo")
+  # -----------------------------------------------------------------
+  build-and-test:
+    name: 🧪 Build & Test E2E
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      # ¡Aquí está la magia! Levantamos el entorno de TEST
+      - name: Levantar entorno de prueba (app-test + mysql-test-db)
+        # Usamos -f para especificar nuestro archivo de test
+        run: docker compose -f docker-compose.test.yml up -d --build
+
+      - name: Esperar a que la app de prueba esté lista
+        run: |
+          echo "Esperando 15 segundos a que la app de prueba inicie..."
+          sleep 15
+          echo "Continuando con los tests..."
+
+      # ---- PASOS DE PLAYWRIGHT ----
+      - name: Configurar Node.js v20 (para correr el test runner)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias de npm (para Playwright)
+        run: npm ci
+
+      - name: Instalar navegadores de Playwright
+        run: npx playwright install --with-deps
+
+      - name: 🚦 Correr Tests E2E de Playwright
+        run: npx playwright test
+        # Aquí asumimos que tus tests (o un globalSetup.ts)
+        # usan la DATABASE_URL del 'environment' de arriba
+        # para poblar la base de datos de test antes de correr.
+
+      # ---- LIMPIEZA ----
+      # Este paso se ejecuta SIEMPRE (aunque los tests fallen)
+      - name: (Limpieza) Apagar y borrar entorno de prueba
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v
+        # -v borra los volúmenes anónimos para empezar de 0 la próxima vez
+
+  # -----------------------------------------------------------------
+  # TRABAJO 2: DESPLEGAR (El "Show Real")
+  # -----------------------------------------------------------------
+  deploy:
+    name: 🚀 Desplegar en Producción
+    
+    # LA REGLA DE ORO: Solo corre si 'build-and-test' tuvo éxito
+    needs: build-and-test
+    
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Dar permisos de ejecución
+        run: chmod +x build.sh deploy.sh rollback.sh
+
+      # Este build.sh usa el docker-compose.yml (original)
+      # y construye la imagen 'portal-mg-app:latest'
+      - name: Construir imagen de Producción
+        run: ./build.sh
+
+      # Este deploy.sh levanta la imagen 'latest' conectada
+      # al VOLUMEN de datos reales e importantes.
+      - name: Desplegar en Producción
+        run: ./deploy.sh
