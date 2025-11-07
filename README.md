@@ -1,4 +1,6 @@
-no# Portal MG 
+Cambios en el readme
+
+#Portal MG 
 
 Sistema de administracio de informacion y usuarios de una empresa de autos. La misma va contar con:
 
