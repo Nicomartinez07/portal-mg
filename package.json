@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "prisma generate --schema=prisma/schema.local.prisma && next dev --turbopack",
+    "dev": "prisma generate && next dev --turbopack",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
@@ -12,9 +12,9 @@
     "db:push:local": "npx prisma db push --schema=prisma/schema.local.prisma",
     "db:push:prod": "npx prisma db push --schema=prisma/schema.prisma",
     "studio:local": "npx prisma studio --schema=prisma/schema.local.prisma",
-    "test": "prisma generate --schema=prisma/schema.test.prisma && npx playwright test",
+    "test": "npx playwright test",
     "test:report": "npx playwright show-report",
-    "test:headed": "prisma generate --schema=prisma/schema.test.prisma && npx playwright test --headed",
+    "test:headed": "npx playwright test --headed",
     "codegen": "node ./prisma/seed.js && npx playwright codegen && node ./prisma/clean.js"
   },
   "dependencies": {

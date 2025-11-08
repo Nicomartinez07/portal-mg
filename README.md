@@ -23,16 +23,12 @@ Para instalar la dependencias del proyecto, ejecutar el comando
 bun install
 ```
 
-Para inicializar la base de datos desde cero, es importante modificar el archivo `.env.example` de acuerdo a las preferencias de quien desarrolla. En particular, la variable `DATABASE_URL` debe indicar el archivo destino para la base de datos. Una vez modificado el archivo, recomendamos copiarlo en un archivo `.env` y correr el comando
-
-```bash
-npx prisma init
-```
-
 Para ejecutar el servidor de desarrollo, correr el siguiente comando
+Si se cayo el docker 
+docker-compose up -d mysql-db
 
 ```bash
-bun run dev
+npm run dev
 ```
 
 Para migrar la base de datos hay que correr el comando 
@@ -73,7 +69,7 @@ docker-compose exec app node prisma/seed.js
 Para ejecutar los pruebas unitarias, correr el siguiente comando
 
 ```bash
-bun run tests
+npm run tests
 ```
 ANTES DE CORRER LOS TESTS CORRER ESTE COMANDO: 
 
@@ -96,67 +92,3 @@ bun run create:test:e2e
 ```
 
 
-LISTADO DE CADA PAGINA Y COSAS POR HACER: 
---------------------------------------------------------------------------------------------------------------------------
-
-Garantias: funciona todo
-
-
---------------------------------------------------------------------------------------------------------------------------
- 
-Ordenes:
-Testing detallitos de cada estado interno
-Manejo de imagenes
-
-Borrador: ver q onda el client id preAutorization 
-
-PreAutorization: actualizar borrador y enviar pre orden
-Servicio: actualizar borrador ok, enviar servicio error
-Reclamo: actualizar borrador y enviar pre orden
-
---------------------------------------------------------------------------------------------------------------------------
-
-Pagina general: Testing 
-
-Crear usuario
-
-Upload tarifario me va a tirar error,
-
-En Vercel, no podés escribir archivos permanentemente dentro del proyecto (por ejemplo en /public, /var/task, /tmp, etc.).
-Tu código funciona en localhost porque en tu PC sí tenés un sistema de archivos de lectura y escritura, pero en Vercel los archivos del build están empaquetados en un entorno inmutable.
-
---------------------------------------------------------------------------------------------------------------------------
-
-Pagina certificados:
--Empadronamiento: fecha activacion de garantia
--F. Importacion: Cuando el auto llego al pais
-Logica de cambiar  Garantia y bloqueado,
-
-Testar filtros 
-
-Testing
-Verificar Importar certificados                   
-
---------------------------------------------------------------------------------------------------------------------------
-Repuestos: 
-
---------------------------------------------------------------------------------------------------------------------------
-
-Cargar Auto: id fallo, patente opcional en el modal, para poder cargarla en el Activar Garantia
-
---------------------------------------------------------------------------------------------------------------------------
-
-Buscador de VIN: 
-
---------------------------------------------------------------------------------------------------------------------------
-
-CONFIGURACION DEL CORREO
-Inicio de sesion : CONFIGURAR EMAIL QUE VA A ENVIAR MAILS DE RECUPERAR CONTRASEÑA
-
-Paginado a todas las paginas
-
-
-Ver en los modales, si queda mejor hacer el header fijo o si queda mejor el header desplzabale, ejemplos: 
-
-Header fijo: editar empresa
-Header desplazable: ingreso PreAutorizacion

@@ -1,34 +1,43 @@
-const path = require('path');
-const fs = require('fs');
 const { execSync } = require('child_process');
 const { chromium } = require('@playwright/test');
+require('dotenv').config(); // Carga tu .env para las variables
 
 const authFile = 'tests/auth.json';
+const TEST_DB_URL = "mysql://root:root@localhost:3306/portalmg_test_db";
 
 async function globalSetup(config) {
-  console.log('✨ [SETUP] Configurando base de datos de testing (SQLite)...');
+  console.log('✨ [SETUP] Configurando base de datos de testing (MySQL)...');
 
-  const DB_PATH = path.resolve(process.cwd(), 'prisma/test.db');
+  // 1. Asigna la URL de la DB de test a la variable de entorno
+  //    para que los comandos de Prisma la usen.
+  process.env.DATABASE_URL = TEST_DB_URL;
 
-  if (fs.existsSync(DB_PATH)) {
-    console.log(`Borrando archivo DB residual: ${DB_PATH}`);
-    fs.unlinkSync(DB_PATH);
-  }
-
-  // Crea las tablas y seed
+  // 2. Crea/Resetea la base de datos de test
   try {
-    execSync('npx prisma db push --schema=prisma/schema.test.prisma', { stdio: 'inherit' });
-    execSync('npx ts-node prisma/test-seed.js', { stdio: 'inherit' });
-    console.log('✅ [SETUP] Base de datos de testing lista.');
+    // 'migrate reset' borra la DB, la vuelve a crear,
+    // aplica migraciones y corre el seed (si está en package.json)
+    console.log('Aplicando migraciones a la DB de test...');
+    execSync('npx prisma migrate reset --force', {
+      env: { ...process.env }, // Pasa la DATABASE_URL de test
+      stdio: 'inherit',
+    });
+
+    // Si tu seed no está en package.json como "prisma.seed",
+    // ejecútalo manualmente (como en tu archivo original).
+    // Asumiré que tu seed ahora es 'prisma/seed.js' (no 'test-seed.js')
+    console.log('Ejecutando seed en la DB de test...');
+    execSync('node prisma/seed.js', {
+      env: { ...process.env }, // Sigue usando la DATABASE_URL de test
+      stdio: 'inherit',
+    });
+
+    console.log('✅ [SETUP] Base de datos de testing (MySQL) lista.');
   } catch (error) {
     console.error('❌ Error en Global Setup (DB):', error.message);
     process.exit(1);
   }
 
-  const DB_CREATED_PATH = path.resolve(process.cwd(), 'prisma/test.db');
-  console.log(`✅ [SETUP] BASE DE DATOS CREADA ${DB_CREATED_PATH}.`);
-
-  // Login y storageState
+  // 3. Login y storageState
   console.log('🤖 [SETUP] Realizando login para generar auth state...');
 
   const { baseURL } = config.projects[0].use;
