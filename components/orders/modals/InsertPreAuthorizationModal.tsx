@@ -318,24 +318,27 @@ export default function InsertPreAuthorizationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-white p-6 rounded-lg w-[900px] max-h-[90vh] overflow-y-auto relative shadow-lg text-sm">
-        {/* Header */}
-        <h2 className="text-lg font-semibold mb-4">
+  <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+    <div className="bg-white rounded-lg w-[900px] max-h-[90vh] overflow-hidden flex flex-col shadow-lg text-sm">
+      {/* Header fijo */}
+      <div className="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+        <h2 className="text-lg font-semibold">
           {isEditMode ? "Editar Borrador - Pre-Autorización" : "Ingreso de Pre-Autorización"}
           {isEditMode && draft?.id && (
             <span className="text-sm text-gray-500 ml-2">(ID: {draft.id})</span>
           )}
         </h2>
-
         <button
           onClick={handleClose}
-          className="absolute top-3 right-4 text-lg font-bold"
+          className="text-lg font-bold text-gray-500 hover:text-gray-700"
           disabled={isSubmitting}
         >
           ×
         </button>
+      </div>
 
+      {/* Contenido scrollable */}
+      <div className="overflow-y-auto flex-1 p-6">
         <form onSubmit={handleSubmitOrder}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Fecha */}
@@ -747,5 +750,6 @@ export default function InsertPreAuthorizationModal({
         </form>
       </div>
     </div>
-  );
+  </div>
+);
 }

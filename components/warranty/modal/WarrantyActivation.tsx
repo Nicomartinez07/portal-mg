@@ -156,17 +156,22 @@ export function ActivationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-y-auto relative">
-        <h2 className="text-lg font-bold mb-4">Activar Garantia</h2>
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div className="bg-white rounded-lg shadow-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Header fijo */}
+      <div className="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+        <h2 className="text-lg font-bold">Activar Garantia</h2>
         <button
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="text-gray-500 hover:text-gray-700 text-xl"
           onClick={handleClose}
         >
           ×
         </button>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Contenido scrollable */}
+      <div className="overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Vehículo */}
           <div className="border-b border-gray-300 pb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -308,15 +313,14 @@ export function ActivationModal({
                 </label>
                 <input
                   type="text"
-                  name="companyName" // Nombre para mostrar el valor
+                  name="companyName"
                   value={formData.companyName}
                   className="border px-3 py-2 w-full rounded bg-gray-100"
                   readOnly
                 />
                 
-                {/* Campo oculto con el ID */}
                 <input
-                  type="hidden" // Escondido, pero su valor será enviado en el submit
+                  type="hidden"
                   name="companyId" 
                   value={formData.companyId}
                 />
@@ -325,7 +329,6 @@ export function ActivationModal({
                   <p className="text-red-500 text-xs mt-1">{errors.companyId}</p>
                 )}
               </div>
-
 
               {/* Vendedor */}
               <div>
@@ -347,11 +350,14 @@ export function ActivationModal({
               </div>
             </div>
           </div>
-
-          {/* Separador */}
-          {/* ================= CLIENTE ================= */}
-          <div className="grid grid-cols-2 gap-4">
+          
+          {/* Cliente */}
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Cliente
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nombre */}
+            
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Nombre
@@ -447,47 +453,46 @@ export function ActivationModal({
             </div>
 
             {/* Provincia */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Provincia
-                </label>
-                <select
-                  name="clientProvince"
-                  value={formData.clientProvince}
-                  onChange={handleProvinceChange}
-                  className="border px-3 py-2 w-full rounded"
-                >
-                  <option value="">Seleccione una provincia</option>
-                  {provincias.map((prov, index) => (
-                    <option key={index} value={prov.provincia}>
-                      {prov.provincia}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Provincia
+              </label>
+              <select
+                name="clientProvince"
+                value={formData.clientProvince}
+                onChange={handleProvinceChange}
+                className="border px-3 py-2 w-full rounded"
+              >
+                <option value="">Seleccione una provincia</option>
+                {provincias.map((prov, index) => (
+                  <option key={index} value={prov.provincia}>
+                    {prov.provincia}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              {/* Localidad */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Localidad
-                </label>
-                <select
-                  name="clientLocality"
-                  value={formData.clientLocality}
-                  onChange={handleChange}
-                  className="border px-3 py-2 w-full rounded"
-                  disabled={!formData.clientProvince}
-                >
-                  <option value="">Seleccione una localidad</option>
-                  {localidades.map((localidad, index) => (
-                    <option key={index} value={localidad}>
-                      {localidad}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Localidad */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Localidad
+              </label>
+              <select
+                name="clientLocality"
+                value={formData.clientLocality}
+                onChange={handleChange}
+                className="border px-3 py-2 w-full rounded"
+                disabled={!formData.clientProvince}
+              >
+                <option value="">Seleccione una localidad</option>
+                {localidades.map((localidad, index) => (
+                  <option key={index} value={localidad}>
+                    {localidad}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-
 
           {/* Botones */}
           <div className="flex justify-end gap-4 pt-6">
@@ -510,5 +515,6 @@ export function ActivationModal({
         </form>
       </div>
     </div>
-  );
+  </div>
+);
 }

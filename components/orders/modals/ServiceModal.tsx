@@ -1,5 +1,3 @@
-// src/app/components/ServiceModal.tsx
-
 import React from "react";
 import type { Order } from "../../../app/types";
 
@@ -14,15 +12,21 @@ export default function ServiceModal({ order, onClose, onShowHistory }: ServiceM
     order.photos?.find((p) => p.type === type)?.url || "-";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-white p-6 rounded-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-auto relative">
-        <h2 className="text-2xl font-bold mb-4">Ingreso de Servicio</h2>
+  <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+    <div className="bg-white rounded-lg w-[90%] sm:w-[70%] md:w-[700px] lg:w-[750px] max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Header fijo */}
+      <div className="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+        <h2 className="text-2xl font-bold">Ingreso de Servicio</h2>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-xl font-bold"
+          className="text-xl font-bold text-gray-500 hover:text-gray-700"
         >
           ×
         </button>
+      </div>
+
+      {/* Contenido scrollable */}
+      <div className="overflow-y-auto flex-1 p-6">
         {/* Datos de la Orden */}
         <div className="mb-4 text-xs">
           <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
@@ -71,5 +75,6 @@ export default function ServiceModal({ order, onClose, onShowHistory }: ServiceM
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
