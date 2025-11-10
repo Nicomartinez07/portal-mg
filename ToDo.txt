@@ -1,7 +1,5 @@
 Inicio de sesion con email
 
-Header fijos de formularios
-
 Observado de Reclamo y preAutorizacion
 
 Borrar todos los repuestos desde eximar
@@ -9,9 +7,6 @@ Borrar todos los repuestos desde eximar
 Imagenes y pdf en preAutorizacion Y reclamo
 
 Cada 50 paginado
-
-
-
 
 --------------------------------------------------------------------------------------------------------------------------
 
@@ -69,8 +64,5 @@ Buscador de VIN:
 CONFIGURACION DEL CORREO
 Inicio de sesion : CONFIGURAR EMAIL QUE VA A ENVIAR MAILS DE RECUPERAR CONTRASEÑA
 
-
-Header fijo: editar empresa
-Header desplazable: ingreso PreAutorizacion
 
 

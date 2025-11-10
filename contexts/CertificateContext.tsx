@@ -11,24 +11,24 @@ export type CertificateFilters = {
   importDateFrom?: string;
   importDateTo?: string;
   combinacion?: "AMBOS" | "NRO_CERTIFICADO" | "F_IMPORTACION" | "NINGUNO";
-  garantia?: "ACTIVA" | "NO_ACTIVA" | null; 
-  blocked?: "BLOQUEADO" | "NO_BLOQUEADO" | null; 
+  garantia?: "ACTIVA" | "NO_ACTIVA" | null;
+  blocked?: "BLOQUEADO" | "NO_BLOQUEADO" | null;
 };
 
 type CertificateContextType = {
   filters: CertificateFilters;
   setFilters: (f: CertificateFilters) => void;
-  results: any[];
-  setResults: (r: any[]) => void;
-  loading: boolean;
-  setLoading: (l: boolean) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalCertificates: number;
+  setTotalCertificates: (total: number) => void;
 };
 
 const CertificateContext = createContext<CertificateContextType | null>(null);
 
 export const CertificateProvider = ({ children }: { children: React.ReactNode }) => {
   const [filters, setFilters] = useState<CertificateFilters>({
-    fromDate: undefined, // undefined es mejor que ""
+    fromDate: undefined,
     toDate: undefined,
     vin: undefined,
     model: undefined,
@@ -36,16 +36,29 @@ export const CertificateProvider = ({ children }: { children: React.ReactNode })
     importDateFrom: undefined,
     importDateTo: undefined,
     combinacion: undefined,
-    blocked: null, // <-- Inicializar con null para evitar el string ""
-    garantia: null, // <-- Inicializar con null para evitar el string ""
+    blocked: null,
+    garantia: null,
   });
 
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCertificates, setTotalCertificates] = useState(0);
+
+
+  const handleSetFilters = (newFilters: CertificateFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
 
   return (
     <CertificateContext.Provider
-      value={{ filters, setFilters, results, setResults, loading, setLoading }}
+      value={{
+        filters,
+        setFilters: handleSetFilters, 
+        currentPage,
+        setCurrentPage,
+        totalCertificates,
+        setTotalCertificates,
+      }}
     >
       {children}
     </CertificateContext.Provider>
@@ -54,6 +67,9 @@ export const CertificateProvider = ({ children }: { children: React.ReactNode })
 
 export const useCertificate = () => {
   const ctx = useContext(CertificateContext);
-  if (!ctx) throw new Error("useCertificate debe usarse dentro de CertificateProvider");
+  if (!ctx)
+    throw new Error(
+      "useCertificate debe usarse dentro de CertificateProvider"
+    );
   return ctx;
 };

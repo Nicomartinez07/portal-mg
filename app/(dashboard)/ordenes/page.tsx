@@ -5,7 +5,6 @@ import { ExportOrdersButton } from "@/components/orders/export/ExportButton";
 
 export default function OrdersPage() {
   return (
-
       <OrderProvider>
        <div className="p-6">
           <div className="flex justify-between items-center mb-6">
@@ -17,6 +16,5 @@ export default function OrdersPage() {
           <OrdersTable />
         </div>
       </OrderProvider>
-
   );
 }

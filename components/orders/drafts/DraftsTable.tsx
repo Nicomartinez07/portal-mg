@@ -1,31 +1,29 @@
-// src/app/ordenes/borradores/DraftTable.tsx
 "use client";
-import { useEffect, useState } from "react";
-import { getDraftOrders } from "@/app/(dashboard)/ordenes/borradores/actions";
+import { useState } from "react";
 import { useDraft } from "@/contexts/DraftContext";
 import type { Draft } from "@/app/types";
 import InsertPreAuthorizationModal from "@/components/orders/modals/InsertPreAuthorizationModal";
 import InsertClaimModal from "@/components/orders/modals/InsertClaimModal";
 import InsertServiceModal from "@/components/orders/modals/InsertServiceModal";
+import Pagination from "@/components/ui/Pagination";
+
+// Definimos el tamaño de la página
+const ITEMS_PER_PAGE = 25;
 
 export const DraftTable = () => {
-  const { filters } = useDraft();
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  // Obtenemos los nuevos estados del contexto
+  const {
+    currentPage,
+    setCurrentPage,
+    totalDrafts,
+    results,
+    loading, 
+  } = useDraft();
+
+  // Estados locales (solo para UI, no para datos)
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
-  const [loading, setLoading] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
-
-  const fetchDrafts = async () => {
-    setLoading(true);
-    const data = await getDraftOrders(filters);
-    setDrafts(data as Draft[]);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchDrafts();
-  }, [filters]);
 
   const handleShowHistory = (draft: Draft) => {
     if (draft.statusHistory) {
@@ -44,11 +42,10 @@ export const DraftTable = () => {
       case 'RECHAZADO':
         return 'bg-red-500 text-white';
       default:
-        return 'bg-gray-300 text-gray-700';
+        return 'text-black'; 
     }
   };
 
-  // Renderizar el modal correcto según el tipo
   const renderModal = () => {
     if (!selectedDraft) return null;
 
@@ -72,8 +69,26 @@ export const DraftTable = () => {
     }
   };
 
+  // Calculamos el total de páginas
+  const totalPages = Math.ceil(totalDrafts / ITEMS_PER_PAGE);
+
   return (
     <>
+      {/* --- RENDERIZADO DEL PAGINADOR --- */}
+      {!loading && totalDrafts > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-4 px-2">
+          {/* Ocultar en mobile */}
+          <div className="hidden sm:block text-sm text-gray-700 mb-2 sm:mb-0">
+            Total: <strong>{totalDrafts}</strong>
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-lg shadow">
         <table className="min-w-full border border-gray-200 bg-white">
           <thead className="bg-gray-100">
@@ -89,8 +104,14 @@ export const DraftTable = () => {
             </tr>
           </thead>
           <tbody>
-            {drafts.length > 0 ? (
-              drafts.map((draft) => (
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                  Cargando borradores...
+                </td>
+              </tr>
+            ) : results.length > 0 ? ( // ← Usamos results en lugar de drafts
+              results.map((draft) => (
                 <tr key={draft.id} className="border-t">
                   <td className="px-4 py-2">
                     {draft.creationDate ? new Date(draft.creationDate as any).toLocaleDateString() : "-"}
@@ -127,6 +148,7 @@ export const DraftTable = () => {
         </table>
       </div>
 
+      
       {/* Renderizar el modal correspondiente */}
       {renderModal()}
 

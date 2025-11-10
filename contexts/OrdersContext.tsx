@@ -31,10 +31,10 @@ type OrderFilters = {
 type OrderContextType = {
   filters: OrderFilters;
   setFilters: (f: OrderFilters) => void;
-  results: any[];
-  setResults: (r: any[]) => void;
-  loading: boolean;
-  setLoading: (l: boolean) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalOrders: number;
+  setTotalOrders: (total: number) => void;
 };
 
 const OrderContext = createContext<OrderContextType | null>(null);
@@ -52,12 +52,26 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     toDate: getLastDayOfMonth(),
   });
 
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+
+  // Modificamos setFilters para que siempre resetee a la página 1
+  const handleSetFilters = (newFilters: OrderFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1); 
+  };
 
   return (
     <OrderContext.Provider
-      value={{ filters, setFilters, results, setResults, loading, setLoading }}
+      value={{
+        filters,
+        setFilters: handleSetFilters, 
+        currentPage,
+        setCurrentPage,
+        totalOrders,
+        setTotalOrders,
+      }}
     >
       {children}
     </OrderContext.Provider>

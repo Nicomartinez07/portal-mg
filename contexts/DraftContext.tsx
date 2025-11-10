@@ -5,20 +5,22 @@ type DraftFilters = {
   orderNumber?: string;
   vin?: string;
   status?: string;
-  type?: string;  
+  type?: string;
   fromDate?: string;
   toDate?: string;
 };
 
-
-
 type DraftContextType = {
   filters: DraftFilters;
   setFilters: (f: DraftFilters) => void;
-  results: any[];
+  results: any[]; 
   setResults: (r: any[]) => void;
   loading: boolean;
   setLoading: (l: boolean) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalDrafts: number;
+  setTotalDrafts: (total: number) => void;
 };
 
 const DraftContext = createContext<DraftContextType | null>(null);
@@ -35,10 +37,28 @@ export const DraftProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalDrafts, setTotalDrafts] = useState(0);
+  
+  const handleSetFilters = (newFilters: DraftFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
 
   return (
     <DraftContext.Provider
-      value={{ filters, setFilters, results, setResults, loading, setLoading }}
+      value={{
+        filters,
+        setFilters: handleSetFilters, 
+        results,
+        setResults,
+        loading,
+        setLoading,
+        currentPage,
+        setCurrentPage,
+        totalDrafts,
+        setTotalDrafts,
+      }}
     >
       {children}
     </DraftContext.Provider>

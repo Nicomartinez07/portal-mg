@@ -1,10 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useWarranty } from "../../contexts/WarrantyContext";
-import { deleteWarranty } from "../../app/(dashboard)/garantias/actions";
+import { deleteWarranty, getFilteredWarranties } from "../../app/(dashboard)/garantias/actions";
+import Pagination from "@/components/ui/Pagination"; 
+import { Warranty } from "@/app/types";
+
+const ITEMS_PER_PAGE = 25;
 
 export const WarrantyTable = () => {
-  const { results } = useWarranty();
+  const { results, setResults, totalWarranty, setTotalWarranty, filters, currentPage, setCurrentPage } = useWarranty();
+
   const [selected, setSelected] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +24,6 @@ export const WarrantyTable = () => {
     minute: "2-digit",
   });
 }
-
 
   const handleDownload = async () => {
     if (!selected) return;
@@ -53,56 +57,103 @@ export const WarrantyTable = () => {
     }
   };
 
+   const fetchWarranty = useCallback(async () => {
+      setLoading(true);
+      try {
+        // Llamamos a la server action AHORA con los filtros y la paginación
+        const response = await getFilteredWarranties({
+          filters,
+          page: currentPage,
+          pageSize: ITEMS_PER_PAGE,
+        });
+
+        // La action nos devuelve un objeto { data, total }
+        setResults(response.data as Warranty[]);
+        setTotalWarranty(response.total);
+
+      } catch (error) {
+        console.error("Error al obtener las órdenes:", error);
+        setResults([]); // En caso de error, vaciamos la tabla
+        setTotalWarranty(0); // y reseteamos el total
+      } finally {
+        setLoading(false);
+      }
+    }, [filters, currentPage, setTotalWarranty]);
+  
+    // y CADA VEZ que `fetchWarranty` cambia (o sea, cuando filters o currentPage cambian)
+    useEffect(() => {
+      fetchWarranty();
+    }, [fetchWarranty]);
+
+    // Calculamos el total de páginas
+  const totalPages = Math.ceil(totalWarranty / ITEMS_PER_PAGE);
+
   return (
     <>
-    <div className="overflow-x-auto rounded-lg shadow">
-      <table className="min-w-full border border-gray-200 bg-white">
-          <thead className="bg-gray-100">
-          <tr>
-            <th className="px-4 py-3 text-left">Fecha</th>
-            <th className="px-4 py-3 text-left">VIN</th>
-            <th className="px-4 py-3 text-left">Modelo</th>
-            <th className="px-4 py-3 text-left">Patente</th>
-            <th className="px-4 py-3 text-left">Cliente</th>
-            <th className="px-4 py-3 text-left">Empresa</th>
-            <th className="px-4 py-3 text-left">Usuario</th>
-            <th className="px-4 py-3 text-left"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {results.length > 0 ? (
-            results.map((w) => (
-              <tr key={w.id} className="border-t">
-                <td className="px-4 py-3">{new Date(w.activationDate).toLocaleDateString()}</td>
-                <td className="px-4 py-3">{w.vehicle.vin}</td>
-                <td className="px-4 py-3">{w.vehicle.model}</td>
-                <td className="px-4 py-3">{w.vehicle.licensePlate}</td>
-                <td className="px-4 py-3">
-                  {w.customer.firstName} {w.customer.lastName}
-                </td>
-                <td className="px-4 py-3">{w.company.name}</td>
-                <td className="px-4 py-3">{w.user?.username}</td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => setSelected(w)}
-                    className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
-                    name="Detalles"
-                  >
-                    Detalles
-                  </button>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
-                No se encontraron garantías
-              </td>
-            </tr>
-          )}
-        </tbody>
 
-      </table>
+          {/* --- PAGINADOR --- */}
+          {!loading && totalWarranty > 0 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-4 px-2">
+              {/* Ocultar en mobile */}
+              <div className="hidden sm:block text-sm text-gray-700 mb-2 sm:mb-0">
+                Total: <strong>{totalWarranty}</strong>
+              </div>
+    
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            </div>
+          )}
+        <div className="overflow-x-auto rounded-lg shadow">
+          <table className="min-w-full border border-gray-200 bg-white">
+              <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-3 text-left">Fecha</th>
+                <th className="px-4 py-3 text-left">VIN</th>
+                <th className="px-4 py-3 text-left">Modelo</th>
+                <th className="px-4 py-3 text-left">Patente</th>
+                <th className="px-4 py-3 text-left">Cliente</th>
+                <th className="px-4 py-3 text-left">Empresa</th>
+                <th className="px-4 py-3 text-left">Usuario</th>
+                <th className="px-4 py-3 text-left"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.length > 0 ? (
+                results.map((w) => (
+                  <tr key={w.id} className="border-t">
+                    <td className="px-4 py-3">{new Date(w.activationDate).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">{w.vehicle.vin}</td>
+                    <td className="px-4 py-3">{w.vehicle.model}</td>
+                    <td className="px-4 py-3">{w.vehicle.licensePlate}</td>
+                    <td className="px-4 py-3">
+                      {w.customer.firstName} {w.customer.lastName}
+                    </td>
+                    <td className="px-4 py-3">{w.company.name}</td>
+                    <td className="px-4 py-3">{w.user?.username}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setSelected(w)}
+                        className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+                        name="Detalles"
+                      >
+                        Detalles
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-4 py-6 text-center text-gray-500">
+                    No se encontraron garantías
+                  </td>
+                </tr>
+              )}
+            </tbody>
+
+          </table>
 
       </div>
 

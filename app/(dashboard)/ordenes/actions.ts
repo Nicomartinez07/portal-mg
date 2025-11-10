@@ -1,5 +1,3 @@
-// app/ordenes/actions.ts
-
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -17,58 +15,68 @@ export type OrderInternalStatusUpdateData = {
 };
 
 // --- 2. Tu función getOrders (SIN CAMBIOS) ---
-export async function getOrders(filters: {
-  orderNumber?: string;
-  vin?: string;
-  customerName?: string;
-  status?: string;
-  type?: string;
-  internalStatus?: string;
-  companyId?: string;
-  fromDate?: string;
-  toDate?: string;
+export async function getOrders(params: {
+  filters: {
+    orderNumber?: string;
+    vin?: string;
+    customerName?: string;
+    status?: string;
+    type?: string;
+    internalStatus?: string;
+    companyId?: string;
+    fromDate?: string;
+    toDate?: string;
+  };
+  page: number;
+  pageSize: number;
 }) {
-  return prisma.order.findMany({
-    where: {
-      draft: false,
-      ...(filters.orderNumber && { orderNumber: Number(filters.orderNumber) }),
-      vehicle: filters.vin ? { vin: { contains: filters.vin } } : undefined,
+  const { filters, page, pageSize } = params;
 
-      ...(filters.status && { status: filters.status as any }),
-      ...(filters.type && { type: filters.type as any }),
-      ...(filters.internalStatus && {
-        internalStatus: filters.internalStatus as any,
-      }),
-      ...(filters.companyId && { companyId: Number(filters.companyId) }),
+  // 1. Construir la cláusula 'where' para reutilizarla
+  const whereClause = {
+    draft: false,
+    ...(filters.orderNumber && { orderNumber: Number(filters.orderNumber) }),
+    vehicle: filters.vin ? { vin: { contains: filters.vin } } : undefined,
+    ...(filters.status && { status: filters.status as any }),
+    ...(filters.type && { type: filters.type as any }),
+    ...(filters.internalStatus && {
+      internalStatus: filters.internalStatus as any,
+    }),
+    ...(filters.companyId && { companyId: Number(filters.companyId) }),
+    creationDate: {
+      gte: filters.fromDate ? new Date(filters.fromDate) : undefined,
+      lte: filters.toDate ? new Date(filters.toDate) : undefined,
+    },
+  };
 
-      creationDate: {
-        gte: filters.fromDate ? new Date(filters.fromDate) : undefined,
-        lte: filters.toDate ? new Date(filters.toDate) : undefined,
+  // 2. Calcular cuántos registros saltar (skip)
+  const skip = (page - 1) * pageSize;
+
+  // 3. Usar una transacción para obtener el conteo y los datos
+  const [total, data] = await prisma.$transaction([
+    // Consulta 1: Contar el total de registros que coinciden con el filtro
+    prisma.order.count({ where: whereClause }),
+    
+    // Consulta 2: Obtener solo la página de datos que necesitamos
+    prisma.order.findMany({
+      where: whereClause,
+      include: {
+        customer: true,
+        company: true,
+        user: true,
+        vehicle: { include: { warranty: true } },
+        statusHistory: { orderBy: { changedAt: "asc" } },
+        tasks: { include: { parts: { include: { part: true } } } },
+        photos: true,
       },
-    },
-    include: {
-      customer: true,
-      company: true,
-      user: true,
-      vehicle: {
-        include: {
-          warranty: true,
-        },
-      },
-      statusHistory: {
-        orderBy: { changedAt: "asc" },
-      },
-      tasks: {
-        include: {
-          parts: {
-            include: { part: true },
-          },
-        },
-      },
-      photos: true,
-    },
-    orderBy: { creationDate: "desc" },
-  });
+      orderBy: { creationDate: "desc" },
+      skip: skip,   // Saltar los registros de páginas anteriores
+      take: pageSize, // Tomar solo la cantidad para esta página
+    }),
+  ]);
+
+  // 4. Devolver un objeto con los datos y el total
+  return { data, total };
 }
 
 // --- 3. Tu función updateOrderStatus (Le agregué revalidatePath) ---

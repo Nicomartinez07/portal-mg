@@ -3,23 +3,13 @@
 import { CertificateProvider, useCertificate } from "@/contexts/CertificateContext";
 import { CertificateFilters } from "@/components/certificate/CertificateFilters";
 import { CertificateTable } from "@/components/certificate/CertificateTable";
-// 🚨 Importamos el componente de Modal de Importación
-import { CertificateImportModal } from "@/components/certificate/import/CertificateImportModal"; // Ajusta la ruta si es necesario
-import { getCertificate } from "../certificados/actions";
+import { CertificateImportModal } from "@/components/certificate/import/CertificateImportModal"; 
+
 const CertificadosContent = () => {
-    const { filters, setResults, setLoading, loading } = useCertificate();
+    const { filters, setFilters } = useCertificate();
 
     const handleImportSuccess = async () => {
-        console.log("Importación OK. Refrescando tabla...");
-        setLoading(true);
-        try {
-            const data = await getCertificate(filters);
-            setResults(data);
-        } catch (err) {
-            console.error("Error al refrescar certificados:", err);
-        } finally {
-            setLoading(false);
-        }
+        setFilters({ ...filters }); 
     };
 
     return (
@@ -29,7 +19,6 @@ const CertificadosContent = () => {
                 <CertificateImportModal onImportSuccess={handleImportSuccess} />
             </div>
             <CertificateFilters />
-            {loading && <p>Cargando...</p>}
             <CertificateTable />
         </div>
     );

@@ -21,6 +21,10 @@ type WarrantyContextType = {
   setResults: (r: any[]) => void;
   loading: boolean;
   setLoading: (l: boolean) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalWarranty: number;
+  setTotalWarranty: (total: number) => void;
 };
 
 const WarrantyContext = createContext<WarrantyContextType | null>(null);
@@ -40,10 +44,12 @@ export const WarrantyProvider = ({ children }: { children: React.ReactNode }) =>
 
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalWarranty, setTotalWarranty] = useState(0);
 
   return (
     <WarrantyContext.Provider
-      value={{ filters, setFilters, results, setResults, loading, setLoading }}
+      value={{ filters, setFilters, results, setResults, loading, setLoading, currentPage, setCurrentPage, totalWarranty, setTotalWarranty }}
     >
       {children}
     </WarrantyContext.Provider>
