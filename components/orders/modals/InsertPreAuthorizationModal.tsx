@@ -1,10 +1,17 @@
-// src/app/components/InsertPreAuthorizationModal.tsx
+// components/orders/modals/InsertPreAuthorizationModal.tsx
 import React, { useEffect, useState } from "react";
-import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaTrash } from "react-icons/fa";
 import { getVehicleByVin } from "@/app/(dashboard)/vehiculos/actions";
-import { savePreAuthorization } from "@/app/(dashboard)/ordenes/insert/preAutorizacion/actions";
-import { useUser } from '@/hooks/useUser';
+import { savePreAuthorizationWithPhotos } from "@/app/(dashboard)/ordenes/insert/preAutorizacion/actions";
+import { uploadOrderPhotos } from "@/lib/uploadOrderPhotos";
+import { useUser } from "@/hooks/useUser";
 import type { Draft } from "@/app/types";
+
+// Importar componentes de upload
+import ImageUploadField from "@/components/awss3/ImageUploadField";
+import MultipleMediaUploadField from "@/components/awss3/MultipleMediaUploadField";
+import PDFUploadField from "@/components/awss3/PDFUploadField";
+
 
 interface InsertPreAuthorizationModalProps {
   onClose: () => void;
@@ -24,7 +31,6 @@ interface Task {
   }[];
 }
 
-// Estado inicial del formulario
 const initialFormData = {
   creationDate: "",
   orderNumber: "",
@@ -43,11 +49,6 @@ const initialFormData = {
       parts: [{ part: { code: "", description: "" } }],
     },
   ] as Task[],
-  badgePhoto: null as File | null,
-  vinPhoto: null as File | null,
-  milagePhoto: null as File | null,
-  aditionalPartsPhoto: null as File | null,
-  orPhoto: null as File | null,
 };
 
 export default function InsertPreAuthorizationModal({
@@ -56,44 +57,44 @@ export default function InsertPreAuthorizationModal({
   draft,
   isEditMode = false,
 }: InsertPreAuthorizationModalProps) {
-  // Estado unificado del formulario
   const [formData, setFormData] = useState(initialFormData);
-
-  // Estados para UI y control
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { user, loading } = useUser();
 
-  // Cargar datos del draft cuando se abre el modal
+  // Estados para fotos
+  const [licensePlatePhoto, setLicensePlatePhoto] = useState<File | null>(null);
+  const [vinPlatePhoto, setVinPlatePhoto] = useState<File | null>(null);
+  const [odometerPhoto, setOdometerPhoto] = useState<File | null>(null);
+  const [additionalPhotos, setAdditionalPhotos] = useState<File[]>([]);
+  const [orPhotos, setOrPhotos] = useState<File[]>([]);
+  const [reportPdfs, setReportPdfs] = useState<File[]>([]);
+
+  // Cargar datos del draft
   useEffect(() => {
     if (open && draft) {
-      console.log("Cargando draft:", draft);
-      
-      // --- CORRECCIÓN 1 ---
-      // Convertir tasks del draft al formato del formulario
-      const draftTasks = (draft.tasks && draft.tasks.length > 0) 
-        ? draft.tasks.map(task => ({
-            description: task.description || "",
-            hoursCount: task.hoursCount?.toString() || "",
-            
-            // --- CORRECCIÓN 2 ---
-            parts: (task.parts && task.parts.length > 0) 
-              ? task.parts.map(part => ({
-                  part: {
-                    code: part.part?.code || "",
-                    description: part.part?.description || ""
-                  }
-                }))
-              : [{ part: { code: "", description: "" } }]
-          }))
-        : initialFormData.tasks;
+      const draftTasks =
+        draft.tasks && draft.tasks.length > 0
+          ? draft.tasks.map((task) => ({
+              description: task.description || "",
+              hoursCount: task.hoursCount?.toString() || "",
+              parts:
+                task.parts && task.parts.length > 0
+                  ? task.parts.map((part) => ({
+                      part: {
+                        code: part.part?.code || "",
+                        description: part.part?.description || "",
+                      },
+                    }))
+                  : [{ part: { code: "", description: "" } }],
+            }))
+          : initialFormData.tasks;
 
       const draftFormData = {
-        creationDate: draft.creationDate 
-          ? (typeof draft.creationDate === 'string' 
-             ? draft.creationDate 
-             : new Date(draft.creationDate).toLocaleDateString())
+        creationDate: draft.creationDate
+          ? typeof draft.creationDate === "string"
+            ? draft.creationDate
+            : new Date(draft.creationDate).toLocaleDateString()
           : new Date().toLocaleDateString(),
         orderNumber: draft.orderNumber?.toString() || "",
         customerName: draft.customerName || draft.customer?.firstName || "",
@@ -105,30 +106,37 @@ export default function InsertPreAuthorizationModal({
         diagnosis: draft.diagnosis || "",
         additionalObservations: draft.additionalObservations || "",
         tasks: draftTasks,
-        badgePhoto: null,
-        vinPhoto: null,
-        milagePhoto: null,
-        aditionalPartsPhoto: null,
-        orPhoto: null,
-        
       };
 
       setFormData(draftFormData);
-      console.log("FormData cargado:", draftFormData);
+      
+      // Limpiar fotos (no se pueden cargar desde draft)
+      setLicensePlatePhoto(null);
+      setVinPlatePhoto(null);
+      setOdometerPhoto(null);
+      setAdditionalPhotos([]);
+      setOrPhotos([]);
+      setReportPdfs([]);
     } else if (open) {
-      // Resetear si no hay draft
       const date = new Date();
       setFormData({
         ...initialFormData,
         creationDate: date.toLocaleDateString(),
       });
+      
+      // Limpiar fotos
+      setLicensePlatePhoto(null);
+      setVinPlatePhoto(null);
+      setOdometerPhoto(null);
+      setAdditionalPhotos([]);
+      setOrPhotos([]);
+      setReportPdfs([]);
     }
-    
+
     setErrors({});
     setIsSubmitting(false);
   }, [open, draft]);
 
-  // Handler único para todos los campos del formulario
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -138,13 +146,11 @@ export default function InsertPreAuthorizationModal({
       [name]: value,
     }));
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  // Handler para buscar vehículo
   const handleSearchVehicle = async () => {
     if (!formData.vin) {
       alert("Ingrese un VIN primero");
@@ -168,16 +174,6 @@ export default function InsertPreAuthorizationModal({
     }
   };
 
-  // Handlers para archivos
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = async () => {};
-
-  // Funciones para manejar tareas
   const handleAddTask = () => {
     setFormData((prev) => ({
       ...prev,
@@ -219,16 +215,37 @@ export default function InsertPreAuthorizationModal({
     });
   };
 
-  // Handler para cerrar modal
   const handleClose = () => {
     onClose();
   };
 
+  // Validar fotos antes de enviar
+  const validatePhotos = (): boolean => {
+    if (!licensePlatePhoto) {
+      alert("❌ Debes subir la foto de patente");
+      return false;
+    }
+    if (!vinPlatePhoto) {
+      alert("❌ Debes subir la foto de VIN");
+      return false;
+    }
+    if (!odometerPhoto) {
+      alert("❌ Debes subir la foto de kilómetros");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
-      alert('❌ No se pudo obtener la información del usuario');
+      alert("❌ No se pudo obtener la información del usuario");
+      return;
+    }
+
+    // Validar fotos obligatorias
+    if (!validatePhotos()) {
       return;
     }
 
@@ -236,6 +253,29 @@ export default function InsertPreAuthorizationModal({
     setErrors({});
 
     try {
+      // 1. Generar ID temporal para subir fotos (si es nueva orden)
+      const tempOrderId = draft?.id || Date.now();
+
+      console.log("📤 Paso 1: Subiendo fotos a S3...");
+
+      // 2. Subir todas las fotos a S3
+      const uploadResult = await uploadOrderPhotos(tempOrderId, {
+        licensePlatePhoto: licensePlatePhoto!,
+        vinPlatePhoto: vinPlatePhoto!,
+        odometerPhoto: odometerPhoto!,
+        additionalPhotos,
+        orPhotos,
+        reportPdfs,
+      });
+
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || "Error al subir fotos");
+      }
+
+      console.log("✅ Fotos subidas exitosamente");
+      console.log("💾 Paso 2: Guardando orden en base de datos...");
+
+      // 3. Preparar datos de la orden
       const dataToSubmit = {
         ...formData,
         tasks: formData.tasks.filter(
@@ -245,43 +285,89 @@ export default function InsertPreAuthorizationModal({
             task.parts[0].part.code.trim() !== "" ||
             task.parts[0].part.description.trim() !== ""
         ),
+        photoUrls: uploadResult.photoUrls!,
       };
 
-      const result = await savePreAuthorization(
+      // 4. Guardar orden con fotos
+      const result = await savePreAuthorizationWithPhotos(
         dataToSubmit,
-        user.companyId, 
-        user.userId,     
-        false,
+        user.companyId,
+        user.userId,
+        false, // No es borrador
         draft?.id
       );
 
       if (result.success) {
-        alert(`✅ ${isEditMode ? "Borrador convertido a orden" : "Pre-autorización enviada"} correctamente`);
+        alert(
+          `✅ ${
+            isEditMode
+              ? "Borrador convertido a orden"
+              : "Pre-autorización creada"
+          } correctamente`
+        );
         handleClose();
       } else {
         alert("⚠️ " + result.message);
       }
     } catch (error) {
       console.error(error);
-      alert("❌ Error inesperado al procesar la solicitud");
+      alert(
+        "❌ Error: " +
+          (error instanceof Error ? error.message : "Error desconocido")
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Guardar borrador
   const handleDraftSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
-      alert('❌ No se pudo obtener la información del usuario');
+      alert("❌ No se pudo obtener la información del usuario");
       return;
     }
-    
+
+    // Los borradores pueden guardarse sin fotos
     setIsSubmitting(true);
     setErrors({});
 
     try {
+      // Si hay fotos, subirlas
+      let photoUrls: {
+        licensePlate: string;
+        vinPlate: string;
+        odometer: string;
+        additional: string[];
+        or: string[];
+        reportPdfs: string[];
+      } = {
+        licensePlate: "",
+        vinPlate: "",
+        odometer: "",
+        additional: [],
+        or: [],
+        reportPdfs: [],
+      };
+
+      if (licensePlatePhoto && vinPlatePhoto && odometerPhoto) {
+        console.log("📤 Subiendo fotos del borrador...");
+        
+        const tempOrderId = draft?.id || Date.now();
+        const uploadResult = await uploadOrderPhotos(tempOrderId, {
+          licensePlatePhoto,
+          vinPlatePhoto,
+          odometerPhoto,
+          additionalPhotos,
+          orPhotos,
+          reportPdfs,
+        });
+
+        if (uploadResult.success) {
+          photoUrls = uploadResult.photoUrls!;
+        }
+      }
+
       const draftData = {
         ...formData,
         tasks: formData.tasks.filter(
@@ -291,18 +377,21 @@ export default function InsertPreAuthorizationModal({
             task.parts[0].part.code.trim() !== "" ||
             task.parts[0].part.description.trim() !== ""
         ),
+        photoUrls,
       };
 
-      const result = await savePreAuthorization(
+      const result = await savePreAuthorizationWithPhotos(
         draftData,
-        user.companyId,  
+        user.companyId,
         user.userId,
-        true,
+        true, // Es borrador
         draft?.id
       );
 
       if (result.success) {
-        alert(`✅ ${draft?.id ? "Borrador actualizado" : "Borrador guardado"} correctamente`);
+        alert(
+          `✅ ${draft?.id ? "Borrador actualizado" : "Borrador guardado"} correctamente`
+        );
         handleClose();
       } else {
         alert("⚠️ " + result.message);
@@ -318,88 +407,75 @@ export default function InsertPreAuthorizationModal({
   if (!open) return null;
 
   return (
-  <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-    <div className="bg-white rounded-lg w-[900px] max-h-[90vh] overflow-hidden flex flex-col shadow-lg text-sm">
-      {/* Header fijo */}
-      <div className="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
-        <h2 className="text-lg font-semibold">
-          {isEditMode ? "Editar Borrador - Pre-Autorización" : "Ingreso de Pre-Autorización"}
-          {isEditMode && draft?.id && (
-            <span className="text-sm text-gray-500 ml-2">(ID: {draft.id})</span>
-          )}
-        </h2>
-        <button
-          onClick={handleClose}
-          className="text-lg font-bold text-gray-500 hover:text-gray-700"
-          disabled={isSubmitting}
-        >
-          ×
-        </button>
-      </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div className="bg-white rounded-lg w-[900px] max-h-[90vh] overflow-hidden flex flex-col shadow-lg text-sm">
+        {/* Header */}
+        <div className="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+          <h2 className="text-lg font-semibold">
+            {isEditMode
+              ? "Editar Borrador - Pre-Autorización"
+              : "Ingreso de Pre-Autorización"}
+            {isEditMode && draft?.id && (
+              <span className="text-sm text-gray-500 ml-2">
+                (ID: {draft.id})
+              </span>
+            )}
+          </h2>
+          <button
+            onClick={handleClose}
+            className="text-lg font-bold text-gray-500 hover:text-gray-700"
+            disabled={isSubmitting}
+          >
+            ×
+          </button>
+        </div>
 
-      {/* Contenido scrollable */}
-      <div className="overflow-y-auto flex-1 p-6">
-        <form onSubmit={handleSubmitOrder}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Fecha */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Fecha
-              </label>
-              <input
-                readOnly
-                value={formData.creationDate}
-                className="border rounded px-2 py-1 w-full bg-gray-100"
-              />
-            </div>
+        {/* Contenido scrollable */}
+        <div className="overflow-y-auto flex-1 p-6">
+          <form onSubmit={handleSubmitOrder}>
+            {/* Campos del formulario  */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Fecha
+                </label>
+                <input
+                  readOnly
+                  value={formData.creationDate}
+                  className="border rounded px-2 py-1 w-full bg-gray-100"
+                />
+              </div>
 
-            {/* OR interna */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Or interna
-              </label>
-              <div className="flex gap-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Or interna
+                </label>
                 <input
                   name="orderNumber"
                   value={formData.orderNumber}
                   onChange={handleChange}
-                  placeholder="Ingrese el numero interno de orden de reparacion"
-                  className={`border rounded px-2 py-1 w-full ${
-                    errors.orderNumber ? "border-red-500" : "border-gray-300"
-                  }`}
+                  placeholder="Ingrese el numero interno de orden"
+                  className="border rounded px-2 py-1 w-full"
                 />
               </div>
-              {errors.orderNumber && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.orderNumber}
-                </p>
-              )}
-            </div>
 
-            {/* Nombre Cliente */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nombre Cliente
-              </label>
-              <div className="flex gap-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Nombre Cliente
+                </label>
                 <input
                   name="customerName"
                   value={formData.customerName}
                   onChange={handleChange}
-                  placeholder="Ingrese nombre completo del cliente"
+                  placeholder="Ingrese nombre completo"
                   className={`border rounded px-2 py-1 w-full ${
-                    errors.customerName ? "border-red-500" : "border-gray-300"
+                    errors.customerName ? "border-red-500" : ""
                   }`}
                 />
               </div>
-              {errors.customerName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.customerName}
-                </p>
-              )}
-            </div>
 
-            {/* VIN + Buscar */}
+              {/* VIN + Buscar */}
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 VIN
@@ -638,118 +714,108 @@ export default function InsertPreAuthorizationModal({
             )}
           </div>
 
-          {/* Subida de archivo */}
-          <div className="mt-6">
-            <div className="grid grid-cols-[160px_1fr] gap-2 items-center text-sm">
-              <label>Foto Patente</label>
-              <div className="flex items-center gap-3 mb-2">
-                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
-                  Seleccionar archivo
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    disabled={isSubmitting}
+            {/* ========== NUEVA SECCIÓN DE FOTOS ========== */}
+            <div className="mt-8 pt-6 border-t">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                📸 Fotos y Documentos
+              </h3>
+
+              <div className="space-y-6">
+                {/* Fotos obligatorias */}
+                <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+                  <p className="text-sm text-blue-800 font-medium">
+                    Fotos Obligatorias *
+                  </p>
+
+                  <ImageUploadField
+                    label="Foto de Patente"
+                    value={licensePlatePhoto}
+                    onChange={setLicensePlatePhoto}
+                    required
                   />
-                </label>
-                {selectedFile && (
-                  <>
-                    <span className="text-gray-600 truncate max-w-[150px] text-xs">
-                      {selectedFile.name}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleUpload}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center gap-1 text-xs"
-                      disabled={isSubmitting}
-                    >
-                      <FaUpload className="w-3 h-3" /> Subir
-                    </button>
-                  </>
-                )}
-              </div>
-              <label>Foto chapa VIN</label>
-              <div className="flex items-center gap-3 mb-2">
-                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
-                  Seleccionar archivo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isSubmitting}
+
+                  <ImageUploadField
+                    label="Foto de Chapa VIN"
+                    value={vinPlatePhoto}
+                    onChange={setVinPlatePhoto}
+                    required
                   />
-                </label>
-              </div>
-              <label>Foto Kilometros</label>
-              <div className="flex items-center gap-3 mb-2">
-                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
-                  Seleccionar archivo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isSubmitting}
+
+                  <ImageUploadField
+                    label="Foto de Kilómetros"
+                    value={odometerPhoto}
+                    onChange={setOdometerPhoto}
+                    required
                   />
-                </label>
-              </div>
-              <label>Foto piezas adicionales</label>
-              <div className="flex items-center gap-3 mb-2">
-                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
-                  Seleccionar archivo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isSubmitting}
+                </div>
+
+                {/* Fotos opcionales */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                  <p className="text-sm text-gray-700 font-medium">
+                    Fotos Adicionales (Opcional)
+                  </p>
+
+                  <MultipleMediaUploadField
+                    label="Piezas Adicionales (Fotos/Videos)"
+                    value={additionalPhotos}
+                    onChange={setAdditionalPhotos}
+                    maxFiles={10}
                   />
-                </label>
-              </div>
-              <label>Foto Or</label>
-              <div className="flex items-center gap-3 mb-2">
-                <label className="bg-gray-200 text-gray-700 px-3 py-1 rounded cursor-pointer hover:bg-gray-300 text-xs">
-                  Seleccionar archivo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isSubmitting}
+
+                  <MultipleMediaUploadField
+                    label="Fotos OR (Fotos/Videos)"
+                    value={orPhotos}
+                    onChange={setOrPhotos}
+                    maxFiles={10}
                   />
-                </label>
+
+                  <PDFUploadField
+                    label="Reportes PDF"
+                    value={reportPdfs}
+                    onChange={setReportPdfs}
+                    maxFiles={2}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Botones */}
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-sm"
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleDraftSave}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Guardando..." : isEditMode ? "Actualizar Borrador" : "Guardar Borrador"}
-            </button>
-            <button
-              type="submit"
-              onClick={handleSubmitOrder}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Enviando..." : isEditMode ? "Enviar Pre-Autorización" : "Enviar Pre-Autorización"}
-            </button>
-          </div>
-        </form>
+            {/* Botones */}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-sm"
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDraftSave}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Guardando..."
+                  : isEditMode
+                  ? "Actualizar Borrador"
+                  : "Guardar Borrador"}
+              </button>
+              <button
+                type="submit"
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Enviando..."
+                  : isEditMode
+                  ? "Enviar Pre-Autorización"
+                  : "Enviar Pre-Autorización"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }

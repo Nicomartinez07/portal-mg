@@ -8,6 +8,8 @@ import {
   OrderInternalStatusUpdateData,
 } from "@/app/(dashboard)/ordenes/actions";
 
+import OrderPhotosSection from '@/components/awss3/OrderPhotosSection';
+
 // 3. ASUMO que el tipo 'OrderInternalStatusUpdateData' existe en 'actions.ts'
 
 interface PreAuthorizationModalProps {
@@ -469,22 +471,7 @@ export default function PreAuthorizationModal({
       </div>
 
       {/* Fotos */}
-      <div className="mt-4 text-xs">
-        <h3 className="font-semibold mb-2">Fotos</h3>
-        <div className="grid grid-cols-[160px_1fr] gap-2 items-center">
-          <label className="text-gray-800">Foto Patente</label>
-          <input readOnly value={getPhotoUrl("license_plate")} className="border rounded px-2 py-1 w-full bg-gray-100" />
-          <label className="text-gray-800">Foto VIN</label>
-          <input readOnly value={getPhotoUrl("vin_plate")} className="border rounded px-2 py-1 w-full bg-gray-100" />
-          <label className="text-gray-800">Foto Kilómetros</label>
-          <input readOnly value={getPhotoUrl("odometer")} className="border rounded px-2 py-1 w-full bg-gray-100" />
-          <label className="text-gray-800">Fotos Piezas Adicionales</label>
-          <input readOnly value={getPhotoUrl("additional_parts")} className="border rounded px-2 py-1 w-full bg-gray-100" />
-          <label className="text-gray-800">Fotos OR</label>
-          <input readOnly value={getPhotoUrl("or_photo")} className="border rounded px-2 py-1 w-full bg-gray-100" />
-        </div>
-      </div>
-
+      <OrderPhotosSection orderId={order.id} />
       {/* Botones */}
       <div className="mt-4 flex justify-end gap-2">
         <button
