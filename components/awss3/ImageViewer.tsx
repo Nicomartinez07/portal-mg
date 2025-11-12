@@ -32,8 +32,8 @@ export default function ImageViewer({ url, alt, label }: ImageViewerProps) {
             className="w-full h-full object-cover"
           />
           {/* Overlay al hacer hover */}
-          <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
-            <ZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={32} />
+          <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
+            <ZoomIn className="text-white bg-blackopacity-0 group-hover:opacity-100 transition-opacity" size={32} />
           </div>
         </div>
       </div>
@@ -41,7 +41,7 @@ export default function ImageViewer({ url, alt, label }: ImageViewerProps) {
       {/* Modal para ver imagen grande */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-90"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
           onClick={() => setIsModalOpen(false)}
         >
           <button
@@ -59,7 +59,7 @@ export default function ImageViewer({ url, alt, label }: ImageViewerProps) {
               onClick={(e) => e.stopPropagation()}
             />
             {label && (
-              <div className="absolute bottom-0 left-0 right-0 bg-opacity-70 text-white px-4 py-2 text-center">
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 text-white px-4 py-2 text-center">
                 {label}
               </div>
             )}

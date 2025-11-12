@@ -1,16 +1,54 @@
-// src/app/ordenes/insert/reclamo/actions.ts
+// actions/saveClaimWithPhotos.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { CreateOrderResult } from "@/app/types";
-import { claimSchema, draftClaimSchema } from '@/schemas/claim';
-import { z } from 'zod';
 import { triggerNewOrderNotification } from "@/lib/email";
 
-// Reutilizamos las mismas funciones auxiliares
+type TaskData = {
+  description: string;
+  hoursCount: string;
+  parts: {
+    part: {
+      code: string;
+      description: string;
+    };
+  }[];
+};
+
+type ClaimDataWithPhotos = {
+  vin: string;
+  orderNumber?: string;
+  preAuthorizationNumber?: string;
+  customerName: string;
+  actualMileage: string;
+  diagnosis: string;
+  additionalObservations?: string;
+  warrantyActivation?: string;
+  engineNumber?: string;
+  model?: string;
+  tasks?: TaskData[];
+  // URLs de las fotos (ya subidas a S3)
+  photoUrls: {
+    licensePlate: string;
+    vinPlate: string;
+    odometer: string;
+    customerSignature?: string; // Opcional
+    additional: string[];
+    or: string[];
+    reportPdfs: string[];
+  };
+};
+
+type SaveResult = {
+  success: boolean;
+  order?: any;
+  message?: string;
+  errors?: Record<string, string>;
+};
+
 async function findOrCreateCustomer(customerName: string) {
   const [firstName, ...lastParts] = customerName.trim().split(" ");
-  const lastName = lastParts.join(" ") || "";
+  const lastName = lastParts.join(" ") || "Desconocido";
 
   let customer = await prisma.customer.findFirst({
     where: {
@@ -35,47 +73,47 @@ async function findOrCreateCustomer(customerName: string) {
   return customer;
 }
 
-// En tu actions.ts - modificar la función saveClaim
-export async function saveClaim(
-  orderData: any,
+export async function saveClaimWithPhotos(
+  claimData: ClaimDataWithPhotos,
   companyId: number,
   userId?: number,
   isDraft: boolean = false,
   draftId?: number
-): Promise<CreateOrderResult> {
+): Promise<SaveResult> {
   try {
-    // 1. VALIDAR CON ZOD - usar schema diferente para borradores
-    const validatedData = isDraft 
-      ? draftClaimSchema.parse(orderData)  // Schema flexible para borradores
-      : claimSchema.parse(orderData);      // Schema estricto para reclamos
+    console.log("🚀 Iniciando guardado de reclamo con fotos");
 
-    // Buscar Creador de orden
-    let creatorUsername = "Sistema"; // Default
+    // Validaciones básicas
+    if (!claimData.vin?.trim()) {
+      return { success: false, errors: { vin: "El VIN es requerido" } };
+    }
+
+    const vehicle = await prisma.vehicle.findUnique({
+      where: { vin: claimData.vin },
+    });
+
+    if (!vehicle) {
+      return { success: false, message: "Vehículo no encontrado" };
+    }
+
+    // Buscar o crear cliente
+    const customer = await findOrCreateCustomer(claimData.customerName);
+
+    // Buscar nombre de usuario
+    let creatorUsername = "Sistema";
     if (userId) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { username: true }
+        select: { username: true },
       });
       if (user) creatorUsername = user.username;
     }
 
-    // 2. VALIDAR QUE EL VEHÍCULO EXISTA (solo si hay VIN)
-    if (validatedData.vin && validatedData.vin.trim() !== "") {
-      const vehicle = await prisma.vehicle.findUnique({
-        where: { vin: validatedData.vin },
-      });
-
-      if (!vehicle) {
-        return { success: false, message: "Vehículo no encontrado" };
-      }
-    }
-
-    // 3. PARA RECLAMOS COMPLETOS: VALIDAR QUE TODOS LOS REPUESTOS EXISTAN
-    // Para borradores, no validamos la existencia de repuestos
-    if (!isDraft) {
+    // Validar repuestos (solo para reclamos completos, no borradores)
+    if (!isDraft && claimData.tasks) {
       const missingParts: string[] = [];
       
-      for (const task of validatedData.tasks || []) {
+      for (const task of claimData.tasks) {
         for (const partItem of task.parts || []) {
           if (partItem.part.code && partItem.part.code.trim()) {
             const existingPart = await prisma.part.findUnique({
@@ -92,52 +130,48 @@ export async function saveClaim(
       if (missingParts.length > 0) {
         return {
           success: false,
-          message: `❌ Los siguientes repuestos no existen en la base de datos: ${missingParts.join(', ')}`
+          message: `❌ Los siguientes repuestos no existen: ${missingParts.join(', ')}`
         };
       }
     }
 
-    // 4. BUSCAR O CREAR CLIENTE (solo si hay nombre de cliente)
-    let customer = null;
-    if (validatedData.customerName && validatedData.customerName.trim() !== "") {
-      customer = await findOrCreateCustomer(validatedData.customerName);
-    }
-
-    // 🔒 TRANSACCIÓN
+    // Transacción para guardar reclamo + fotos
     const order = await prisma.$transaction(async (tx) => {
+      let savedOrder;
+
+      // Actualizar borrador existente o crear nuevo reclamo
       if (draftId) {
-        console.log(`🔄 Actualizando borrador de reclamo ID: ${draftId}, isDraft: ${isDraft}`);
-        
-        // 1. Eliminar tareas y partes existentes
+        console.log(`🔄 Actualizando borrador de reclamo ID: ${draftId}`);
+
+        // Eliminar tareas anteriores
         await tx.orderTaskPart.deleteMany({
-          where: { orderTask: { orderId: draftId } }
+          where: { orderTask: { orderId: draftId } },
         });
-        await tx.orderTask.deleteMany({ where: { orderId: draftId } });
+        await tx.orderTask.deleteMany({
+          where: { orderId: draftId },
+        });
 
-        // 2. Actualizar orden existente
-        const updateData: any = {
-          draft: isDraft,
-          status: isDraft ? "BORRADOR" : "PENDIENTE",
-          actualMileage: validatedData.actualMileage || 0,
-          diagnosis: validatedData.diagnosis || "",
-          additionalObservations: validatedData.additionalObservations || "",
-          preAuthorizationNumber: validatedData.preAuthorizationNumber || null,
-        };
+        // Eliminar fotos anteriores
+        await tx.orderPhoto.deleteMany({
+          where: { orderId: draftId },
+        });
 
-        // Solo conectar customer y vehicle si existen
-        if (customer) {
-          updateData.customer = { connect: { id: customer.id } };
-        }
-        if (validatedData.vin && validatedData.vin.trim() !== "") {
-          updateData.vehicle = { connect: { vin: validatedData.vin } };
-        }
-
-        const updatedOrder = await tx.order.update({
+        // Actualizar orden
+        savedOrder = await tx.order.update({
           where: { id: draftId },
-          data: updateData,
+          data: {
+            draft: isDraft,
+            customerId: customer.id,
+            vehicleVin: claimData.vin,
+            status: isDraft ? "BORRADOR" : "PENDIENTE",
+            actualMileage: Number(claimData.actualMileage) || 0,
+            diagnosis: claimData.diagnosis || "",
+            additionalObservations: claimData.additionalObservations || "",
+            preAuthorizationNumber: claimData.preAuthorizationNumber || null,
+          },
         });
 
-        // 3. Agregar historial si se convierte a orden
+        // Agregar historial si se convierte a orden
         if (!isDraft) {
           await tx.orderStatusHistory.create({
             data: {
@@ -147,56 +181,10 @@ export async function saveClaim(
             },
           });
         }
-
-        // 4. Crear nuevas tareas y partes (solo si existen)
-        for (const task of validatedData.tasks || []) {
-          // Para borradores, crear tareas aunque estén incompletas
-          if (isDraft || (task.description && task.hoursCount)) {
-            const createdTask = await tx.orderTask.create({
-              data: {
-                description: task.description || "",
-                hoursCount: task.hoursCount || 0,
-                orderId: draftId,
-              },
-            });
-
-            for (const partItem of task.parts || []) {
-              if (partItem.part.code) {
-                // Buscar el repuesto (para borradores no validamos existencia)
-                const part = await prisma.part.findUnique({
-                  where: { code: partItem.part.code }
-                });
-                
-                // Si el repuesto existe o es borrador, creamos la relación
-                if (part || isDraft) {
-                  await tx.orderTaskPart.create({
-                    data: {
-                      orderTaskId: createdTask.id,
-                      partId: part?.id || 0, // Para borradores con repuestos no existentes
-                      quantity: 1,
-                      description: part?.description || partItem.part.description || "",
-                    },
-                  });
-                }
-              }
-            }
-          }
-        }
-
-        return tx.order.findUnique({
-          where: { id: draftId },
-          include: {
-            tasks: { include: { parts: { include: { part: true } } } },
-            customer: true,
-            vehicle: true,
-          },
-        });
-
       } else {
-        // 👇 CREAR NUEVA ORDEN
-        console.log("🆕 Creando nuevo reclamo/borrador");
+        console.log("🆕 Creando nuevo reclamo");
 
-        // Determinar número de orden (solo para reclamos completos)
+        // Determinar número de orden
         let orderNumber = 99999;
         if (!isDraft) {
           const lastOrder = await tx.order.findFirst({
@@ -206,129 +194,160 @@ export async function saveClaim(
           orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
         }
 
-        // Validaciones mínimas para creación
-        if (!customer) {
-          throw new Error("Cliente es requerido");
-        }
-        if (!validatedData.vin || validatedData.vin.trim() === "") {
-          throw new Error("VIN es requerido");
-        }
-
-        // Crear nueva orden
-        const newOrder = await tx.order.create({
+        // Crear nuevo reclamo
+        savedOrder = await tx.order.create({
           data: {
             orderNumber,
             type: "RECLAMO",
             creationDate: new Date(),
             draft: isDraft,
-            customer: { connect: { id: customer.id } },   
-            vehicle: { connect: { vin: validatedData.vin } },
-            company: { connect: { id: companyId } },
-            user: userId ? { connect: { id: userId } } : undefined,
+            customerId: customer.id,
+            vehicleVin: claimData.vin,
+            companyId,
+            userId,
             status: isDraft ? "BORRADOR" : "PENDIENTE",
             internalStatus: null,
-            actualMileage: validatedData.actualMileage || 0,
-            diagnosis: validatedData.diagnosis || "",
-            additionalObservations: validatedData.additionalObservations || "",
-            preAuthorizationNumber: validatedData.preAuthorizationNumber || null,
+            actualMileage: Number(claimData.actualMileage) || 0,
+            diagnosis: claimData.diagnosis || "",
+            additionalObservations: claimData.additionalObservations || "",
+            preAuthorizationNumber: claimData.preAuthorizationNumber || null,
             statusHistory: {
-              create: [{
-                status: isDraft ? "BORRADOR" : null,
-                changedAt: new Date(),
-              }],
+              create: [
+                {
+                  status: isDraft ? "BORRADOR" : "PENDIENTE",
+                  changedAt: new Date(),
+                },
+              ],
             },
           },
         });
+      }
 
-        // Crear tareas y partes (solo si existen)
-        for (const task of validatedData.tasks || []) {
-          // Para borradores, crear tareas aunque estén incompletas
-          if (isDraft || (task.description && task.hoursCount)) {
-            const createdTask = await tx.orderTask.create({
-              data: {
-                description: task.description || "",
-                hoursCount: task.hoursCount || 0,
-                orderId: newOrder.id,
-              },
+      // Crear tareas
+      const tasksToCreate = claimData.tasks?.filter(
+        (task) =>
+          task.description?.trim() ||
+          task.hoursCount?.trim() ||
+          task.parts[0]?.part?.code?.trim() ||
+          task.parts[0]?.part?.description?.trim()
+      ) || [];
+
+      for (const task of tasksToCreate) {
+        const createdTask = await tx.orderTask.create({
+          data: {
+            description: task.description || "",
+            hoursCount: Number(task.hoursCount) || 0,
+            orderId: savedOrder.id,
+          },
+        });
+
+        for (const partItem of task.parts || []) {
+          if (partItem.part.code?.trim()) {
+            const part = await prisma.part.findUnique({
+              where: { code: partItem.part.code }
             });
 
-            for (const partItem of task.parts || []) {
-              if (partItem.part.code) {
-                // Buscar el repuesto (para borradores no validamos existencia)
-                const part = await prisma.part.findUnique({
-                  where: { code: partItem.part.code }
-                });
-                
-                // Si el repuesto existe o es borrador, creamos la relación
-                if (part || isDraft) {
-                  await tx.orderTaskPart.create({
-                    data: {
-                      orderTaskId: createdTask.id,
-                      partId: part?.id || 0, // Para borradores con repuestos no existentes
-                      quantity: 1,
-                      description: part?.description || partItem.part.description || "",
-                    },
-                  });
-                }
-              }
+            if (part) {
+              await tx.orderTaskPart.create({
+                data: {
+                  orderTaskId: createdTask.id,
+                  partId: part.id,
+                  quantity: 1,
+                  description: part.description,
+                },
+              });
             }
           }
         }
+      }
 
-        return tx.order.findUnique({
-          where: { id: newOrder.id },
-          include: {
-            tasks: { include: { parts: { include: { part: true } } } },
-            customer: true,
-            vehicle: true,
-          },
+      // Guardar fotos en OrderPhoto
+      console.log("📸 Guardando fotos en base de datos");
+
+      const photosToCreate = [
+        { type: "license_plate", url: claimData.photoUrls.licensePlate },
+        { type: "vin_plate", url: claimData.photoUrls.vinPlate },
+        { type: "odometer", url: claimData.photoUrls.odometer },
+      ];
+
+      // Agregar firma del cliente si existe
+      if (claimData.photoUrls.customerSignature) {
+        photosToCreate.push({
+          type: "customer_signature",
+          url: claimData.photoUrls.customerSignature,
         });
       }
+
+      // Agregar fotos adicionales
+      photosToCreate.push(
+        ...claimData.photoUrls.additional.map((url, i) => ({
+          type: `additional_${i + 1}`,
+          url,
+        })),
+        ...claimData.photoUrls.or.map((url, i) => ({
+          type: `or_${i + 1}`,
+          url,
+        })),
+        ...claimData.photoUrls.reportPdfs.map((url, i) => ({
+          type: `report_pdf_${i + 1}`,
+          url,
+        }))
+      );
+
+      await tx.orderPhoto.createMany({
+        data: photosToCreate.map((photo) => ({
+          orderId: savedOrder.id,
+          type: photo.type,
+          url: photo.url,
+        })),
+      });
+
+      console.log(`✅ ${photosToCreate.length} fotos guardadas`);
+
+      // Retornar orden completa
+      return tx.order.findUnique({
+        where: { id: savedOrder.id },
+        include: {
+          tasks: { include: { parts: { include: { part: true } } } },
+          customer: true,
+          vehicle: true,
+          photos: true,
+        },
+      });
     });
 
-    // Disparar evento, Lo hacemos *después* de que la transacción fue exitosa
-    // y SÓLO si NO es un borrador.
+    // Enviar notificación si no es borrador
     if (order && !isDraft) {
       triggerNewOrderNotification(
-        order.orderNumber, 
-        order.vehicle.vin, 
-        creatorUsername,   // El nombre que buscamos arriba
-        "RECLAMO"          // El tipo de orden
+        order.orderNumber,
+        order.vehicle.vin,
+        creatorUsername,
+        "RECLAMO"
       );
     }
 
-    // Mensaje de éxito
-    let message = draftId
-      ? (isDraft 
-          ? "✅ Borrador de reclamo actualizado correctamente" 
-          : "✅ Borrador convertido a reclamo exitosamente")
-      : (isDraft
-          ? "✅ Borrador de reclamo guardado correctamente"
-          : "✅ Reclamo creado exitosamente");
-
-    return { success: true, order, message };
-
-  } catch (error) {
-    // Manejar errores de Zod
-    if (error instanceof z.ZodError) {
-      const errors: Record<string, string> = {};
-      error.issues.forEach(err => {
-        if (err.path && err.path[0]) {
-          const fieldName = err.path.join('.');
-          errors[fieldName] = err.message;
-        }
-      });
-      return {
-        success: false,
-        errors,
-        message: "❌ Errores de validación en el formulario"
-      };
+    // Mensaje según operación
+    let message = "";
+    if (draftId) {
+      message = isDraft
+        ? "✅ Borrador de reclamo actualizado correctamente"
+        : "✅ Borrador convertido a reclamo exitosamente";
+    } else {
+      message = isDraft
+        ? "✅ Borrador de reclamo guardado correctamente"
+        : "✅ Reclamo creado exitosamente";
     }
 
-    console.error("Error en saveClaim:", error);
+    return {
+      success: true,
+      order,
+      message,
+    };
+  } catch (error) {
+    console.error("❌ Error en saveClaimWithPhotos:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "❌ Error interno del servidor",
+      message: "❌ Error interno del servidor",
     };
   }
 }

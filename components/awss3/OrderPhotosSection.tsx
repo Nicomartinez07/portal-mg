@@ -9,23 +9,23 @@ import PDFViewer from './PDFViewer';
 
 type OrderPhotosSectionProps = {
   orderId: number;
+  orderType?: 'PRE_AUTORIZACION' | 'RECLAMO' | 'SERVICIO'; 
 };
 
 // --- Componente de "No adjunto" ---
-// He movido el texto de "no adjunto" a un componente
-// para que todos tengan el mismo estilo y padding.
 const NoAttachment = ({ text = 'No adjunta' }: { text?: string }) => (
   <p className="text-gray-500 text-sm pt-1">{text}</p>
 );
 
 // --- Componente de Label ---
-// Lo mismo para el label, para asegurar alineación.
 const GridLabel = ({ children }: { children: React.ReactNode }) => (
   <label className="text-gray-800 font-medium pt-1">{children}</label>
 );
 
-
-export default function OrderPhotosSection({ orderId }: OrderPhotosSectionProps) {
+export default function OrderPhotosSection({ 
+  orderId, 
+  orderType = 'PRE_AUTORIZACION' 
+}: OrderPhotosSectionProps) {
   const [photos, setPhotos] = useState<OrganizedPhotos | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function OrderPhotosSection({ orderId }: OrderPhotosSectionProps)
     setIsLoading(false);
   };
 
-  // Mover esta función fuera del return
+  // Función para preparar items multimedia
   const prepareMediaItems = (items: any[]) => {
     return items.map(item => ({
       ...item,
@@ -58,8 +58,6 @@ export default function OrderPhotosSection({ orderId }: OrderPhotosSectionProps)
   };
 
   // --- Estados de Carga y Error ---
-  // Estos se mantienen igual que en tu versión funcional
-
   if (isLoading) {
     return (
       <div className="py-8 text-center">
@@ -92,7 +90,8 @@ export default function OrderPhotosSection({ orderId }: OrderPhotosSectionProps)
     photos.odometer ||
     photos.additional.length > 0 ||
     photos.or.length > 0 ||
-    photos.reportPdfs.length > 0;
+    photos.reportPdfs.length > 0 ||
+    (orderType === 'RECLAMO' && photos.customerSignature);
 
   if (!hasAnyContent) {
     return (
@@ -102,14 +101,11 @@ export default function OrderPhotosSection({ orderId }: OrderPhotosSectionProps)
     );
   }
 
-  // --- Renderizado Principal (Con el nuevo layout) ---
-
+  // --- Renderizado Principal con la estética del anterior ---
   return (
     <div className="mt-4">
-      {/* Tomamos el título de tu primer snippet */}
       <h3 className="font-semibold mb-4 text-gray-900">Fotos y Documentos</h3>
       
-      {/* Y aquí aplicamos la grilla que te gustó */}
       <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-start">
         
         {/* Fila 1: Patente */}
@@ -142,39 +138,56 @@ export default function OrderPhotosSection({ orderId }: OrderPhotosSectionProps)
           )}
         </div>
 
-        {/* Fila 4: Piezas Adicionales */}
+        {/* Fila 4: Firma del Cliente (solo para RECLAMO) */}
+        {orderType === 'RECLAMO' && (
+          <>
+            <GridLabel>Firma Conformidad Cliente</GridLabel>
+            <div>
+              {photos.customerSignature ? (
+                <ImageViewer 
+                  url={photos.customerSignature.url} 
+                  alt="Firma de conformidad del cliente" 
+                />
+              ) : (
+                <NoAttachment text="No adjunta" />
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Fila 5: Piezas Adicionales */}
         <GridLabel>Fotos Piezas Adicionales</GridLabel>
         <div>
           {photos.additional.length > 0 ? (
             <MediaGallery
               items={prepareMediaItems(photos.additional)}
-              label="" // El label ya está en la grilla
+              label=""
             />
           ) : (
             <NoAttachment text="No adjuntas" />
           )}
         </div>
 
-        {/* Fila 5: Fotos OR */}
+        {/* Fila 6: Fotos OR */}
         <GridLabel>Fotos OR</GridLabel>
         <div>
           {photos.or.length > 0 ? (
             <MediaGallery
               items={prepareMediaItems(photos.or)}
-              label="" // El label ya está en la grilla
+              label=""
             />
           ) : (
             <NoAttachment text="No adjuntas" />
           )}
         </div>
 
-        {/* Fila 6: PDFs (Funcionalidad del script 2) */}
+        {/* Fila 7: PDFs */}
         <GridLabel>Reportes PDF</GridLabel>
         <div>
           {photos.reportPdfs.length > 0 ? (
             <PDFViewer
               items={photos.reportPdfs}
-              label="" // El label ya está en la grilla
+              label=""
             />
           ) : (
             <NoAttachment text="No adjuntos" />

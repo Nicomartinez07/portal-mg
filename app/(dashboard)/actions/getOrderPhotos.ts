@@ -13,6 +13,7 @@ export type OrganizedPhotos = {
   licensePlate?: OrderPhoto;
   vinPlate?: OrderPhoto;
   odometer?: OrderPhoto;
+  customerSignature?: OrderPhoto;
   additional: OrderPhoto[];
   or: OrderPhoto[];
   reportPdfs: OrderPhoto[];
@@ -43,6 +44,7 @@ export async function getOrderPhotos(orderId: number): Promise<GetOrderPhotosRes
       licensePlate: undefined,
       vinPlate: undefined,
       odometer: undefined,
+      customerSignature: undefined,
       additional: [],
       or: [],
       reportPdfs: [],
@@ -55,6 +57,8 @@ export async function getOrderPhotos(orderId: number): Promise<GetOrderPhotosRes
         organized.vinPlate = photo;
       } else if (photo.type === 'odometer') {
         organized.odometer = photo;
+      } else if (photo.type === 'customer_signature') {
+        organized.customerSignature = photo;
       } else if (photo.type.startsWith('additional_')) {
         organized.additional.push(photo);
       } else if (photo.type.startsWith('or_')) {

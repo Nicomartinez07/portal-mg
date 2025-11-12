@@ -1,4 +1,4 @@
-// src/app/components/InsertServiceModal.tsx
+// app/components/InsertServiceModal.tsx
 import React, { useEffect, useState } from "react";
 import { FaUpload, FaPlus, FaTrash } from "react-icons/fa";
 import { saveService } from "@/app/(dashboard)/ordenes/insert/service/actions";
