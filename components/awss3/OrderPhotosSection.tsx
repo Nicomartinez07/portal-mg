@@ -9,18 +9,8 @@ import PDFViewer from './PDFViewer';
 
 type OrderPhotosSectionProps = {
   orderId: number;
-  orderType?: 'PRE_AUTORIZACION' | 'RECLAMO' | 'SERVICIO'; 
+  orderType?: 'PRE_AUTORIZACION' | 'RECLAMO' | 'SERVICIO';
 };
-
-// --- Componente de "No adjunto" ---
-const NoAttachment = ({ text = 'No adjunta' }: { text?: string }) => (
-  <p className="text-gray-500 text-sm pt-1">{text}</p>
-);
-
-// --- Componente de Label ---
-const GridLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="text-gray-800 font-medium pt-1">{children}</label>
-);
 
 export default function OrderPhotosSection({ 
   orderId, 
@@ -49,15 +39,6 @@ export default function OrderPhotosSection({
     setIsLoading(false);
   };
 
-  // Función para preparar items multimedia
-  const prepareMediaItems = (items: any[]) => {
-    return items.map(item => ({
-      ...item,
-      isVideo: item.url.includes('.mp4') || item.url.includes('.mov') || item.url.includes('.webm'),
-    }));
-  };
-
-  // --- Estados de Carga y Error ---
   if (isLoading) {
     return (
       <div className="py-8 text-center">
@@ -83,118 +64,157 @@ export default function OrderPhotosSection({
     );
   }
 
-  // Verificar si hay *algo* que mostrar
-  const hasAnyContent =
-    photos.licensePlate ||
-    photos.vinPlate ||
-    photos.odometer ||
-    photos.additional.length > 0 ||
-    photos.or.length > 0 ||
-    photos.reportPdfs.length > 0 ||
-    (orderType === 'RECLAMO' && photos.customerSignature);
+  // Verificar si hay fotos obligatorias
+  const hasRequiredPhotos = photos.licensePlate && photos.vinPlate && photos.odometer;
 
-  if (!hasAnyContent) {
-    return (
-      <div className="p-8 bg-gray-50 border border-gray-200 rounded-lg text-center">
-        <p className="text-gray-500">Esta orden no tiene fotos ni documentos adjuntos</p>
-      </div>
-    );
-  }
+  // Verificar si hay foto de firma (solo para RECLAMO)
+  const hasCustomerSignature = orderType === 'RECLAMO' && photos.customerSignature;
 
-  // --- Renderizado Principal con la estética del anterior ---
+  // Verificar si hay fotos opcionales
+  const hasAdditionalPhotos = photos.additional.length > 0;
+  const hasOrPhotos = photos.or.length > 0;
+  const hasPdfs = photos.reportPdfs.length > 0;
+
+  // Determinar si es video
+  const prepareMediaItems = (items: any[]) => {
+    return items.map(item => ({
+      ...item,
+      isVideo: item.url.includes('.mp4') || item.url.includes('.mov') || item.url.includes('.webm'),
+    }));
+  };
+
   return (
-    <div className="mt-4">
-      <h3 className="font-semibold mb-4 text-gray-900">Fotos y Documentos</h3>
+    <div className="space-y-6">
       
-      <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-start">
-        
-        {/* Fila 1: Patente */}
-        <GridLabel>Foto Patente</GridLabel>
-        <div>
-          {photos.licensePlate ? (
-            <ImageViewer url={photos.licensePlate.url} alt="Foto de patente" />
-          ) : (
-            <NoAttachment />
-          )}
-        </div>
 
-        {/* Fila 2: VIN */}
-        <GridLabel>Foto VIN</GridLabel>
-        <div>
-          {photos.vinPlate ? (
-            <ImageViewer url={photos.vinPlate.url} alt="Foto de VIN" />
-          ) : (
-            <NoAttachment />
-          )}
-        </div>
+      {/* Fotos obligatorias */}
+      {hasRequiredPhotos && (
+        <div className="space-y-4">
+          <h4 className="font-medium text-blue-800 text-sm mb-4"></h4>
+          
+          <div className="space-y-4">
+            {photos.licensePlate && (
+              <div className="grid grid-cols-[160px_1fr] gap-2 items-start">
+                <label className="text-gray-800 text-sm pt-2">Foto patente</label>
+                <div className="space-y-1">
+                  <div className="max-w-[300px]">
+                    <ImageViewer
+                      url={photos.licensePlate.url}
+                      alt="Foto de patente"
+                    />
+                  </div>
+                  {((photos.licensePlate as any)?.timestamp) && (
+                    <p className="text-xs text-gray-500">
+                      {(photos.licensePlate as any).timestamp}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {/* Fila 3: Kilómetros */}
-        <GridLabel>Foto Kilómetros</GridLabel>
-        <div>
-          {photos.odometer ? (
-            <ImageViewer url={photos.odometer.url} alt="Foto de kilómetros" />
-          ) : (
-            <NoAttachment />
-          )}
-        </div>
+            {photos.vinPlate && (
+              <div className="grid grid-cols-[160px_1fr] gap-2 items-start">
+                <label className="text-gray-800 text-sm pt-2">Foto chapa VIN</label>
+                <div className="space-y-1">
+                  <div className="max-w-[300px]">
+                    <ImageViewer
+                      url={photos.vinPlate.url}
+                      alt="Foto de VIN"
+                    />
+                  </div>
+                  {((photos.vinPlate as any)?.timestamp) && (
+                    <p className="text-xs text-gray-500">
+                      {(photos.vinPlate as any).timestamp}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {/* Fila 4: Firma del Cliente (solo para RECLAMO) */}
-        {orderType === 'RECLAMO' && (
-          <>
-            <GridLabel>Firma Conformidad Cliente</GridLabel>
-            <div>
-              {photos.customerSignature ? (
-                <ImageViewer 
-                  url={photos.customerSignature.url} 
-                  alt="Firma de conformidad del cliente" 
-                />
-              ) : (
-                <NoAttachment text="No adjunta" />
-              )}
+            {photos.odometer && (
+              <div className="grid grid-cols-[160px_1fr] gap-2 items-start">
+                <label className="text-gray-800 text-sm pt-2">Foto cuenta kilómetros</label>
+                <div className="space-y-1">
+                  <div className="max-w-[300px]">
+                    <ImageViewer
+                      url={photos.odometer.url}
+                      alt="Foto de kilómetros"
+                    />
+                  </div>
+                  {((photos.odometer as any)?.timestamp) && (
+                    <p className="text-xs text-gray-500">
+                      {(photos.odometer as any).timestamp}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Foto de firma del cliente (solo RECLAMO) */}
+          {hasCustomerSignature && (
+            <div className="grid grid-cols-[160px_1fr] gap-2 items-start pt-4 border-t border-gray-200">
+              <label className="text-gray-800 text-sm pt-2">Firma Conformidad Cliente</label>
+              <div className="space-y-1">
+                <div className="max-w-[300px]">
+                  <ImageViewer
+                    url={photos.customerSignature!.url}
+                    alt="Firma de conformidad del cliente"
+                  />
+                </div>
+                {((photos.customerSignature as any)?.timestamp) && (
+                  <p className="text-xs text-gray-500">
+                    {(photos.customerSignature as any).timestamp}
+                  </p>
+                )}
+              </div>
             </div>
-          </>
-        )}
-
-        {/* Fila 5: Piezas Adicionales */}
-        <GridLabel>Fotos Piezas Adicionales</GridLabel>
-        <div>
-          {photos.additional.length > 0 ? (
-            <MediaGallery
-              items={prepareMediaItems(photos.additional)}
-              label=""
-            />
-          ) : (
-            <NoAttachment text="No adjuntas" />
           )}
         </div>
+      )}
 
-        {/* Fila 6: Fotos OR */}
-        <GridLabel>Fotos OR</GridLabel>
-        <div>
-          {photos.or.length > 0 ? (
-            <MediaGallery
-              items={prepareMediaItems(photos.or)}
-              label=""
-            />
-          ) : (
-            <NoAttachment text="No adjuntas" />
+      {/* Fotos adicionales */}
+      {(hasAdditionalPhotos || hasOrPhotos || hasPdfs) && (
+        <div className="space-y-6 pt-4 border-t border-gray-200">
+          <h4 className="font-medium text-gray-800 text-sm mb-4"></h4>
+
+          {hasAdditionalPhotos && (
+            <div className="grid grid-cols-[160px_1fr] gap-2 items-start">
+              <label className="text-gray-800 text-sm pt-2">Piezas Adicionales</label>
+              <div>
+                <MediaGallery
+                  items={prepareMediaItems(photos.additional)}
+                />
+              </div>
+            </div>
           )}
-        </div>
 
-        {/* Fila 7: PDFs */}
-        <GridLabel>Reportes PDF</GridLabel>
-        <div>
-          {photos.reportPdfs.length > 0 ? (
+          {hasOrPhotos && (
+            <div className="grid grid-cols-[160px_1fr] gap-2 items-start">
+              <label className="text-gray-800 text-sm pt-2">Fotos OR</label>
+              <div>
+                <MediaGallery
+                  items={prepareMediaItems(photos.or)}
+                />
+              </div>
+            </div>
+          )}
+
+          {hasPdfs && (
             <PDFViewer
               items={photos.reportPdfs}
-              label=""
+              label="Reportes PDF"
             />
-          ) : (
-            <NoAttachment text="No adjuntos" />
           )}
         </div>
+      )}
 
-      </div>
+      {/* Si no hay ninguna foto */}
+      {!hasRequiredPhotos && !hasAdditionalPhotos && !hasOrPhotos && !hasPdfs && (
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+          <p className="text-gray-500">Esta orden no tiene fotos adjuntas</p>
+        </div>
+      )}
     </div>
   );
 }

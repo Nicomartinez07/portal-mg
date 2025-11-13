@@ -1,81 +1,95 @@
-// app/ordenes/insert/servicio/actions.ts
+// actions/saveServiceWithPhotos.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { CreateServiceResult } from "@/app/types";
-import { serviceSchema, draftServiceSchema } from '@/schemas/service';
-import { z } from 'zod';
 
-// Guardar servicio (completo o borrador)
-export async function saveService(
-  serviceData: any,
+type ServiceDataWithPhotos = {
+  vin: string;
+  orderNumber?: string;
+  service?: string;
+  actualMileage: string;
+  additionalObservations?: string;
+  warrantyActivation?: string;
+  engineNumber?: string;
+  model?: string;
+  // URLs de las fotos (ya subidas a S3)
+  photoUrls: {
+    vinPlate: string;
+    or: string[];
+  };
+};
+
+type SaveResult = {
+  success: boolean;
+  service?: any;
+  message?: string;
+  errors?: Record<string, string>;
+};
+
+export async function saveServiceWithPhotos(
+  serviceData: ServiceDataWithPhotos,
   companyId: number,
   userId?: number,
   isDraft: boolean = false,
   draftId?: number
-): Promise<CreateServiceResult> {
+): Promise<SaveResult> {
   try {
-    // 1. VALIDAR CON ZOD - schema diferente para borradores
-    const validatedData = isDraft 
-      ? draftServiceSchema.parse(serviceData)
-      : serviceSchema.parse(serviceData);
+    console.log("🚀 Iniciando guardado de servicio con fotos");
 
-    // 2. VALIDAR QUE EL VEHÍCULO EXISTA
+    // Validaciones básicas
+    if (!serviceData.vin?.trim()) {
+      return { success: false, errors: { vin: "El VIN es requerido" } };
+    }
+
     const vehicle = await prisma.vehicle.findUnique({
-      where: { vin: validatedData.vin },
+      where: { vin: serviceData.vin },
     });
 
     if (!vehicle) {
       return { success: false, message: "Vehículo no encontrado" };
     }
 
-    // 🔒 TRANSACCIÓN
+    // Transacción para guardar servicio + fotos
     const service = await prisma.$transaction(async (tx) => {
-      if (draftId) {
-        console.log(`🔄 Actualizando borrador de servicio ID: ${draftId}, isDraft: ${isDraft}`);
-        
-        // Actualizar orden existente
-        const updateData: any = {
-          draft: isDraft,
-          status: isDraft ? "BORRADOR" : "COMPLETADO",
-          actualMileage: validatedData.actualMileage || 0,
-          additionalObservations: validatedData.additionalObservations || "",
-          service: validatedData.service || null,
-          type: "SERVICIO",
-        };
-        if (validatedData.vin) {
-          updateData.vehicle = { connect: { vin: validatedData.vin } };
-        }
+      let savedOrder;
 
-        const updatedOrder = await tx.order.update({
-          where: { id: draftId },
-          data: updateData,
+      // Actualizar borrador existente o crear nuevo servicio
+      if (draftId) {
+        console.log(`🔄 Actualizando borrador de servicio ID: ${draftId}`);
+
+        // Eliminar fotos anteriores
+        await tx.orderPhoto.deleteMany({
+          where: { orderId: draftId },
         });
 
-        // Agregar historial si se convierte a orden completa
+        // Actualizar orden
+        savedOrder = await tx.order.update({
+          where: { id: draftId },
+          data: {
+            draft: isDraft,
+            vehicleVin: serviceData.vin,
+            status: isDraft ? "BORRADOR" : "COMPLETADO",
+            actualMileage: Number(serviceData.actualMileage) || 0,
+            additionalObservations: serviceData.additionalObservations || "",
+            service: serviceData.service || null,
+            type: "SERVICIO",
+          },
+        });
+
+        // Agregar historial si se convierte a orden
         if (!isDraft) {
           await tx.orderStatusHistory.create({
             data: {
               orderId: draftId,
-              status: "PENDIENTE",
+              status: "COMPLETADO",
               changedAt: new Date(),
             },
           });
         }
-
-        return tx.order.findUnique({
-          where: { id: draftId },
-          include: {
-            customer: true,
-            vehicle: true,
-          },
-        });
-
       } else {
-        // 👇 CREAR NUEVO SERVICIO
-        console.log("🆕 Creando nuevo servicio/borrador");
+        console.log("🆕 Creando nuevo servicio");
 
-        // Determinar número de orden (solo para servicios completos)
+        // Determinar número de orden
         let orderNumber = 99999;
         if (!isDraft) {
           const lastOrder = await tx.order.findFirst({
@@ -84,74 +98,89 @@ export async function saveService(
           });
           orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
         }
-        // Crear nueva orden de servicio
-        const newOrder = await tx.order.create({
+
+        // Crear nuevo servicio
+        savedOrder = await tx.order.create({
           data: {
             orderNumber,
             type: "SERVICIO",
             creationDate: new Date(),
             draft: isDraft,
-            vehicle: { connect: { vin: validatedData.vin } },
-            company: { connect: { id: companyId } },
-            user: userId ? { connect: { id: userId } } : undefined,
+            vehicleVin: serviceData.vin,
+            companyId,
+            userId,
             status: isDraft ? "BORRADOR" : "COMPLETADO",
             internalStatus: null,
-            actualMileage: validatedData.actualMileage || 0,
-            additionalObservations: validatedData.additionalObservations || "",
+            actualMileage: Number(serviceData.actualMileage) || 0,
+            additionalObservations: serviceData.additionalObservations || "",
+            service: serviceData.service || null,
             statusHistory: isDraft
               ? {
-                  create: [{
-                    status: "BORRADOR",
-                    changedAt: new Date(),
-                  }],
+                  create: [
+                    {
+                      status: "BORRADOR",
+                      changedAt: new Date(),
+                    },
+                  ],
                 }
               : undefined,
-            service: validatedData.service || null,
-          },
-        });
-
-        return tx.order.findUnique({
-          where: { id: newOrder.id },
-          include: {
-            customer: true,
-            vehicle: true,
           },
         });
       }
+
+      // Guardar fotos en OrderPhoto
+      console.log("📸 Guardando fotos en base de datos");
+
+      const photosToCreate = [
+        { type: "vin_plate", url: serviceData.photoUrls.vinPlate },
+        ...serviceData.photoUrls.or.map((url, i) => ({
+          type: `or_${i + 1}`,
+          url,
+        })),
+      ];
+
+      await tx.orderPhoto.createMany({
+        data: photosToCreate.map((photo) => ({
+          orderId: savedOrder.id,
+          type: photo.type,
+          url: photo.url,
+        })),
+      });
+
+      console.log(`✅ ${photosToCreate.length} fotos guardadas`);
+
+      // Retornar servicio completo
+      return tx.order.findUnique({
+        where: { id: savedOrder.id },
+        include: {
+          vehicle: true,
+          photos: true,
+        },
+      });
     });
 
-    // Mensaje de éxito
-    let message = draftId
-      ? (isDraft 
-          ? "✅ Borrador de servicio actualizado correctamente" 
-          : "✅ Borrador convertido a servicio exitosamente")
-      : (isDraft
-          ? "✅ Borrador de servicio guardado correctamente"
-          : "✅ Servicio creado exitosamente");
-
-    return { success: true, service, message };
-
-  } catch (error) {
-    // Manejar errores de Zod
-    if (error instanceof z.ZodError) {
-      const errors: Record<string, string> = {};
-      error.issues.forEach(err => {
-        if (err.path && err.path[0]) {
-          const fieldName = err.path.join('.');
-          errors[fieldName] = err.message;
-        }
-      });
-      return {
-        success: false,
-        errors,
-        message: "❌ Errores de validación en el formulario"
-      };
+    // Mensaje según operación
+    let message = "";
+    if (draftId) {
+      message = isDraft
+        ? "✅ Borrador de servicio actualizado correctamente"
+        : "✅ Borrador convertido a servicio exitosamente";
+    } else {
+      message = isDraft
+        ? "✅ Borrador de servicio guardado correctamente"
+        : "✅ Servicio creado exitosamente";
     }
 
-    console.error("Error en saveService:", error);
+    return {
+      success: true,
+      service,
+      message,
+    };
+  } catch (error) {
+    console.error("❌ Error en saveServiceWithPhotos:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "❌ Error interno del servidor",
+      message: "❌ Error interno del servidor",
     };
   }
 }

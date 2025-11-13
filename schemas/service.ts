@@ -1,47 +1,54 @@
-// src/app/schemas/serviceSchemas.ts
-import { z } from 'zod';
-// Schema para servicios completos
+// schemas/serviceSchema.ts
+import { z } from "zod";
+
+// Schema para validar archivos en el cliente
+const fileSchema = z.instanceof(File, { message: "Debe ser un archivo válido" });
+
+// ========== SCHEMA PARA SERVICIO COMPLETO (NO BORRADOR) ==========
 export const serviceSchema = z.object({
-  orderNumber: z.string().min(1, "La OR interna es requerida"),
-  vin: z.string().min(1, "El VIN es requerido"),
-  service: z.string().min(1, "El servicio es requerido"), 
-  actualMileage: z.string()
-    .min(1, "El kilometraje real es requerido")
-    .transform(val => parseFloat(val))
-    .refine(val => !isNaN(val) && val >= 0, {
-      message: "El kilometraje debe ser un número mayor o igual a 0"
-    }),
-  serviceMileage: z.string().optional(),
-  additionalObservations: z.string().optional(), 
-  photos: z.object({
-    vinPlate: z.string().optional(),
-    orPhoto: z.string().optional(),
-  }).optional(),
-  creationDate: z.string().optional(),
-  warrantyActivation: z.string().optional(),
-  engineNumber: z.string().optional(),
-  model: z.string().optional(),
-});
-
-// Schema para borradores (solo VIN requerido)
-export const draftServiceSchema = z.object({
+  // Campos básicos
+  vin: z.string().min(1, "El VIN es obligatorio"),
   orderNumber: z.string().optional(),
-  vin: z.string().min(1, "El VIN es requerido para el borrador"),
-  service: z.string().optional(), 
-  actualMileage: z.string()
-    .optional()
-    .transform(val => val ? parseFloat(val) : 0),
-  serviceMileage: z.string().optional(),
-  additionalObservations: z.string().optional(), 
-  photos: z.object({
-    vinPlate: z.string().optional(),
-    orPhoto: z.string().optional(),
-  }).optional(),
-  creationDate: z.string().optional(),
+  service: z.string().min(1, "El servicio es obligatorio"),
+  actualMileage: z.string().min(1, "El kilometraje es obligatorio"),
+  additionalObservations: z.string().optional(),
+  
+  // Campos de solo lectura (opcionales)
   warrantyActivation: z.string().optional(),
   engineNumber: z.string().optional(),
   model: z.string().optional(),
+  creationDate: z.string().optional(),
+  
+  // Fotos obligatorias (2)
+  vinPlatePhoto: fileSchema,
+  orPhotos: z.array(fileSchema).min(1, "Debe subir al menos 1 foto OR"),
 });
 
-export type ServiceSchema = z.infer<typeof serviceSchema>;
-export type DraftServiceSchema = z.infer<typeof draftServiceSchema>;
+// ========== SCHEMA PARA BORRADOR (SIN FOTOS OBLIGATORIAS) ==========
+export const draftServiceSchema = z.object({
+  // Campos mínimos obligatorios para borrador
+  vin: z.string().min(1, "El VIN es obligatorio"),
+  
+  // Campos opcionales
+  orderNumber: z.string().optional(),
+  service: z.string().optional(),
+  actualMileage: z.string().optional(),
+  additionalObservations: z.string().optional(),
+  warrantyActivation: z.string().optional(),
+  engineNumber: z.string().optional(),
+  model: z.string().optional(),
+  creationDate: z.string().optional(),
+  
+  // TODAS las fotos son opcionales en borradores
+  vinPlatePhoto: fileSchema.optional(),
+  orPhotos: z.array(fileSchema).optional(),
+});
+
+export type ServiceFormData = z.infer<typeof serviceSchema>;
+export type DraftServiceFormData = z.infer<typeof draftServiceSchema>;
+
+// Schema simplificado para validación inicial (sin fotos)
+export const serviceSchemaWithoutPhotos = serviceSchema.omit({
+  vinPlatePhoto: true,
+  orPhotos: true,
+});
