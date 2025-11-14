@@ -11,7 +11,7 @@ export default function Page() {
       {/* Contenido centrado */}
       <div className="flex flex-col items-center justify-center grow">
         <img
-          src="/LogoMGSinFondo.png"
+          src="/MGLOGO_ALCOSTADO.png"
           alt="Geely Logo"
           className="w-72 h-auto mb-4"
         />

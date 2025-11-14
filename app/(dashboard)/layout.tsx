@@ -181,14 +181,15 @@ function AppSidebar({
   return (
     <Sidebar className="bg-[#424f63] text-white border-r-0">
       <SidebarHeader className="border-b bg-[#424f63] border-slate-600 p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-lg">MG</span>
-          </div>
-          <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
-            MG
-          </span>
+        <div className="shrink-0 flex items-center pl-12">
+          <img
+            src="/blancoYnegro.png"
+            alt="MG"
+            className="h-10 w-auto"
+          />
         </div>
+
+
       </SidebarHeader>
 
       <SidebarContent className="bg-[#424f63]">
