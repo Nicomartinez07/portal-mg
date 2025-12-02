@@ -52,12 +52,17 @@ export default function ClaimModal({
         (a, b) =>
           new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()
       );
+      
+      // --- AQUÍ ESTÁ EL CAMBIO ---
       const lastStatusChange = sortedHistory.find(
         (history) =>
           (history.status === "AUTORIZADO" ||
-            history.status === "RECHAZADO") &&
+            history.status === "RECHAZADO" ||
+            history.status === "OBSERVADO") && // <-- AÑADIDO
           history.observation
       );
+      // --- FIN DEL CAMBIO ---
+
       if (lastStatusChange) {
         setLastStatusObservation(lastStatusChange.observation ?? null);
       } else {
@@ -77,7 +82,11 @@ export default function ClaimModal({
     if (result.success) {
       alert(
         `La orden ha sido ${
-          newStatus === "AUTORIZADO" ? "aprobada" : "rechazada"
+          newStatus === "AUTORIZADO"
+            ? "aprobada"
+            : newStatus === "RECHAZADO"
+            ? "rechazada"
+            : "observada" 
         } con éxito`
       );
       onOrderUpdated();
@@ -93,6 +102,10 @@ export default function ClaimModal({
   };
 
   const handleObservationConfirm = (observation: string) => {
+    if (pendingStatus === "OBSERVADO" && observation.trim() === "") {
+      alert("Para marcar como 'Observado', la observación es obligatoria.");
+      return;
+    }
     if (pendingStatus) {
       handleChangeStatus(pendingStatus, observation);
     }
@@ -100,7 +113,6 @@ export default function ClaimModal({
     setPendingStatus(null);
     setObservation("");
   };
-
   const handleObservationCancel = () => {
     setShowObservationModal(false);
     setPendingStatus(null);
@@ -243,7 +255,8 @@ export default function ClaimModal({
                   className="border rounded px-2 py-1 w-full bg-gray-100"
                 />
                 {(order.status === "AUTORIZADO" ||
-                  order.status === "RECHAZADO") &&
+                  order.status === "RECHAZADO" ||
+                  order.status === "OBSERVADO") && 
                   lastStatusObservation && (
                     <>
                       <label className="text-gray-800">
@@ -256,7 +269,7 @@ export default function ClaimModal({
                         className="w-full border rounded px-2 py-1 bg-gray-100 resize-none"
                       />
                     </>
-                  )}
+                )}
 
                 <label className="text-gray-800">Estado Interno</label>
                 <select
@@ -468,6 +481,14 @@ export default function ClaimModal({
               {order.status === "PENDIENTE" && (
                 <>
                   <button
+                    onClick={() => handleStatusButtonClick("OBSERVADO")}
+                    className="bg-gray-600 text-white px-3 py-2 rounded hover:bg-gray-700 disabled:opacity-50"
+                    disabled={isUpdating}
+                    name="Observado"
+                  >
+                    Observado
+                  </button>
+                  <button
                     onClick={() => handleStatusButtonClick("AUTORIZADO")}
                     className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                     disabled={isUpdating}
@@ -497,15 +518,25 @@ export default function ClaimModal({
             <h3 className="text-lg font-bold mb-2">
               {pendingStatus === "RECHAZADO"
                 ? "Rechazo de Reclamo"
-                : "Aprobación de Reclamo"}
+                : pendingStatus === "AUTORIZADO"
+                ? "Aprobación de Reclamo"
+                : "Observar Reclamo"}
             </h3>
             <p className="text-sm text-gray-600 mb-2">
-              Ingresá un mensaje (opcional) para {pendingStatus === "RECHAZADO" ? "rechazar" : "aprobar"} esta solicitud:
+              {pendingStatus === "OBSERVADO"
+                ? "Ingresá un mensaje (obligatorio) para marcar la solicitud como observada:"
+                : `Ingresá un mensaje (opcional) para ${
+                    pendingStatus === "RECHAZADO" ? "rechazar" : "aprobar"
+                  } esta solicitud:`}
             </p>
             <textarea
               className="w-full border rounded p-2 mb-4 resize-none"
               rows={4}
-              placeholder="Podés dejarlo vacío si querés..."
+              placeholder={
+                pendingStatus === "OBSERVADO"
+                  ? "Escribí el motivo de la observación..."
+                  : "Podés dejarlo vacío si querés..."
+              }
               value={observation}
               onChange={(e) => setObservation(e.target.value)}
             />
@@ -521,10 +552,16 @@ export default function ClaimModal({
                 className={`px-3 py-1 rounded text-white ${
                   pendingStatus === "RECHAZADO"
                     ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
+                    : pendingStatus === "AUTORIZADO"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-gray-600 hover:bg-gray-700" 
                 }`}
               >
-                {pendingStatus === "RECHAZADO" ? "Rechazar" : "Aprobar"}
+                {pendingStatus === "RECHAZADO"
+                  ? "Rechazar"
+                  : pendingStatus === "AUTORIZADO"
+                  ? "Aprobar"
+                  : "Guardar Observación"} 
               </button>
             </div>
           </div>

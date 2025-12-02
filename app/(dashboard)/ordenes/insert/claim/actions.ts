@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { triggerNewOrderNotification } from "@/lib/email";
+import { getImporterEmailsForNotification } from "@/app/(dashboard)/general/actions";
 
 type TaskData = {
   description: string;
@@ -27,12 +28,11 @@ type ClaimDataWithPhotos = {
   engineNumber?: string;
   model?: string;
   tasks?: TaskData[];
-  // URLs de las fotos (ya subidas a S3)
   photoUrls: {
     licensePlate: string;
     vinPlate: string;
     odometer: string;
-    customerSignature?: string; // Opcional
+    customerSignature?: string; 
     additional: string[];
     or: string[];
     reportPdfs: string[];
@@ -45,6 +45,33 @@ type SaveResult = {
   message?: string;
   errors?: Record<string, string>;
 };
+
+
+type UpdateObservedClaimData = {
+  orderNumber?: string;
+  customerName: string;
+  actualMileage: string;
+  diagnosis: string;
+  additionalObservations?: string;
+  tasks?: TaskData[];
+  photoUrls?: {
+    licensePlate?: string;
+    vinPlate?: string;
+    odometer?: string;
+    customerSignature?: string;
+    additional?: string[];
+    or?: string[];
+    reportPdfs?: string[];
+  };
+};
+
+type UpdateResult = {
+  success: boolean;
+  order?: any;
+  message?: string;
+  errors?: Record<string, string>;
+};
+
 
 async function findOrCreateCustomer(customerName: string) {
   const [firstName, ...lastParts] = customerName.trim().split(" ");
@@ -86,6 +113,14 @@ export async function saveClaimWithPhotos(
     // Validaciones básicas
     if (!claimData.vin?.trim()) {
       return { success: false, errors: { vin: "El VIN es requerido" } };
+    }
+
+    // ✏️ NUEVA VALIDACIÓN: El número de orden es obligatorio y manual
+    if (!claimData.orderNumber) {
+      return { 
+        success: false, 
+        message: "El número de orden (reclamo) es requerido" 
+      };
     }
 
     const vehicle = await prisma.vehicle.findUnique({
@@ -160,6 +195,8 @@ export async function saveClaimWithPhotos(
         savedOrder = await tx.order.update({
           where: { id: draftId },
           data: {
+            // ✏️ CAMBIO: Se actualiza con el número manual
+            orderNumber: Number(claimData.orderNumber),
             draft: isDraft,
             customerId: customer.id,
             vehicleVin: claimData.vin,
@@ -182,22 +219,15 @@ export async function saveClaimWithPhotos(
           });
         }
       } else {
-        console.log("🆕 Creando nuevo reclamo");
+        console.log("🆕 Creando nuevo reclamo manual");
 
-        // Determinar número de orden
-        let orderNumber = 99999;
-        if (!isDraft) {
-          const lastOrder = await tx.order.findFirst({
-            where: { draft: false },
-            orderBy: { orderNumber: "desc" },
-          });
-          orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
-        }
-
+        // ✏️ CAMBIO: Eliminada lógica de cálculo automático (99999 / lastOrder)
+        
         // Crear nuevo reclamo
         savedOrder = await tx.order.create({
           data: {
-            orderNumber,
+            // ✏️ CAMBIO: Asignación directa del form
+            orderNumber: Number(claimData.orderNumber),
             type: "RECLAMO",
             creationDate: new Date(),
             draft: isDraft,
@@ -315,10 +345,11 @@ export async function saveClaimWithPhotos(
         },
       });
     });
-
+    const toEmails = await getImporterEmailsForNotification();
     // Enviar notificación si no es borrador
     if (order && !isDraft) {
       triggerNewOrderNotification(
+        toEmails ?? [],
         order.orderNumber,
         order.vehicle.vin,
         creatorUsername,
@@ -400,18 +431,19 @@ export async function getPreAuthorizationDetails(preAuthorizationId: string) {
 
     const currentStatus = preAuthorization.status;
     
-    if (currentStatus !== "AUTORIZADO" && currentStatus !== "PENDIENTE") {
+    if (currentStatus !== "AUTORIZADO") {
       const statusText = currentStatus?.toLowerCase() || "sin estado definido";
       
       return {
         success: false,
-        message: `❌ Pre-autorización ${statusText} - debe estar PENDIENTE o AUTORIZADO`
+        message: `❌ Pre-autorización ${statusText} - debe estar AUTORIZADO`
       };
     }
 
     return {
       success: true,
       data: {
+        orderNumber: preAuthorization.orderNumber,
         customerName: `${preAuthorization.customer.firstName} ${preAuthorization.customer.lastName}`,
         vin: preAuthorization.vehicle.vin,
         model: preAuthorization.vehicle.model,
@@ -428,6 +460,216 @@ export async function getPreAuthorizationDetails(preAuthorizationId: string) {
     return {
       success: false,
       message: "❌ Error al buscar pre-autorización"
+    };
+  }
+}
+
+export async function updateObservedClaim(
+  orderId: number,
+  claimData: UpdateObservedClaimData,
+  userId: number
+): Promise<UpdateResult> {
+  try {
+    console.log("🔄 Actualizando reclamo observado ID:", orderId);
+
+    // 1. Validar que la orden existe y está OBSERVADA
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { company: true },
+    });
+
+    if (!existingOrder) {
+      return { success: false, message: "❌ Reclamo no encontrado" };
+    }
+
+    if (existingOrder.status !== "OBSERVADO") {
+      return { 
+        success: false, 
+        message: "❌ Solo se pueden editar reclamos en estado OBSERVADO" 
+      };
+    }
+
+    // 2. Validar que el usuario es el creador
+    if (existingOrder.userId !== userId) {
+      return { 
+        success: false, 
+        message: "❌ No tienes permiso para editar este reclamo" 
+      };
+    }
+
+    // 3. Buscar o crear cliente
+    const customer = await findOrCreateCustomer(claimData.customerName);
+
+    // 4. Validar repuestos si hay tareas
+    if (claimData.tasks) {
+      const missingParts: string[] = [];
+      
+      for (const task of claimData.tasks) {
+        for (const partItem of task.parts || []) {
+          if (partItem.part.code && partItem.part.code.trim()) {
+            const existingPart = await prisma.part.findUnique({
+              where: { code: partItem.part.code }
+            });
+            
+            if (!existingPart) {
+              missingParts.push(partItem.part.code);
+            }
+          }
+        }
+      }
+
+      if (missingParts.length > 0) {
+        return {
+          success: false,
+          message: `❌ Los siguientes repuestos no existen: ${missingParts.join(', ')}`
+        };
+      }
+    }
+
+    // 5. Transacción para actualizar reclamo
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // Eliminar tareas anteriores
+      await tx.orderTaskPart.deleteMany({
+        where: { orderTask: { orderId } },
+      });
+      await tx.orderTask.deleteMany({
+        where: { orderId },
+      });
+
+      // Si hay nuevas fotos, eliminar las anteriores
+      if (claimData.photoUrls) {
+        await tx.orderPhoto.deleteMany({
+          where: { orderId },
+        });
+      }
+
+      // Actualizar la orden
+      const updated = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          orderNumber: claimData.orderNumber ? Number(claimData.orderNumber) : existingOrder.orderNumber,
+          customerId: customer.id,
+          status: "PENDIENTE", // ✅ Vuelve a PENDIENTE
+          internalStatusObservation: null, // ✅ Limpia la observación
+          actualMileage: Number(claimData.actualMileage) || 0,
+          diagnosis: claimData.diagnosis || "",
+          additionalObservations: claimData.additionalObservations || "",
+        },
+      });
+
+      // Crear nuevas tareas
+      const tasksToCreate = claimData.tasks?.filter(
+        (task) =>
+          task.description?.trim() ||
+          task.hoursCount?.trim() ||
+          task.parts[0]?.part?.code?.trim() ||
+          task.parts[0]?.part?.description?.trim()
+      ) || [];
+
+      for (const task of tasksToCreate) {
+        const createdTask = await tx.orderTask.create({
+          data: {
+            description: task.description || "",
+            hoursCount: Number(task.hoursCount) || 0,
+            orderId: updated.id,
+          },
+        });
+
+        for (const partItem of task.parts || []) {
+          if (partItem.part.code?.trim()) {
+            const part = await prisma.part.findUnique({
+              where: { code: partItem.part.code }
+            });
+
+            if (part) {
+              await tx.orderTaskPart.create({
+                data: {
+                  orderTaskId: createdTask.id,
+                  partId: part.id,
+                  quantity: 1,
+                  description: part.description,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      // Guardar nuevas fotos si existen
+      if (claimData.photoUrls) {
+        const photosToCreate = [];
+
+        if (claimData.photoUrls.licensePlate) {
+          photosToCreate.push({ type: "license_plate", url: claimData.photoUrls.licensePlate });
+        }
+        if (claimData.photoUrls.vinPlate) {
+          photosToCreate.push({ type: "vin_plate", url: claimData.photoUrls.vinPlate });
+        }
+        if (claimData.photoUrls.odometer) {
+          photosToCreate.push({ type: "odometer", url: claimData.photoUrls.odometer });
+        }
+        if (claimData.photoUrls.customerSignature) {
+          photosToCreate.push({ type: "customer_signature", url: claimData.photoUrls.customerSignature });
+        }
+
+        claimData.photoUrls.additional?.forEach((url, i) => {
+          photosToCreate.push({ type: `additional_${i + 1}`, url });
+        });
+
+        claimData.photoUrls.or?.forEach((url, i) => {
+          photosToCreate.push({ type: `or_${i + 1}`, url });
+        });
+
+        claimData.photoUrls.reportPdfs?.forEach((url, i) => {
+          photosToCreate.push({ type: `report_pdf_${i + 1}`, url });
+        });
+
+        if (photosToCreate.length > 0) {
+          await tx.orderPhoto.createMany({
+            data: photosToCreate.map((photo) => ({
+              orderId: updated.id,
+              type: photo.type,
+              url: photo.url,
+            })),
+          });
+        }
+      }
+
+      // Agregar al historial el cambio a PENDIENTE
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: updated.id,
+          status: "PENDIENTE",
+          changedAt: new Date(),
+          observation: "Reclamo modificado y reenviado",
+        },
+      });
+
+      // Retornar orden completa
+      return tx.order.findUnique({
+        where: { id: updated.id },
+        include: {
+          tasks: { include: { parts: { include: { part: true } } } },
+          customer: true,
+          vehicle: true,
+          photos: true,
+          statusHistory: true,
+        },
+      });
+    });
+
+    console.log("✅ Reclamo actualizado y reenviado correctamente");
+
+    return {
+      success: true,
+      order: updatedOrder,
+      message: "✅ Reclamo actualizado y reenviado correctamente",
+    };
+  } catch (error) {
+    console.error("❌ Error en updateObservedClaim:", error);
+    return {
+      success: false,
+      message: "❌ Error interno del servidor",
     };
   }
 }

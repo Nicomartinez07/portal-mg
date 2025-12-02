@@ -12,7 +12,6 @@ export async function getVehicleDetails(vin: string) {
                     where: {
                         draft: { not: true } 
                     },
-                    // -----------------------------
                     include: {
                         customer: true,
                         company: true,
@@ -34,15 +33,12 @@ export async function getVehicleDetails(vin: string) {
                 },
             },
         });
-
         if (!vehicle) {
             return null;
         }
-
         // Corregimos los filtros a los tipos de tu base de datos
         const serviceOrders = vehicle.orders.filter(order => order.type === 'SERVICIO');
         const claimOrders = vehicle.orders.filter(order => order.type === 'RECLAMO');
-
         return {
             ...vehicle,
             serviceOrders,

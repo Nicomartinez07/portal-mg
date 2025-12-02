@@ -1,15 +1,12 @@
 // app/vehiculos/buscador/[vin]/page.tsx
-
 import { getVehicleDetails } from "./actions";
 import { VehicleDetailsClient } from "./VehicleDetailsClient";
 
 export default async function BuscadorPage(props: { params: Promise<{ vin: string }> }) {
-
   const { vin } = await props.params;
-  
   try {
+    //Trae datos del vehiculo 
     const vehicleData = await getVehicleDetails(vin);
-
     if (!vehicleData) {
         return (
             <>
@@ -22,7 +19,6 @@ export default async function BuscadorPage(props: { params: Promise<{ vin: strin
     return (
       <VehicleDetailsClient vehicleData={vehicleData} />
     );
-
   } catch (error) {
     console.error("Error fetching vehicle data:", error);
     return (

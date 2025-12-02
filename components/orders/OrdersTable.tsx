@@ -2,15 +2,19 @@
 import { useEffect, useState, useCallback } from "react";
 import { getOrders } from "@/app/(dashboard)/ordenes/actions";
 import { useOrder } from "@/contexts/OrdersContext";
+import { useUser } from "@/hooks/useUser";
 import type { Order } from "@/app/types";
 import PreAuthorizationModal from "@/components/orders/modals/PreAuthorizationModal";
+import EditObservedPreAuthorizationModal from "@/components/orders/modals/EditObservedPreAuthorizationModal";
 import ClaimModal from "@/components/orders/modals/ClaimModal";
+import EditObservedClaimModal from "@/components/orders/modals/EditObservedClaimModal";
 import ServiceModal from "@/components/orders/modals/ServiceModal";
 import Pagination from "@/components/ui/Pagination"; 
 
 const ITEMS_PER_PAGE = 25;
 
 export default function OrdersTable() {
+  const { user } = useUser();
   const {
     filters,
     currentPage,
@@ -22,41 +26,34 @@ export default function OrdersTable() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showEditObservedModal, setShowEditObservedModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
 
-  // Creamos la función para buscar órdenes
-  // Usamos useCallback para evitar que se cree en cada render
-  // y para controlar sus dependencias (filters, currentPage)
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      // Llamamos a la server action AHORA con los filtros y la paginación
       const response = await getOrders({
         filters,
         page: currentPage,
         pageSize: ITEMS_PER_PAGE,
       });
 
-      // La action nos devuelve un objeto { data, total }
       setOrders(response.data as Order[]);
-      setTotalOrders(response.total); // Actualizamos el total en el contexto
+      setTotalOrders(response.total);
     } catch (error) {
       console.error("Error al obtener las órdenes:", error);
-      setOrders([]); // En caso de error, vaciamos la tabla
-      setTotalOrders(0); // y reseteamos el total
+      setOrders([]);
+      setTotalOrders(0);
     } finally {
       setLoading(false);
     }
   }, [filters, currentPage, setTotalOrders]);
 
-  // Este efecto se dispara cuando el componente se monta
-  // y CADA VEZ que `fetchOrders` cambia (o sea, cuando filters o currentPage cambian)
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // --- Tus funciones de ayuda (sin cambios) ---
   const handleShowHistory = (order: Order) => {
     if (order.statusHistory) {
       setHistoryData(order.statusHistory);
@@ -65,6 +62,35 @@ export default function OrdersTable() {
       setHistoryData([]);
       setShowHistoryModal(true);
     }
+  };
+
+  // ✅ FUNCIÓN ACTUALIZADA: Detectar si el usuario puede editar una orden observada
+  const handleOrderClick = (order: Order) => {
+    if (!user) {
+      setSelectedOrder(order);
+      return;
+    }
+
+    // ✅ Si la orden está OBSERVADA, es PRE_AUTORIZACION o RECLAMO, y el usuario es el creador
+    if (
+      order.status === "OBSERVADO" &&
+      (order.type === "PRE_AUTORIZACION" || order.type === "RECLAMO") &&
+      order.userId === user.userId &&
+      (user.role === "WORKSHOP" || user.role === "DEALER")
+    ) {
+      // Abrir modal de edición
+      setSelectedOrder(order);
+      setShowEditObservedModal(true);
+    } else {
+      // Abrir modal de visualización normal
+      setSelectedOrder(order);
+      setShowEditObservedModal(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedOrder(null);
+    setShowEditObservedModal(false);
   };
 
   const getStatusClasses = (status: string | null | undefined) => {
@@ -76,20 +102,19 @@ export default function OrdersTable() {
         return "bg-green-500 text-white";
       case "RECHAZADO":
         return "bg-red-500 text-white";
+      case "OBSERVADO":
+        return "bg-yellow-500 text-white";
       default:
         return "text-black";
     }
   };
   
-  // Calculamos el total de páginas
   const totalPages = Math.ceil(totalOrders / ITEMS_PER_PAGE);
 
   return (
     <>
-      {/* --- PAGINADOR --- */}
       {!loading && totalOrders > 0 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-4 px-2">
-          {/* Ocultar en mobile */}
           <div className="hidden sm:block text-sm text-gray-700 mb-2 sm:mb-0">
             Total: <strong>{totalOrders}</strong>
           </div>
@@ -118,7 +143,6 @@ export default function OrdersTable() {
             </tr>
           </thead>
           <tbody>
-            {/* Manejo de estado de carga */}
             {loading ? (
               <tr>
                 <td colSpan={10} className="px-4 py-6 text-center text-gray-500">
@@ -145,7 +169,7 @@ export default function OrdersTable() {
                   <td className="px-4 py-2">{order.user?.username || "-"}</td>
                   <td className="px-4 py-2">
                     <button
-                      onClick={() => setSelectedOrder(order)}
+                      onClick={() => handleOrderClick(order)}
                       className="bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
                       data-testid={`detalles-${order.id}`}
                     >
@@ -165,36 +189,59 @@ export default function OrdersTable() {
         </table>
       </div>
 
-      {/* --- RENDERIZADO DE MODALES (Sin cambios) --- */}
+      {/* ✅ RENDERIZADO CONDICIONAL DE MODALES ACTUALIZADO */}
       {selectedOrder && (
         <>
-          {selectedOrder.type === "PRE_AUTORIZACION" && (
-            <PreAuthorizationModal
-              order={selectedOrder}
-              onClose={() => setSelectedOrder(null)}
-              onShowHistory={handleShowHistory}
-              onOrderUpdated={fetchOrders} // Pasamos fetchOrders para refrescar
-            />
-          )}
-          {selectedOrder.type === "RECLAMO" && (
-            <ClaimModal
-              order={selectedOrder}
-              onClose={() => setSelectedOrder(null)}
-              onShowHistory={handleShowHistory}
-              onOrderUpdated={fetchOrders} // Pasamos fetchOrders para refrescar
-            />
-          )}
-          {selectedOrder.type === "SERVICIO" && (
-            <ServiceModal
-              order={selectedOrder}
-              onClose={() => setSelectedOrder(null)}
-              onShowHistory={handleShowHistory}
-            />
+          {/* Si es OBSERVADA y es el creador, abrir modal de edición */}
+          {showEditObservedModal ? (
+            <>
+              {selectedOrder.type === "PRE_AUTORIZACION" && (
+                <EditObservedPreAuthorizationModal
+                  order={selectedOrder}
+                  onClose={handleCloseModal}
+                  onOrderUpdated={fetchOrders}
+                />
+              )}
+              {selectedOrder.type === "RECLAMO" && (
+                <EditObservedClaimModal
+                  order={selectedOrder}
+                  onClose={handleCloseModal}
+                  onOrderUpdated={fetchOrders}
+                />
+              )}
+            </>
+          ) : (
+            /* Si no, abrir modal de visualización normal */
+            <>
+              {selectedOrder.type === "PRE_AUTORIZACION" && (
+                <PreAuthorizationModal
+                  order={selectedOrder}
+                  onClose={handleCloseModal}
+                  onShowHistory={handleShowHistory}
+                  onOrderUpdated={fetchOrders}
+                />
+              )}
+              {selectedOrder.type === "RECLAMO" && (
+                <ClaimModal
+                  order={selectedOrder}
+                  onClose={handleCloseModal}
+                  onShowHistory={handleShowHistory}
+                  onOrderUpdated={fetchOrders}
+                />
+              )}
+              {selectedOrder.type === "SERVICIO" && (
+                <ServiceModal
+                  order={selectedOrder}
+                  onClose={handleCloseModal}
+                  onShowHistory={handleShowHistory}
+                />
+              )}
+            </>
           )}
         </>
       )}
 
-      {/* Modal del Historial de Estados (Sin cambios) */}
+      {/* Modal del Historial de Estados */}
       {showHistoryModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-1/3 max-h-[80vh] overflow-auto relative">

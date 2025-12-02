@@ -1,15 +1,10 @@
 Inicio de sesion con email
 
-Observado de Reclamo y preAutorizacion
+Importar certificados
+Ver ordenes en gonzalo alarcon
+Editar borradores de diferentes usuarios desde un solo usuario 
 
-Borrar todos los repuestos desde eximar
-
-patente en cargado de autos tiene que ser opcional pero al subir una garantia tiene que estar si o si
-
-Verificaciones con zod de los formularios de carga FUNCIONALES
-
-Preguntar si gustan modales de insersion y visualizacion de ordenes
-
+Empezar a hacer pruebas unitarias no solamente e2e
 --------------------------------------------------------------------------------------------------------------------------
 
 Garantias: funciona todo

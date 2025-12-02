@@ -211,7 +211,7 @@ export function VehicleModal({
 
             {/* Patente */}
             <div>
-              <label className="block text-sm font-medium">Patente *</label>
+              <label className="block text-sm font-medium">Patente</label>
               <input
                 type="text"
                 name="licensePlate"
@@ -236,10 +236,15 @@ export function VehicleModal({
                 name="year"
                 value={formData.year}
                 onChange={handleChange}
-                className="border px-3 py-2 w-full rounded"
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.year ? "border-red-500" : ""
+                }`}
                 min="1900"
                 max={new Date().getFullYear() + 1}
               />
+              {errors.year && (
+                <p className="text-red-500 text-xs mt-1">{errors.year}</p>
+              )}
             </div>
 
             {/* Nº de Motor */}
@@ -252,8 +257,13 @@ export function VehicleModal({
                 name="engineNumber"
                 value={formData.engineNumber}
                 onChange={handleChange}
-                className="border px-3 py-2 w-full rounded"
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.engineNumber ? "border-red-500" : ""
+                }`}
               />
+              {errors.engineNumber && (
+                <p className="text-red-500 text-xs mt-1">{errors.engineNumber}</p>
+              )}
             </div>
 
             {/* Tipo */}
@@ -264,8 +274,13 @@ export function VehicleModal({
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="border px-3 py-2 w-full rounded"
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.type ? "border-red-500" : ""
+                }`}
               />
+              {errors.type && (
+                <p className="text-red-500 text-xs mt-1">{errors.type}</p>
+              )}
             </div>
 
             {/* Nº de Certificado */}
@@ -278,8 +293,13 @@ export function VehicleModal({
                 name="certificateNumber"
                 value={formData.certificateNumber}
                 onChange={handleChange}
-                className="border px-3 py-2 w-full rounded"
+                className={`border px-3 py-2 w-full rounded ${
+                  errors.certificateNumber ? "border-red-500" : ""
+                }`}
               />
+              {errors.certificateNumber && (
+                <p className="text-red-500 text-xs mt-1">{errors.certificateNumber}</p>
+              )}
             </div>
 
             {/* Fecha de venta */}

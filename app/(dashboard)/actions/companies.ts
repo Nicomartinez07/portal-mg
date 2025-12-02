@@ -125,7 +125,6 @@ export async function updateCompany(
     },
   });
 }
-// 📌 Crear un usuario - VERSIÓN CORREGIDA
 export async function createUser(data: {
   username: string;
   email: string;
@@ -174,7 +173,6 @@ export async function createUser(data: {
   });
 }
 
-// 📌 Actualizar un usuario
 export async function updateUser(
   id: number,
   data: {
@@ -194,19 +192,20 @@ export async function updateUser(
   if (data.notifications !== undefined)
     updateData.notifications = data.notifications;
 
-  // Hashear la contraseña si se está actualizando
   if (data.password) {
     updateData.password = await bcrypt.hash(data.password, 10);
   }
 
-  // Lógica para actualizar los roles
   if (data.roles) {
-    // 1. Desconecta todos los roles existentes del usuario
     await prisma.userRole.deleteMany({
-      where: { userId: id },
+      where: { 
+        userId: id,
+        role: {
+          name: { in: ["WORKSHOP", "DEALER"] }
+        }
+      },
     });
 
-    // 2. Vuelve a crear las relaciones con los roles seleccionados
     const rolesToCreate = [];
     if (data.roles.taller) {
       rolesToCreate.push({
@@ -222,17 +221,18 @@ export async function updateUser(
         },
       });
     }
-    updateData.roles = {
-      create: rolesToCreate,
-    };
-  }
 
+    if (rolesToCreate.length > 0) {
+        updateData.roles = {
+            create: rolesToCreate,
+        };
+    }
+  }
   return prisma.user.update({
     where: { id },
     data: updateData,
   });
 }
-
 
 // 📌 Eliminar solo el usuario (sin borrar relaciones)
 export async function deleteUser(id: number) {

@@ -1,10 +1,10 @@
-// components/ImageUploadField.tsx
+// components/awss3/ImageUploadField.tsx
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { validateImageFile } from '@/lib/fileValidation';
-import { compressImage, isImage } from '@/lib/imageCompression';
+import { compressImage } from '@/lib/imageCompression';
 
 type ImageUploadFieldProps = {
   label: string;
@@ -12,6 +12,7 @@ type ImageUploadFieldProps = {
   onChange: (file: File | null) => void;
   error?: string;
   required?: boolean;
+  currentUrl?: string; // ✅ Nueva prop: URL de la imagen actual
 };
 
 export default function ImageUploadField({
@@ -20,10 +21,18 @@ export default function ImageUploadField({
   onChange,
   error,
   required = false,
+  currentUrl, // ✅ Imagen actual desde la BD
 }: ImageUploadFieldProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ Cargar preview de imagen actual al montar
+  useEffect(() => {
+    if (currentUrl && !value) {
+      setPreview(currentUrl);
+    }
+  }, [currentUrl, value]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,12 +70,15 @@ export default function ImageUploadField({
   };
 
   const handleRemove = () => {
-    setPreview(null);
+    setPreview(currentUrl || null); // ✅ Volver a la imagen actual si existe
     onChange(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
+
+  // ✅ Determinar si hay imagen (nueva o actual)
+  const hasImage = value || currentUrl;
 
   return (
     <div className="space-y-2">
@@ -75,8 +87,34 @@ export default function ImageUploadField({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
 
-      {!value ? (
-        <div className="flex flex-col items-center justify-center w-full">
+      <div className="flex gap-4 items-start">
+        {/* ✅ Preview de imagen (actual o nueva) */}
+        {preview && (
+          <div className="relative flex-shrink-0">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-32 h-32 object-cover rounded-lg border-2 border-gray-300"
+            />
+            {value && ( // ✅ Solo mostrar botón X si es una nueva imagen
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-lg"
+              >
+                <X size={16} />
+              </button>
+            )}
+            {isCompressing && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+                <span className="text-white text-xs">Comprimiendo...</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ✅ Botón de subida */}
+        <div className="flex-1">
           <label
             htmlFor={`file-${label}`}
             className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -96,7 +134,9 @@ export default function ImageUploadField({
                 />
               </svg>
               <p className="mb-2 text-sm text-gray-500">
-                <span className="font-semibold">Toca para seleccionar</span>
+                <span className="font-semibold">
+                  {hasImage ? 'Cambiar imagen' : 'Seleccionar imagen'}
+                </span>
               </p>
               <p className="text-xs text-gray-500">JPG, PNG, WebP (MAX. 5MB)</p>
             </div>
@@ -111,31 +151,7 @@ export default function ImageUploadField({
             />
           </label>
         </div>
-      ) : (
-        <div className="relative inline-block">
-          {preview && (
-            <div className="relative">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full max-w-sm h-auto rounded-lg border-2 border-gray-300"
-              />
-              <button
-                type="button"
-                onClick={handleRemove}
-                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-lg"
-              >
-                <X size={20} />
-              </button>
-              {isCompressing && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                  <span className="text-white text-sm">Comprimiendo...</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

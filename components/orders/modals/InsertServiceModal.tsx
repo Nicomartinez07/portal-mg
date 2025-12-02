@@ -5,6 +5,10 @@ import { uploadServicePhotos } from "@/lib/uploadServicePhotos";
 import { getVehicleByVin } from "@/app/(dashboard)/vehiculos/actions";
 import { useUser } from "@/hooks/useUser";
 import type { Draft } from "@/app/types";
+import {
+  serviceDraftSchema,
+  serviceFinalSchema,
+} from "@/schemas/service";
 
 // Importar componentes de upload
 import ImageUploadField from "@/components/awss3/ImageUploadField";
@@ -91,14 +95,19 @@ export default function InsertServiceModal({
       [name]: value,
     }));
 
+    // Limpiar error del campo al escribir
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const handleSearchVehicle = async () => {
     if (!formData.vin) {
-      alert("Ingrese un VIN primero");
+      setErrors({ vin: "Ingrese un VIN primero" });
       return;
     }
 
@@ -115,7 +124,7 @@ export default function InsertServiceModal({
         engineNumber: v.engineNumber || "",
       }));
     } else {
-      alert(result.message);
+      setErrors({ vin: result.message || "Vehículo no encontrado" });
     }
   };
 
@@ -123,42 +132,55 @@ export default function InsertServiceModal({
     onClose();
   };
 
-  // Validar fotos antes de enviar
-  const validatePhotos = (): boolean => {
-    if (!vinPlatePhoto) {
-      alert("❌ Debes subir la foto de VIN");
+  // ==================== VALIDACIÓN CON ZOD ====================
+  const validateForm = (isDraft: boolean) => {
+    const dataToValidate = {
+      ...formData,
+      vinPlatePhoto,
+      orPhotos,
+    };
+
+    // Usar schema según si es borrador o no
+    const schema = isDraft ? serviceDraftSchema : serviceFinalSchema;
+    const result = schema.safeParse(dataToValidate);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      
+      result.error.issues.forEach((err) => {
+        const path = err.path.join(".");
+        fieldErrors[path] = err.message;
+      });
+
+      setErrors(fieldErrors);
       return false;
     }
-    if (orPhotos.length === 0) {
-      alert("❌ Debes subir al menos 1 foto OR");
-      return false;
-    }
+
+    setErrors({});
     return true;
   };
 
+  // ==================== SUBMIT ORDEN FINAL ====================
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      alert("❌ No se pudo obtener la información del usuario");
+      setErrors({ general: "No se pudo obtener la información del usuario" });
       return;
     }
 
-    // Validar fotos obligatorias
-    if (!validatePhotos()) {
+    // Validar con schema estricto
+    if (!validateForm(false)) {
       return;
     }
 
     setIsSubmitting(true);
-    setErrors({});
 
     try {
-      // 1. Generar ID temporal para subir fotos
       const tempOrderId = draft?.id || Date.now();
 
       console.log("📤 Paso 1: Subiendo fotos a S3...");
 
-      // 2. Subir todas las fotos a S3
       const uploadResult = await uploadServicePhotos(tempOrderId, {
         vinPlatePhoto: vinPlatePhoto!,
         orPhotos,
@@ -171,18 +193,16 @@ export default function InsertServiceModal({
       console.log("✅ Fotos subidas exitosamente");
       console.log("💾 Paso 2: Guardando servicio en base de datos...");
 
-      // 3. Preparar datos del servicio
       const dataToSubmit = {
         ...formData,
         photoUrls: uploadResult.photoUrls!,
       };
 
-      // 4. Guardar servicio con fotos
       const result = await saveServiceWithPhotos(
         dataToSubmit,
         user.companyId,
         user.userId,
-        false, // No es borrador
+        false,
         draft?.id
       );
 
@@ -194,40 +214,41 @@ export default function InsertServiceModal({
         );
         handleClose();
       } else {
-        if (result.errors) {
-          setErrors(result.errors);
-        }
-        alert("⚠️ " + result.message);
+        setErrors({ general: result.message || "Error al guardar el servicio" });
       }
     } catch (error) {
       console.error(error);
-      alert(
-        "❌ Error: " +
-          (error instanceof Error ? error.message : "Error desconocido")
-      );
+      setErrors({
+        general: error instanceof Error ? error.message : "Error desconocido",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ==================== GUARDAR BORRADOR ====================
   const handleDraftSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      alert("❌ No se pudo obtener la información del usuario");
+      setErrors({ general: "No se pudo obtener la información del usuario" });
+      return;
+    }
+
+    // Validar con schema permisivo
+    if (!validateForm(true)) {
       return;
     }
 
     setIsSubmitting(true);
-    setErrors({});
 
     try {
-      // Si hay fotos, subirlas
       let photoUrls: any = {
         vinPlate: "",
         or: [],
       };
 
+      // Si hay fotos, subirlas
       if (vinPlatePhoto && orPhotos.length > 0) {
         console.log("📤 Subiendo fotos del borrador...");
 
@@ -251,7 +272,7 @@ export default function InsertServiceModal({
         draftData,
         user.companyId,
         user.userId,
-        true, // Es borrador
+        true,
         draft?.id
       );
 
@@ -263,14 +284,11 @@ export default function InsertServiceModal({
         );
         handleClose();
       } else {
-        if (result.errors) {
-          setErrors(result.errors);
-        }
-        alert("⚠️ " + result.message);
+        setErrors({ general: result.message || "Error al guardar borrador" });
       }
     } catch (error) {
       console.error(error);
-      alert("❌ Error al guardar borrador");
+      setErrors({ general: "Error al guardar borrador" });
     } finally {
       setIsSubmitting(false);
     }
@@ -303,6 +321,13 @@ export default function InsertServiceModal({
         {/* Contenido scrollable */}
         <div className="overflow-y-auto flex-1 p-6">
           <form onSubmit={handleSubmitOrder}>
+            {/* Error general */}
+            {errors.general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {errors.general}
+              </div>
+            )}
+
             {/* Campos del formulario */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -318,7 +343,7 @@ export default function InsertServiceModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Or interna
+                  Or interna <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="orderNumber"
@@ -338,7 +363,7 @@ export default function InsertServiceModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  VIN
+                  VIN <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -399,7 +424,7 @@ export default function InsertServiceModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Servicio
+                  Servicio <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="service"
@@ -423,7 +448,7 @@ export default function InsertServiceModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Kilometraje Real del vehiculo
+                  Kilometraje Real del vehiculo <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="actualMileage"
@@ -459,37 +484,57 @@ export default function InsertServiceModal({
             {/* ========== SECCIÓN DE FOTOS ========== */}
             <div className="mt-8 pt-6 border-t">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                📸 Fotos
+                Fotos
               </h3>
-
               <div className="space-y-6">
-                {/* Foto VIN */}
-                <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-                  <p className="text-sm text-blue-800 font-medium">
-                    Fotos Obligatorias *
-                  </p>
+                <div className="p-4 rounded-lg space-y-4">
+                  
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Chapa VIN"
+                      value={vinPlatePhoto}
+                      onChange={(file) => {
+                        setVinPlatePhoto(file);
+                        if (errors.vinPlatePhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.vinPlatePhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.vinPlatePhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.vinPlatePhoto}
+                      </p>
+                    )}
+                  </div>
 
-                  <ImageUploadField
-                    label="Foto de Chapa VIN"
-                    value={vinPlatePhoto}
-                    onChange={setVinPlatePhoto}
-                    required
-                  />
-                </div>
-
-                {/* Fotos OR */}
-                <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                  <p className="text-sm text-gray-700 font-medium">
-                    Fotos OR *
-                  </p>
-
-                  <MultipleMediaUploadField
-                    label="Fotos OR (Fotos/Videos)"
-                    value={orPhotos}
-                    onChange={setOrPhotos}
-                    maxFiles={10}
-                    required
-                  />
+                  <div>
+                    <MultipleMediaUploadField
+                      label="Fotos OR (Fotos/Videos)"
+                      value={orPhotos}
+                      onChange={(files) => {
+                        setOrPhotos(files);
+                        if (errors.orPhotos) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.orPhotos;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      maxFiles={10}
+                      required
+                    />
+                    {errors.orPhotos && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.orPhotos}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { uploadToS3, uploadMultipleToS3 } from "@/app/(dashboard)/actions/uploadToS3";
 import { triggerNewOrderNotification } from "@/lib/email";
+import { getImporterEmailsForNotification } from "@/app/(dashboard)/general/actions";
 
 type TaskData = {
   description: string;
@@ -18,12 +19,12 @@ type TaskData = {
 
 type OrderDataWithPhotos = {
   vin: string;
-  orderNumber?: string;
   customerName: string;
   actualMileage: string;
   diagnosis: string;
   additionalObservations?: string;
   warrantyActivation?: string;
+  orderNumber: string | number;
   engineNumber?: string;
   model?: string;
   tasks?: TaskData[];
@@ -39,6 +40,31 @@ type OrderDataWithPhotos = {
 };
 
 type SaveResult = {
+  success: boolean;
+  order?: any;
+  message?: string;
+  errors?: Record<string, string>;
+};
+
+type UpdateObservedOrderData = {
+  orderNumber?: string;
+  customerName: string;
+  actualMileage: string;
+  diagnosis: string;
+  additionalObservations?: string;
+  tasks?: TaskData[];
+  // URLs de las fotos (ya subidas a S3)
+  photoUrls?: {
+    licensePlate?: string;
+    vinPlate?: string;
+    odometer?: string;
+    additional?: string[];
+    or?: string[];
+    reportPdfs?: string[];
+  };
+};
+
+type UpdateResult = {
   success: boolean;
   order?: any;
   message?: string;
@@ -103,9 +129,15 @@ export async function savePreAuthorizationWithPhotos(
   try {
     console.log("🚀 Iniciando guardado de pre-autorización con fotos");
 
-    // Validaciones básicas
+    // 1. Validaciones básicas
     if (!orderData.vin?.trim()) {
       return { success: false, errors: { vin: "El VIN es requerido" } };
+    }
+    if (!orderData.orderNumber) {
+      return { 
+        success: false, 
+        message: "El número de orden es requerido" 
+      };
     }
 
     const vehicle = await prisma.vehicle.findUnique({
@@ -119,7 +151,7 @@ export async function savePreAuthorizationWithPhotos(
     // Buscar o crear cliente
     const customer = await findOrCreateCustomer(orderData.customerName);
 
-    // Buscar nombre de usuario
+    // Buscar nombre de usuario para notificaciones
     let creatorUsername = "Sistema";
     if (userId) {
       const user = await prisma.user.findUnique({
@@ -133,19 +165,17 @@ export async function savePreAuthorizationWithPhotos(
     const order = await prisma.$transaction(async (tx) => {
       let savedOrder;
 
-      // Actualizar borrador existente o crear nueva orden
+      // CASO A: Actualizar borrador existente
       if (draftId) {
         console.log(`🔄 Actualizando borrador ID: ${draftId}`);
 
-        // Eliminar tareas anteriores
+        // Limpieza previa (tareas y fotos viejas)
         await tx.orderTaskPart.deleteMany({
           where: { orderTask: { orderId: draftId } },
         });
         await tx.orderTask.deleteMany({
           where: { orderId: draftId },
         });
-
-        // Eliminar fotos anteriores
         await tx.orderPhoto.deleteMany({
           where: { orderId: draftId },
         });
@@ -154,6 +184,7 @@ export async function savePreAuthorizationWithPhotos(
         savedOrder = await tx.order.update({
           where: { id: draftId },
           data: {
+            orderNumber: Number(orderData.orderNumber), 
             draft: isDraft,
             customerId: customer.id,
             vehicleVin: orderData.vin,
@@ -164,7 +195,7 @@ export async function savePreAuthorizationWithPhotos(
           },
         });
 
-        // Agregar historial si se convierte a orden
+        // Historial si deja de ser borrador
         if (!isDraft) {
           await tx.orderStatusHistory.create({
             data: {
@@ -174,23 +205,14 @@ export async function savePreAuthorizationWithPhotos(
             },
           });
         }
+
       } else {
-        console.log("🆕 Creando nueva orden");
+        // CASO B: Crear nueva orden
+        console.log("🆕 Creando nueva orden manual");
 
-        // Determinar número de orden
-        let orderNumber = 99999;
-        if (!isDraft) {
-          const lastOrder = await tx.order.findFirst({
-            where: { draft: false },
-            orderBy: { orderNumber: "desc" },
-          });
-          orderNumber = lastOrder ? lastOrder.orderNumber + 1 : 100000;
-        }
-
-        // Crear nueva orden
         savedOrder = await tx.order.create({
           data: {
-            orderNumber,
+            orderNumber: Number(orderData.orderNumber),
             type: "PRE_AUTORIZACION",
             creationDate: new Date(),
             draft: isDraft,
@@ -215,7 +237,7 @@ export async function savePreAuthorizationWithPhotos(
         });
       }
 
-      // Crear tareas
+      // 2. Crear tareas
       const tasksToCreate = orderData.tasks?.filter(
         (task) =>
           task.description?.trim() ||
@@ -253,7 +275,7 @@ export async function savePreAuthorizationWithPhotos(
         }
       }
 
-      // Guardar fotos en OrderPhoto
+      // 3. Guardar fotos
       console.log("📸 Guardando fotos en base de datos");
 
       const photosToCreate = [
@@ -296,9 +318,11 @@ export async function savePreAuthorizationWithPhotos(
       });
     });
 
+    const toEmails = await getImporterEmailsForNotification();
     // Enviar notificación si no es borrador
     if (order && !isDraft) {
       triggerNewOrderNotification(
+        toEmails ?? [],
         order.orderNumber,
         order.vehicle.vin,
         creatorUsername,
@@ -306,7 +330,7 @@ export async function savePreAuthorizationWithPhotos(
       );
     }
 
-    // Mensaje según operación
+    // Mensaje de respuesta
     let message = "";
     if (draftId) {
       message = isDraft
@@ -325,6 +349,187 @@ export async function savePreAuthorizationWithPhotos(
     };
   } catch (error) {
     console.error("❌ Error en savePreAuthorizationWithPhotos:", error);
+    return {
+      success: false,
+      message: "❌ Error interno del servidor",
+    };
+  }
+}
+
+export async function updateObservedPreAuthorization(
+  orderId: number,
+  orderData: UpdateObservedOrderData,
+  userId: number
+): Promise<UpdateResult> {
+  try {
+    console.log("🔄 Actualizando orden observada ID:", orderId);
+
+    // 1. Validar que la orden existe y está OBSERVADA
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { company: true },
+    });
+
+    if (!existingOrder) {
+      return { success: false, message: "❌ Orden no encontrada" };
+    }
+
+    if (existingOrder.status !== "OBSERVADO") {
+      return { 
+        success: false, 
+        message: "❌ Solo se pueden editar órdenes en estado OBSERVADO" 
+      };
+    }
+
+    // 2. Validar que el usuario es el creador
+    if (existingOrder.userId !== userId) {
+      return { 
+        success: false, 
+        message: "❌ No tienes permiso para editar esta orden" 
+      };
+    }
+
+    // 3. Buscar o crear cliente
+    const customer = await findOrCreateCustomer(orderData.customerName);
+
+    // 4. Transacción para actualizar orden
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // Eliminar tareas anteriores
+      await tx.orderTaskPart.deleteMany({
+        where: { orderTask: { orderId } },
+      });
+      await tx.orderTask.deleteMany({
+        where: { orderId },
+      });
+
+      // Si hay nuevas fotos, eliminar las anteriores
+      if (orderData.photoUrls) {
+        await tx.orderPhoto.deleteMany({
+          where: { orderId },
+        });
+      }
+
+      // Actualizar la orden
+      const updated = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          orderNumber: orderData.orderNumber ? Number(orderData.orderNumber) : existingOrder.orderNumber,
+          customerId: customer.id,
+          status: "PENDIENTE", // ✅ Vuelve a PENDIENTE
+          internalStatusObservation: null, // ✅ Limpia la observación
+          actualMileage: Number(orderData.actualMileage) || 0,
+          diagnosis: orderData.diagnosis || "",
+          additionalObservations: orderData.additionalObservations || "",
+        },
+      });
+
+      // Crear nuevas tareas
+      const tasksToCreate = orderData.tasks?.filter(
+        (task) =>
+          task.description?.trim() ||
+          task.hoursCount?.trim() ||
+          task.parts[0]?.part?.code?.trim() ||
+          task.parts[0]?.part?.description?.trim()
+      ) || [];
+
+      for (const task of tasksToCreate) {
+        const createdTask = await tx.orderTask.create({
+          data: {
+            description: task.description || "",
+            hoursCount: Number(task.hoursCount) || 0,
+            orderId: updated.id,
+          },
+        });
+
+        for (const partItem of task.parts || []) {
+          if (partItem.part.code?.trim()) {
+            const part = await findOrCreatePart({
+              code: partItem.part.code,
+              description: partItem.part.description,
+              companyId: existingOrder.companyId,
+            });
+
+            await tx.orderTaskPart.create({
+              data: {
+                orderTaskId: createdTask.id,
+                partId: part.id,
+                quantity: 1,
+                description: part.description,
+              },
+            });
+          }
+        }
+      }
+
+      // Guardar nuevas fotos si existen
+      if (orderData.photoUrls) {
+        const photosToCreate = [];
+
+        if (orderData.photoUrls.licensePlate) {
+          photosToCreate.push({ type: "license_plate", url: orderData.photoUrls.licensePlate });
+        }
+        if (orderData.photoUrls.vinPlate) {
+          photosToCreate.push({ type: "vin_plate", url: orderData.photoUrls.vinPlate });
+        }
+        if (orderData.photoUrls.odometer) {
+          photosToCreate.push({ type: "odometer", url: orderData.photoUrls.odometer });
+        }
+
+        orderData.photoUrls.additional?.forEach((url, i) => {
+          photosToCreate.push({ type: `additional_${i + 1}`, url });
+        });
+
+        orderData.photoUrls.or?.forEach((url, i) => {
+          photosToCreate.push({ type: `or_${i + 1}`, url });
+        });
+
+        orderData.photoUrls.reportPdfs?.forEach((url, i) => {
+          photosToCreate.push({ type: `report_pdf_${i + 1}`, url });
+        });
+
+        if (photosToCreate.length > 0) {
+          await tx.orderPhoto.createMany({
+            data: photosToCreate.map((photo) => ({
+              orderId: updated.id,
+              type: photo.type,
+              url: photo.url,
+            })),
+          });
+        }
+      }
+
+      // Agregar al historial el cambio a PENDIENTE
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: updated.id,
+          status: "PENDIENTE",
+          changedAt: new Date(),
+          observation: "Orden modificada y reenviada",
+        },
+      });
+
+      // Retornar orden completa
+      return tx.order.findUnique({
+        where: { id: updated.id },
+        include: {
+          tasks: { include: { parts: { include: { part: true } } } },
+          customer: true,
+          vehicle: true,
+          photos: true,
+          statusHistory: true,
+        },
+      });
+    });
+
+    console.log("✅ Orden actualizada y reenviada correctamente");
+
+    return {
+      success: true,
+      order: updatedOrder,
+      message: "✅ Orden actualizada y reenviada correctamente",
+    };
+  } catch (error) {
+    console.error("❌ Error en updateObservedPreAuthorization:", error);
     return {
       success: false,
       message: "❌ Error interno del servidor",

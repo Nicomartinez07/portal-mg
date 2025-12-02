@@ -2,15 +2,15 @@
 
 // Primero, define los tipos base si los necesitas
 export type OrderType = "PRE_AUTORIZACION" | "RECLAMO" | "SERVICIO";
-export type OrderStatus = "PENDIENTE" | "AUTORIZADO" | "RECHAZADO" | "COMPLETADO" | "BORRADOR" | null;
+export type OrderStatus = "PENDIENTE" | "AUTORIZADO" | "RECHAZADO" | "COMPLETADO" | "OBSERVADO"  | "BORRADOR" | null;
 export type InternalStatus =
   |  null
-  | "PENDIENTE DE RECLAMO"
-  | "RECLAMADO EN ORIGEN"
-  | "APROBADO EN ORIGEN"
-  | "RECHAZADO EN ORIGEN"
-  | "COBRADO"
-  | "NO RECLAMABLE A ORIGEN";
+  | "PENDIENTE_RECLAMO"
+  | "RECLAMO_EN_ORIGEN"
+  | "APROBADO_EN_ORIGEN"
+  | "RECHAZADO_EN_ORIGEN"
+  | "CARGADO"
+  | "NO_RECLAMABLE";
 
 // Interfaces para los modelos relacionados
 export interface Customer {
@@ -26,7 +26,7 @@ export interface Company {
 
 export interface User {
   id: number;
-  username: string; // O name, según lo que uses en tu modelo
+  username: string;
 }
 
 export interface Warranty {
@@ -38,7 +38,7 @@ export interface Vehicle {
   brand: string;
   model: string;
   engineNumber: string | null;
-  warranty: Warranty | null; // Nullable porque puede no tener garantía
+  warranty: Warranty | null;
 }
 
 export interface OrderPhoto {
@@ -56,7 +56,7 @@ export interface OrderTaskPart {
   id: number;
   quantity: number;
   description: string | null;
-  part: Part; // La parte del repuesto
+  part: Part;
 }
 
 export interface OrderTask {
@@ -75,7 +75,7 @@ export interface OrderStatusHistory {
 
 // Interfaz principal de la Orden, reflejando la consulta de Prisma
 export interface Order {
-  preAuthorizationNumber: string | null; // Nuevo campo agregado
+  preAuthorizationNumber: string | null;
   id: number;
   creationDate: string | Date;
   orderNumber: number;
@@ -92,6 +92,10 @@ export interface Order {
   laborRecovery: number | null;
   partsRecovery: number | null;
 
+  // ✅ AGREGADO: Campo userId para identificar al creador
+  userId?: number | null;
+  companyId: number;
+
   // Relaciones incluidas
   customer: Customer;
   company: Company;
@@ -104,7 +108,6 @@ export interface Order {
 
 // TIPOS PARA DRAFTS (BORRADORES)
 
-// Base común para todos los drafts
 export interface BaseDraft {
   id?: number;
   creationDate: string | Date;
@@ -113,7 +116,6 @@ export interface BaseDraft {
   status?: OrderStatus;
   draft: true;
   
-  // Campos comunes que pueden existir en todos los drafts
   customerName?: string;
   vin?: string;
   warrantyActivation?: string;
@@ -125,14 +127,12 @@ export interface BaseDraft {
   preAuthorizationNumber: string | null
   service?: string | null;
   
-  // Archivos (pueden ser comunes)
   badgePhoto?: File | null | string;
   vinPhoto?: File | null | string;
   milagePhoto?: File | null | string;
   aditionalPartsPhoto?: File | null | string;
   orPhoto?: File | null | string;
   
-  // Relaciones que pueden venir del backend
   customer?: Customer;
   vehicle?: Vehicle;
   user?: User;
@@ -141,29 +141,23 @@ export interface BaseDraft {
   photos?: OrderPhoto[];
 }
 
-// Draft específico para Pre-Autorización
 export interface PreAuthorizationDraft extends BaseDraft {
   type: "PRE_AUTORIZACION";
   preAuthorizationNumber: string | null;
 }
 
-// Draft específico para Reclamo
 export interface ClaimDraft extends BaseDraft {
   type: "RECLAMO";
   claimNumber?: string;
-  // ... otros campos específicos de reclamo que necesites
 }
 
-// Draft específico para Servicio
 export interface ServiceDraft extends BaseDraft {
   type: "SERVICIO";
   service: string | null;
 }
 
-// Tipo unión para todos los drafts
 export type Draft = PreAuthorizationDraft | ClaimDraft | ServiceDraft;
 
-// Tipo para el formulario de creación (puede ser usado tanto para orders como drafts)
 export interface CreateOrderData {
   creationDate?: string;
   orderNumber: string;
@@ -182,7 +176,6 @@ export interface CreateOrderData {
       }
     }[];
   }[];
-  // Campos para archivos
   badgePhoto?: File | null;
   vinPhoto?: File | null;
   milagePhoto?: File | null;
@@ -203,7 +196,6 @@ export interface CreateServiceResult {
   message?: string;
   errors?: Record<string, string>;
 }
-
 
 export type Certificate = {
   id: number;
@@ -240,7 +232,6 @@ export type Certificate = {
   };
 };
 
-// Tipo para los filtros de búsqueda de drafts
 export interface DraftFilters {
   type?: OrderType;
   status?: OrderStatus;

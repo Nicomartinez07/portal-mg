@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Portal MG",
-  description: "Portal para consecionario de autos MG",
+  description: "Portal para concesionario de autos MG",
 };
 
 export default function RootLayout({

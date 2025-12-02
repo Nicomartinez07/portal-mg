@@ -8,6 +8,10 @@ import { uploadClaimPhotos } from "@/lib/uploadClaimPhotos";
 import { useUser } from "@/hooks/useUser";
 import type { Draft } from "@/app/types";
 
+import {
+  claimDraftSchema,
+  claimFinalSchema,
+} from "@/schemas/claim";
 // Importar componentes de upload
 import ImageUploadField from "@/components/awss3/ImageUploadField";
 import MultipleMediaUploadField from "@/components/awss3/MultipleMediaUploadField";
@@ -152,14 +156,19 @@ export default function InsertClaimModal({
       [name]: value,
     }));
 
+    // Limpiar error del campo al escribir
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const handleSearchVehicle = async () => {
     if (!formData.vin) {
-      alert("Ingrese un VIN primero");
+      setErrors({ vin: "Ingrese un VIN primero" });
       return;
     }
 
@@ -176,13 +185,13 @@ export default function InsertClaimModal({
         engineNumber: v.engineNumber || "",
       }));
     } else {
-      alert(result.message);
+      setErrors({ vin: result.message || "Vehículo no encontrado" });
     }
   };
 
   const handleSearchPreAuthorization = async () => {
     if (!formData.preAuthorizationNumber) {
-      alert("Ingrese un ID de pre-autorización primero");
+      setErrors({ preAuthorizationNumber: "Ingrese un ID de pre-autorización primero" });
       return;
     }
 
@@ -193,6 +202,7 @@ export default function InsertClaimModal({
     if (result.success && result.data) {
       setFormData((prev) => ({
         ...prev,
+        orderNumber: result.data!.orderNumber?.toString() || "",
         customerName: result.data!.customerName,
         vin: result.data!.vin,
         model: result.data!.model,
@@ -214,7 +224,7 @@ export default function InsertClaimModal({
 
       alert(result.message);
     } else {
-      alert(result.message);
+      setErrors({ preAuthorizationNumber: result.message || "Pre-autorización no encontrada" });
     }
   };
 
@@ -263,20 +273,35 @@ export default function InsertClaimModal({
     onClose();
   };
 
-  // Validar fotos antes de enviar
-  const validatePhotos = (): boolean => {
-    if (!licensePlatePhoto) {
-      alert("❌ Debes subir la foto de patente");
+  const validateForm = (isDraft: boolean) => {
+    const dataToValidate = {
+      ...formData,
+      licensePlatePhoto,
+      vinPlatePhoto,
+      odometerPhoto,
+      customerSignaturePhoto,
+      additionalPhotos,
+      orPhotos,
+      reportPdfs,
+    };
+
+    // Usar schema según si es borrador o no
+    const schema = isDraft ? claimDraftSchema : claimFinalSchema;
+    const result = schema.safeParse(dataToValidate);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      
+      result.error.issues.forEach((err) => {
+        const path = err.path.join(".");
+        fieldErrors[path] = err.message;
+      });
+
+      setErrors(fieldErrors);
       return false;
     }
-    if (!vinPlatePhoto) {
-      alert("❌ Debes subir la foto de VIN");
-      return false;
-    }
-    if (!odometerPhoto) {
-      alert("❌ Debes subir la foto de kilómetros");
-      return false;
-    }
+
+    setErrors({});
     return true;
   };
 
@@ -284,40 +309,22 @@ export default function InsertClaimModal({
     e.preventDefault();
 
     if (!user) {
-      alert("❌ No se pudo obtener la información del usuario");
+      setErrors({ general: "No se pudo obtener la información del usuario" });
       return;
     }
 
-    // Validar fotos obligatorias
-    if (!validatePhotos()) {
-      return;
-    }
-
-    // Validar tareas
-    const validTasks = formData.tasks.filter(
-      (task) =>
-        task.description.trim() !== "" &&
-        task.hoursCount.trim() !== "" &&
-        task.parts[0].part.code.trim() !== ""
-    );
-
-    if (validTasks.length === 0) {
-      alert(
-        "❌ Debe completar al menos una tarea con: descripción, horas y código de repuesto"
-      );
+    // Validar con schema estricto
+    if (!validateForm(false)) {
       return;
     }
 
     setIsSubmitting(true);
-    setErrors({});
 
     try {
-      // 1. Generar ID temporal para subir fotos
       const tempOrderId = draft?.id || Date.now();
 
       console.log("📤 Paso 1: Subiendo fotos a S3...");
 
-      // 2. Subir todas las fotos a S3
       const uploadResult = await uploadClaimPhotos(tempOrderId, {
         licensePlatePhoto: licensePlatePhoto!,
         vinPlatePhoto: vinPlatePhoto!,
@@ -335,11 +342,16 @@ export default function InsertClaimModal({
       console.log("✅ Fotos subidas exitosamente");
       console.log("💾 Paso 2: Guardando reclamo en base de datos...");
 
-      // 3. Preparar datos del reclamo
       const photoUrls = uploadResult.photoUrls!;
       const dataToSubmit = {
         ...formData,
-        tasks: validTasks,
+        tasks: formData.tasks.filter(
+          (task) =>
+            task.description.trim() !== "" ||
+            task.hoursCount.trim() !== "" ||
+            task.parts[0].part.code.trim() !== "" ||
+            task.parts[0].part.description.trim() !== ""
+        ),
         photoUrls: {
           licensePlate: photoUrls.licensePlate?.url || "",
           vinPlate: photoUrls.vinPlate?.url || "",
@@ -351,12 +363,11 @@ export default function InsertClaimModal({
         },
       };
 
-      // 4. Guardar reclamo con fotos
       const result = await saveClaimWithPhotos(
         dataToSubmit,
         user.companyId,
         user.userId,
-        false, // No es borrador
+        false,
         draft?.id
       );
 
@@ -368,17 +379,13 @@ export default function InsertClaimModal({
         );
         handleClose();
       } else {
-        if (result.errors) {
-          setErrors(result.errors);
-        }
-        alert("⚠️ " + result.message);
+        setErrors({ general: result.message || "Error al guardar el reclamo" });
       }
     } catch (error) {
       console.error(error);
-      alert(
-        "❌ Error: " +
-          (error instanceof Error ? error.message : "Error desconocido")
-      );
+      setErrors({
+        general: error instanceof Error ? error.message : "Error desconocido",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -388,21 +395,18 @@ export default function InsertClaimModal({
     e.preventDefault();
 
     if (!user) {
-      alert("❌ No se pudo obtener la información del usuario");
+      setErrors({ general: "No se pudo obtener la información del usuario" });
       return;
     }
 
-    // Para borradores, validación mínima
-    if (!formData.vin?.trim() || !formData.customerName?.trim()) {
-      alert("❌ Para guardar borrador se requiere: VIN y Nombre del cliente");
+    // Validar con schema permisivo
+    if (!validateForm(true)) {
       return;
     }
 
     setIsSubmitting(true);
-    setErrors({});
 
     try {
-      // Si hay fotos, subirlas
       let photoUrls: any = {
         licensePlate: "",
         vinPlate: "",
@@ -428,7 +432,16 @@ export default function InsertClaimModal({
         });
 
         if (uploadResult.success) {
-          photoUrls = uploadResult.photoUrls!;
+          const urls = uploadResult.photoUrls!;
+          photoUrls = {
+            licensePlate: urls.licensePlate?.url || "",
+            vinPlate: urls.vinPlate?.url || "",
+            odometer: urls.odometer?.url || "",
+            customerSignature: urls.customerSignature?.url,
+            additional: urls.additional?.map(p => p?.url || "") || [],
+            or: urls.or?.map(p => p?.url || "") || [],
+            reportPdfs: urls.reportPdfs?.map(p => p?.url || "") || [],
+          };
         }
       }
 
@@ -448,7 +461,7 @@ export default function InsertClaimModal({
         draftData,
         user.companyId,
         user.userId,
-        true, // Es borrador
+        true,
         draft?.id
       );
 
@@ -460,14 +473,11 @@ export default function InsertClaimModal({
         );
         handleClose();
       } else {
-        if (result.errors) {
-          setErrors(result.errors);
-        }
-        alert("⚠️ " + result.message);
+        setErrors({ general: result.message || "Error al guardar borrador" });
       }
     } catch (error) {
       console.error(error);
-      alert("❌ Error al guardar borrador");
+      setErrors({ general: "Error al guardar borrador" });
     } finally {
       setIsSubmitting(false);
     }
@@ -496,7 +506,12 @@ export default function InsertClaimModal({
             ×
           </button>
         </div>
-
+        {/* Error general */}
+        {errors.general && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            {errors.general}
+          </div>
+        )}
         {/* Contenido scrollable */}
         <div className="overflow-y-auto flex-1 p-6">
           <form onSubmit={handleSubmitOrder}>
@@ -516,23 +531,19 @@ export default function InsertClaimModal({
               {/* OR interna */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Or interna
+                  Or interna <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    name="orderNumber"
-                    value={formData.orderNumber}
-                    onChange={handleChange}
-                    placeholder="Ingrese el numero interno de orden de reparacion"
-                    className={`border rounded px-2 py-1 w-full ${
-                      errors.orderNumber ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                </div>
+                <input
+                  name="orderNumber"
+                  placeholder="Ingrese el numero interno de orden"
+                  value={formData.orderNumber}
+                  onChange={handleChange}
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.orderNumber ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
                 {errors.orderNumber && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.orderNumber}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.orderNumber}</p>
                 )}
               </div>
 
@@ -722,6 +733,14 @@ export default function InsertClaimModal({
                 </button>
               </div>
 
+
+              {/* Error general de tareas */}
+              {errors.tasks && (
+                <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-xs">
+                  {errors.tasks}
+                </div>
+              )}
+
               {formData.tasks.length > 0 ? (
                 <div className="overflow-x-auto border border-gray-300 rounded">
                   <table className="min-w-full">
@@ -754,9 +773,16 @@ export default function InsertClaimModal({
                                 )
                               }
                               placeholder="Descripción de la tarea"
-                              className="w-full border rounded px-2 py-1 text-xs"
+                              className={`w-full border rounded px-2 py-1 text-xs ${
+                                errors[`tasks.${index}.description`] ? "border-red-500" : ""
+                              }`}
                               disabled={isSubmitting}
                             />
+                            {errors[`tasks.${index}.description`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`tasks.${index}.description`]}
+                              </p>
+                            )}
                           </td>
                           <td className="px-3 py-2 border">
                             <input
@@ -770,9 +796,16 @@ export default function InsertClaimModal({
                                 )
                               }
                               placeholder="0"
-                              className="w-full border rounded px-2 py-1 text-xs text-center"
+                              className={`w-full border rounded px-2 py-1 text-xs text-center ${
+                                errors[`tasks.${index}.hoursCount`] ? "border-red-500" : ""
+                              }`}
                               disabled={isSubmitting}
                             />
+                            {errors[`tasks.${index}.hoursCount`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`tasks.${index}.hoursCount`]}
+                              </p>
+                            )}
                           </td>
                           <td className="px-3 py-2 border">
                             <input
@@ -785,9 +818,16 @@ export default function InsertClaimModal({
                                 )
                               }
                               placeholder="Código repuesto"
-                              className="w-full border rounded px-2 py-1 text-xs text-center"
+                              className={`w-full border rounded px-2 py-1 text-xs text-center ${
+                                errors[`tasks.${index}.parts.0.part.code`] ? "border-red-500" : ""
+                              }`}
                               disabled={isSubmitting}
                             />
+                            {errors[`tasks.${index}.parts.0.part.code`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`tasks.${index}.parts.0.part.code`]}
+                              </p>
+                            )}
                           </td>
                           <td className="px-3 py-2 border">
                             <input
@@ -832,44 +872,80 @@ export default function InsertClaimModal({
             {/* ========== NUEVA SECCIÓN DE FOTOS ========== */}
             <div className="mt-8 pt-6 border-t">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                📸 Fotos y Documentos
+                Fotos y Documentos
               </h3>
 
               <div className="space-y-6">
                 {/* Fotos obligatorias */}
-                <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-                  <p className="text-sm text-blue-800 font-medium">
-                    Fotos Obligatorias *
-                  </p>
+                <div className=" p-4 rounded-lg space-y-4">
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Patente"
+                      value={licensePlatePhoto}
+                      onChange={(file) => {
+                        setLicensePlatePhoto(file);
+                        if (errors.licensePlatePhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.licensePlatePhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.licensePlatePhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.licensePlatePhoto}
+                      </p>
+                    )}
+                  </div>
 
-                  <ImageUploadField
-                    label="Foto de Patente"
-                    value={licensePlatePhoto}
-                    onChange={setLicensePlatePhoto}
-                    required
-                  />
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Chapa VIN"
+                      value={vinPlatePhoto}
+                      onChange={(file) => {
+                        setVinPlatePhoto(file);
+                        if (errors.vinPlatePhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.vinPlatePhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.vinPlatePhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.vinPlatePhoto}
+                      </p>
+                    )}
+                  </div>
 
-                  <ImageUploadField
-                    label="Foto de Chapa VIN"
-                    value={vinPlatePhoto}
-                    onChange={setVinPlatePhoto}
-                    required
-                  />
-
-                  <ImageUploadField
-                    label="Foto de Kilómetros"
-                    value={odometerPhoto}
-                    onChange={setOdometerPhoto}
-                    required
-                  />
-                </div>
-
-                {/* Fotos opcionales */}
-                <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                  <p className="text-sm text-gray-700 font-medium">
-                    Material Adicional (Opcional)
-                  </p>
-
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Kilómetros"
+                      value={odometerPhoto}
+                      onChange={(file) => {
+                        setOdometerPhoto(file);
+                        if (errors.odometerPhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.odometerPhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.odometerPhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.odometerPhoto}
+                      </p>
+                    )}
+                  </div>
                   {/* Firma del cliente */}
                   <ImageUploadField
                     label="Foto Firma Conformidad Cliente"

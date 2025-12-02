@@ -86,9 +86,6 @@ export async function createUser(data: {
     });
 }
 
-
-
-// Actualizar usuario
 export async function updateUser(
   id: number,
   data: {
@@ -104,27 +101,41 @@ export async function updateUser(
 ) {
   const updateData: any = {};
 
+  // ... (lógica de username, email, password igual que antes) ...
   if (data.username) updateData.username = data.username;
   if (data.email) updateData.email = data.email;
-  if (data.notifications !== undefined)
-    updateData.notifications = data.notifications;
-
+  if (data.notifications !== undefined) updateData.notifications = data.notifications;
   if (data.password) {
     updateData.password = await bcrypt.hash(data.password, 10);
   }
 
+  // --- AQUÍ ESTÁ EL CAMBIO CRÍTICO ---
   if (data.roles) {
-    await prisma.userRole.deleteMany({ where: { userId: id } });
+    // 1. Borramos SOLO Taller y Concesionario. 
+    // El filtro 'role: { name: ... }' protege al Importador.
+    await prisma.userRole.deleteMany({
+      where: {
+        userId: id,
+        role: {
+          name: { in: ["WORKSHOP", "DEALER"] } 
+        }
+      }
+    });
 
+    // 2. Preparamos los que hay que crear de nuevo
     const rolesToCreate = [];
+    
     if (data.roles.taller) {
-      rolesToCreate.push({ role: { connect: { name: "Taller" } } });
+      rolesToCreate.push({ role: { connect: { name: "WORKSHOP" } } });
     }
     if (data.roles.concesionario) {
-      rolesToCreate.push({ role: { connect: { name: "Concesionario" } } });
+      rolesToCreate.push({ role: { connect: { name: "DEALER" } } });
     }
 
-    updateData.roles = { create: rolesToCreate };
+    // 3. Si hay roles para agregar, los agregamos a la actualización
+    if (rolesToCreate.length > 0) {
+      updateData.roles = { create: rolesToCreate };
+    }
   }
 
   return prisma.user.update({

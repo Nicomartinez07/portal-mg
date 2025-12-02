@@ -12,6 +12,7 @@ enum OrderStatus {
   AUTORIZADO
   RECHAZADO
   COMPLETADO
+  OBSERVADO
   BORRADOR
   null
 }
@@ -169,7 +170,7 @@ model Warranty {
 // =============== ORDENES =================
 model Order {
   id                     Int        @id @default(autoincrement())
-  orderNumber            Int @default(99999)
+  orderNumber            Int 
   type                   OrderType
   creationDate           DateTime
   draft                  Boolean?

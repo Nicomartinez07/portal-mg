@@ -94,7 +94,7 @@ export function NewUserModal({ onClose, onSuccess }: NewUserModalProps) {
               <label className="block font-medium mb-1">Nombre</label>
               <input
                 type="text"
-                name="name"
+                name="username"
                 value={form.username}
                 onChange={handleInputChange}
                 required

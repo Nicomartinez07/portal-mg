@@ -46,10 +46,17 @@ const roleAccessList: Record<string, string[]> = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // --- EVITAR PROTEGER ARCHIVOS ESTÁTICOS ---
+  if (
+    pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico|txt|pdf)$/i)
+  ) {
+    return NextResponse.next();
+  }
+
   // 5. Define tus rutas públicas (no requieren login)
   const publicRoutes = [
     '/login',
-    '/register', // Si tienes
+    '/register', // Si tienes  
   ];
 
   // 6. Obtener el token de la cookie

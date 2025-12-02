@@ -6,12 +6,15 @@ import { savePreAuthorizationWithPhotos } from "@/app/(dashboard)/ordenes/insert
 import { uploadOrderPhotos } from "@/lib/uploadOrderPhotos";
 import { useUser } from "@/hooks/useUser";
 import type { Draft } from "@/app/types";
+import { 
+  preAuthorizationDraftSchema, 
+  preAuthorizationFinalSchema 
+} from "@/schemas/preAuthorization";
 
 // Importar componentes de upload
 import ImageUploadField from "@/components/awss3/ImageUploadField";
 import MultipleMediaUploadField from "@/components/awss3/MultipleMediaUploadField";
 import PDFUploadField from "@/components/awss3/PDFUploadField";
-
 
 interface InsertPreAuthorizationModalProps {
   onClose: () => void;
@@ -110,7 +113,7 @@ export default function InsertPreAuthorizationModal({
 
       setFormData(draftFormData);
       
-      // Limpiar fotos (no se pueden cargar desde draft)
+      // Limpiar fotos
       setLicensePlatePhoto(null);
       setVinPlatePhoto(null);
       setOdometerPhoto(null);
@@ -146,14 +149,19 @@ export default function InsertPreAuthorizationModal({
       [name]: value,
     }));
 
+    // Limpiar error del campo al escribir
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const handleSearchVehicle = async () => {
     if (!formData.vin) {
-      alert("Ingrese un VIN primero");
+      setErrors({ vin: "Ingrese un VIN primero" });
       return;
     }
 
@@ -170,7 +178,7 @@ export default function InsertPreAuthorizationModal({
         engineNumber: v.engineNumber || "",
       }));
     } else {
-      alert(result.message);
+      setErrors({ vin: result.message || "Vehículo no encontrado" });
     }
   };
 
@@ -219,46 +227,59 @@ export default function InsertPreAuthorizationModal({
     onClose();
   };
 
-  // Validar fotos antes de enviar
-  const validatePhotos = (): boolean => {
-    if (!licensePlatePhoto) {
-      alert("❌ Debes subir la foto de patente");
+  // ==================== VALIDACIÓN CON ZOD ====================
+  const validateForm = (isDraft: boolean) => {
+    const dataToValidate = {
+      ...formData,
+      licensePlatePhoto,
+      vinPlatePhoto,
+      odometerPhoto,
+      additionalPhotos,
+      orPhotos,
+      reportPdfs,
+    };
+
+    // Usar schema según si es borrador o no
+    const schema = isDraft ? preAuthorizationDraftSchema : preAuthorizationFinalSchema;
+    const result = schema.safeParse(dataToValidate);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      
+      result.error.issues.forEach((err) => {
+        const path = err.path.join(".");
+        fieldErrors[path] = err.message;
+      });
+
+      setErrors(fieldErrors);
       return false;
     }
-    if (!vinPlatePhoto) {
-      alert("❌ Debes subir la foto de VIN");
-      return false;
-    }
-    if (!odometerPhoto) {
-      alert("❌ Debes subir la foto de kilómetros");
-      return false;
-    }
+
+    setErrors({});
     return true;
   };
 
+  // ==================== SUBMIT ORDEN FINAL ====================
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      alert("❌ No se pudo obtener la información del usuario");
+      setErrors({ general: "No se pudo obtener la información del usuario" });
       return;
     }
 
-    // Validar fotos obligatorias
-    if (!validatePhotos()) {
+    // Validar con schema estricto
+    if (!validateForm(false)) {
       return;
     }
 
     setIsSubmitting(true);
-    setErrors({});
 
     try {
-      // 1. Generar ID temporal para subir fotos (si es nueva orden)
       const tempOrderId = draft?.id || Date.now();
 
       console.log("📤 Paso 1: Subiendo fotos a S3...");
 
-      // 2. Subir todas las fotos a S3
       const uploadResult = await uploadOrderPhotos(tempOrderId, {
         licensePlatePhoto: licensePlatePhoto!,
         vinPlatePhoto: vinPlatePhoto!,
@@ -275,7 +296,6 @@ export default function InsertPreAuthorizationModal({
       console.log("✅ Fotos subidas exitosamente");
       console.log("💾 Paso 2: Guardando orden en base de datos...");
 
-      // 3. Preparar datos de la orden
       const dataToSubmit = {
         ...formData,
         tasks: formData.tasks.filter(
@@ -288,12 +308,11 @@ export default function InsertPreAuthorizationModal({
         photoUrls: uploadResult.photoUrls!,
       };
 
-      // 4. Guardar orden con fotos
       const result = await savePreAuthorizationWithPhotos(
         dataToSubmit,
         user.companyId,
         user.userId,
-        false, // No es borrador
+        false,
         draft?.id
       );
 
@@ -307,33 +326,35 @@ export default function InsertPreAuthorizationModal({
         );
         handleClose();
       } else {
-        alert("⚠️ " + result.message);
+        setErrors({ general: result.message || "Error al guardar la orden" });
       }
     } catch (error) {
       console.error(error);
-      alert(
-        "❌ Error: " +
-          (error instanceof Error ? error.message : "Error desconocido")
-      );
+      setErrors({
+        general: error instanceof Error ? error.message : "Error desconocido",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ==================== GUARDAR BORRADOR ====================
   const handleDraftSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      alert("❌ No se pudo obtener la información del usuario");
+      setErrors({ general: "No se pudo obtener la información del usuario" });
       return;
     }
 
-    // Los borradores pueden guardarse sin fotos
+    // Validar con schema permisivo
+    if (!validateForm(true)) {
+      return;
+    }
+
     setIsSubmitting(true);
-    setErrors({});
 
     try {
-      // Si hay fotos, subirlas
       let photoUrls: {
         licensePlate: string;
         vinPlate: string;
@@ -350,6 +371,7 @@ export default function InsertPreAuthorizationModal({
         reportPdfs: [],
       };
 
+      // Si hay fotos, subirlas
       if (licensePlatePhoto && vinPlatePhoto && odometerPhoto) {
         console.log("📤 Subiendo fotos del borrador...");
         
@@ -384,7 +406,7 @@ export default function InsertPreAuthorizationModal({
         draftData,
         user.companyId,
         user.userId,
-        true, // Es borrador
+        true,
         draft?.id
       );
 
@@ -394,11 +416,11 @@ export default function InsertPreAuthorizationModal({
         );
         handleClose();
       } else {
-        alert("⚠️ " + result.message);
+        setErrors({ general: result.message || "Error al guardar borrador" });
       }
     } catch (error) {
       console.error(error);
-      alert("❌ Error al guardar borrador");
+      setErrors({ general: "Error al guardar borrador" });
     } finally {
       setIsSubmitting(false);
     }
@@ -433,7 +455,14 @@ export default function InsertPreAuthorizationModal({
         {/* Contenido scrollable */}
         <div className="overflow-y-auto flex-1 p-6">
           <form onSubmit={handleSubmitOrder}>
-            {/* Campos del formulario  */}
+            {/* Error general */}
+            {errors.general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {errors.general}
+              </div>
+            )}
+
+            {/* Campos del formulario */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
               <div>
@@ -449,20 +478,25 @@ export default function InsertPreAuthorizationModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Or interna
+                  Or interna <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="orderNumber"
                   value={formData.orderNumber}
                   onChange={handleChange}
                   placeholder="Ingrese el numero interno de orden"
-                  className="border rounded px-2 py-1 w-full"
+                  className={`border rounded px-2 py-1 w-full ${
+                    errors.orderNumber ? "border-red-500" : ""
+                  }`}
                 />
+                {errors.orderNumber && (
+                  <p className="text-red-500 text-xs mt-1">{errors.orderNumber}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Nombre Cliente
+                  Nombre Cliente <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="customerName"
@@ -473,287 +507,357 @@ export default function InsertPreAuthorizationModal({
                     errors.customerName ? "border-red-500" : ""
                   }`}
                 />
+                {errors.customerName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.customerName}</p>
+                )}
               </div>
 
               {/* VIN + Buscar */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                VIN
-              </label>
-              <div className="flex gap-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  VIN <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    name="vin"
+                    value={formData.vin}
+                    onChange={handleChange}
+                    placeholder="Ingrese VIN del vehículo"
+                    className={`border rounded px-2 py-1 w-full ${
+                      errors.vin ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearchVehicle}
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                    disabled={isSubmitting}
+                  >
+                    Buscar
+                  </button>
+                </div>
+                {errors.vin && (
+                  <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Activación Garantía
+                </label>
                 <input
-                  name="vin"
-                  value={formData.vin}
+                  value={formData.warrantyActivation}
+                  readOnly
+                  className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Nro. Motor
+                </label>
+                <input
+                  value={formData.engineNumber}
+                  readOnly
+                  className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Modelo
+                </label>
+                <input
+                  value={formData.model}
+                  readOnly
+                  className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Kilometraje Real del vehiculo <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="actualMileage"
+                  placeholder="Ingrese kilometraje"
+                  value={formData.actualMileage}
                   onChange={handleChange}
-                  placeholder="Ingrese VIN del vehículo"
                   className={`border rounded px-2 py-1 w-full ${
-                    errors.vin ? "border-red-500" : "border-gray-300"
+                    errors.actualMileage ? "border-red-500" : "border-gray-300"
                   }`}
                 />
+                {errors.actualMileage && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.actualMileage}
+                  </p>
+                )}
+              </div>
+
+              {/* Diagnóstico */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Diagnóstico <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="diagnosis"
+                  placeholder="Ingrese el diagnóstico"
+                  value={formData.diagnosis}
+                  onChange={handleChange}
+                  rows={3}
+                  className={`border rounded px-2 py-1 w-full resize-none ${
+                    errors.diagnosis ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.diagnosis && (
+                  <p className="text-red-500 text-xs mt-1">{errors.diagnosis}</p>
+                )}
+              </div>
+
+              {/* Observaciones */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Observaciones adicionales
+                </label>
+                <textarea
+                  name="additionalObservations"
+                  placeholder="Ingrese observaciones"
+                  value={formData.additionalObservations}
+                  onChange={handleChange}
+                  rows={3}
+                  className="border rounded px-2 py-1 w-full resize-none"
+                />
+              </div>
+            </div>
+
+            {/* SECCIÓN DE TAREAS */}
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-gray-700">
+                  Tareas <span className="text-red-500">*</span>
+                </h3>
                 <button
                   type="button"
-                  onClick={handleSearchVehicle}
-                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                  onClick={handleAddTask}
+                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center gap-1 text-xs"
                   disabled={isSubmitting}
                 >
-                  Buscar
+                  <FaPlus className="w-3 h-3" /> Agregar Tarea
                 </button>
               </div>
-              {errors.vin && (
-                <p className="text-red-500 text-xs mt-1">{errors.vin}</p>
+
+              {/* Error general de tareas */}
+              {errors.tasks && (
+                <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-xs">
+                  {errors.tasks}
+                </div>
               )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Activación Garantía
-              </label>
-              <input
-                value={formData.warrantyActivation}
-                readOnly
-                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nro. Motor
-              </label>
-              <input
-                value={formData.engineNumber}
-                readOnly
-                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Modelo
-              </label>
-              <input
-                value={formData.model}
-                readOnly
-                className="border rounded px-2 py-1 w-full bg-gray-100 cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Kilometraje Real del vehiculo
-              </label>
-              <input
-                name="actualMileage"
-                placeholder="Ingrese kilometraje"
-                value={formData.actualMileage}
-                onChange={handleChange}
-                className={`border rounded px-2 py-1 w-full ${
-                  errors.actualMileage ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.actualMileage && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.actualMileage}
-                </p>
-              )}
-            </div>
-
-            {/* Diagnóstico */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Diagnóstico
-              </label>
-              <textarea
-                name="diagnosis"
-                placeholder="Ingrese el diagnóstico"
-                value={formData.diagnosis}
-                onChange={handleChange}
-                rows={3}
-                className={`border rounded px-2 py-1 w-full resize-none ${
-                  errors.diagnosis ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.diagnosis && (
-                <p className="text-red-500 text-xs mt-1">{errors.diagnosis}</p>
-              )}
-            </div>
-
-            {/* Observaciones */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Observaciones adicionales
-              </label>
-              <textarea
-                name="additionalObservations"
-                placeholder="Ingrese observaciones"
-                value={formData.additionalObservations}
-                onChange={handleChange}
-                rows={3}
-                className="border rounded px-2 py-1 w-full resize-none"
-              />
-            </div>
-          </div>
-
-          {/* SECCIÓN DE TAREAS */}
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-gray-700">Tareas</h3>
-              <button
-                type="button"
-                onClick={handleAddTask}
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 flex items-center gap-1 text-xs"
-                disabled={isSubmitting}
-              >
-                <FaPlus className="w-3 h-3" /> Agregar Tarea
-              </button>
-            </div>
-
-            {formData.tasks.length > 0 ? (
-              <div className="overflow-x-auto border border-gray-300 rounded">
-                <table className="min-w-full">
-                  <thead>
-                    <tr className="bg-gray-100 text-gray-700 text-left text-xs">
-                      <th className="px-3 py-2 border">Tarea</th>
-                      <th className="px-3 py-2 border text-center w-24">
-                        Cant. horas
-                      </th>
-                      <th className="px-3 py-2 border text-center w-32">
-                        Código repuesto
-                      </th>
-                      <th className="px-3 py-2 border">Descripción repuesto</th>
-                      <th className="px-3 py-2 border text-center w-16">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.tasks.map((task, index) => (
-                      <tr key={index} className="odd:bg-white even:bg-gray-50">
-                        <td className="px-3 py-2 border">
-                          <input
-                            value={task.description}
-                            onChange={(e) =>
-                              handleTaskChange(
-                                index,
-                                "description",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Descripción de la tarea"
-                            className="w-full border rounded px-2 py-1 text-xs"
-                            disabled={isSubmitting}
-                          />
-                        </td>
-                        <td className="px-3 py-2 border">
-                          <input
-                            type="number"
-                            value={task.hoursCount}
-                            onChange={(e) =>
-                              handleTaskChange(
-                                index,
-                                "hoursCount",
-                                e.target.value
-                              )
-                            }
-                            placeholder="0"
-                            className="w-full border rounded px-2 py-1 text-xs text-center"
-                            disabled={isSubmitting}
-                          />
-                        </td>
-                        <td className="px-3 py-2 border">
-                          <input
-                            value={task.parts[0].part.code}
-                            onChange={(e) =>
-                              handleTaskChange(
-                                index,
-                                "partCode",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Código repuesto"
-                            className="w-full border rounded px-2 py-1 text-xs text-center"
-                            disabled={isSubmitting}
-                          />
-                        </td>
-                        <td className="px-3 py-2 border">
-                          <input
-                            value={task.parts[0].part.description}
-                            onChange={(e) =>
-                              handleTaskChange(
-                                index,
-                                "partDescription",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Descripción del repuesto"
-                            className="w-full border rounded px-2 py-1 text-xs"
-                            disabled={isSubmitting}
-                          />
-                        </td>
-                        <td className="px-3 py-2 border text-center">
-                          {formData.tasks.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTask(index)}
-                              className="text-red-500 hover:text-red-700"
-                              title="Eliminar tarea"
-                              disabled={isSubmitting}
-                            >
-                              <FaTrash className="w-3 h-3" />
-                            </button>
-                          )}
-                        </td>
+              {formData.tasks.length > 0 ? (
+                <div className="overflow-x-auto border border-gray-300 rounded">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gray-100 text-gray-700 text-left text-xs">
+                        <th className="px-3 py-2 border">Tarea</th>
+                        <th className="px-3 py-2 border text-center w-24">
+                          Cant. horas
+                        </th>
+                        <th className="px-3 py-2 border text-center w-32">
+                          Código repuesto
+                        </th>
+                        <th className="px-3 py-2 border">Descripción repuesto</th>
+                        <th className="px-3 py-2 border text-center w-16">
+                          Acciones
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 border border-gray-300 rounded py-4">
-                No hay tareas agregadas
-              </div>
-            )}
-          </div>
+                    </thead>
+                    <tbody>
+                      {formData.tasks.map((task, index) => (
+                        <tr key={index} className="odd:bg-white even:bg-gray-50">
+                          <td className="px-3 py-2 border">
+                            <input
+                              value={task.description}
+                              onChange={(e) =>
+                                handleTaskChange(
+                                  index,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Descripción de la tarea"
+                              className={`w-full border rounded px-2 py-1 text-xs ${
+                                errors[`tasks.${index}.description`] ? "border-red-500" : ""
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                            {errors[`tasks.${index}.description`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`tasks.${index}.description`]}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 border">
+                            <input
+                              type="number"
+                              value={task.hoursCount}
+                              onChange={(e) =>
+                                handleTaskChange(
+                                  index,
+                                  "hoursCount",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="0"
+                              className={`w-full border rounded px-2 py-1 text-xs text-center ${
+                                errors[`tasks.${index}.hoursCount`] ? "border-red-500" : ""
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                            {errors[`tasks.${index}.hoursCount`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`tasks.${index}.hoursCount`]}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 border">
+                            <input
+                              value={task.parts[0].part.code}
+                              onChange={(e) =>
+                                handleTaskChange(
+                                  index,
+                                  "partCode",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Código repuesto"
+                              className={`w-full border rounded px-2 py-1 text-xs text-center ${
+                                errors[`tasks.${index}.parts.0.part.code`] ? "border-red-500" : ""
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                            {errors[`tasks.${index}.parts.0.part.code`] && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors[`tasks.${index}.parts.0.part.code`]}
+                              </p>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 border">
+                            <input
+                              value={task.parts[0].part.description}
+                              onChange={(e) =>
+                                handleTaskChange(
+                                  index,
+                                  "partDescription",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Descripción del repuesto"
+                              className="w-full border rounded px-2 py-1 text-xs"
+                              disabled={isSubmitting}
+                            />
+                          </td>
+                          <td className="px-3 py-2 border text-center">
+                            {formData.tasks.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTask(index)}
+                                className="text-red-500 hover:text-red-700"
+                                title="Eliminar tarea"
+                                disabled={isSubmitting}
+                              >
+                                <FaTrash className="w-3 h-3" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 border border-gray-300 rounded py-4">
+                  No hay tareas agregadas
+                </div>
+              )}
+            </div>
 
-            {/* ========== NUEVA SECCIÓN DE FOTOS ========== */}
+            {/* ========== SECCIÓN DE FOTOS ========== */}
             <div className="mt-8 pt-6 border-t">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                📸 Fotos y Documentos
+                Fotos y Documentos
               </h3>
 
               <div className="space-y-6">
-                {/* Fotos obligatorias */}
-                <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-                  <p className="text-sm text-blue-800 font-medium">
-                    Fotos Obligatorias *
-                  </p>
+                <div className="p-4 rounded-lg space-y-4">
 
-                  <ImageUploadField
-                    label="Foto de Patente"
-                    value={licensePlatePhoto}
-                    onChange={setLicensePlatePhoto}
-                    required
-                  />
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Patente"
+                      value={licensePlatePhoto}
+                      onChange={(file) => {
+                        setLicensePlatePhoto(file);
+                        if (errors.licensePlatePhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.licensePlatePhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.licensePlatePhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.licensePlatePhoto}
+                      </p>
+                    )}
+                  </div>
 
-                  <ImageUploadField
-                    label="Foto de Chapa VIN"
-                    value={vinPlatePhoto}
-                    onChange={setVinPlatePhoto}
-                    required
-                  />
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Chapa VIN"
+                      value={vinPlatePhoto}
+                      onChange={(file) => {
+                        setVinPlatePhoto(file);
+                        if (errors.vinPlatePhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.vinPlatePhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.vinPlatePhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.vinPlatePhoto}
+                      </p>
+                    )}
+                  </div>
 
-                  <ImageUploadField
-                    label="Foto de Kilómetros"
-                    value={odometerPhoto}
-                    onChange={setOdometerPhoto}
-                    required
-                  />
-                </div>
-
-                {/* Fotos opcionales */}
-                <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                  <p className="text-sm text-gray-700 font-medium">
-                    Fotos Adicionales (Opcional)
-                  </p>
+                  <div>
+                    <ImageUploadField
+                      label="Foto de Kilómetros"
+                      value={odometerPhoto}
+                      onChange={(file) => {
+                        setOdometerPhoto(file);
+                        if (errors.odometerPhoto) {
+                          setErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.odometerPhoto;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      required
+                    />
+                    {errors.odometerPhoto && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.odometerPhoto}
+                      </p>
+                    )}
+                  </div>
 
                   <MultipleMediaUploadField
                     label="Piezas Adicionales (Fotos/Videos)"

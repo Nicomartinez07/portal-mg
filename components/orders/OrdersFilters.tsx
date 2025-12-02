@@ -122,6 +122,7 @@ export const OrderFilters = () => {
             <option value="PENDIENTE">Pendiente</option>
             <option value="AUTORIZADO">Autorizada</option>
             <option value="RECHAZADO">Rechazada</option>
+            <option value="OBSERVADO">Observado</option>
           </select>
         </div>
 

@@ -31,6 +31,7 @@ export async function getVehicleByVin(vin: string) {
   }
 }
 
+
 export async function createVehicle(data: unknown): Promise<{
   success: boolean;
   errors?: Record<string, string>;

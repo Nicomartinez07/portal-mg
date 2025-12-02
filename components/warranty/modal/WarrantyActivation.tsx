@@ -295,15 +295,23 @@ export function ActivationModal({
               {/* Patente */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Patente
+                  Patente * 
                 </label>
                 <input
                   type="text"
                   name="licensePlate"
                   value={formData.licensePlate}
-                  className="border px-3 py-2 w-full rounded bg-gray-100"
-                  readOnly
+                
+                  onChange={handleChange} 
+                  className={`border px-3 py-2 w-full rounded ${
+                    errors.licensePlate ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                {errors.licensePlate && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.licensePlate}
+                  </p>
+                )}
               </div>
 
               {/* Empresa */}
@@ -333,7 +341,7 @@ export function ActivationModal({
               {/* Vendedor */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Vendedor
+                  Vendedor *
                 </label>
                 <input
                   type="text"

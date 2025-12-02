@@ -42,7 +42,7 @@ const LoginForm = () => {
     <>  
     <div
       className="relative flex items-center justify-center min-h-screen bg-cover bg-center px-4 sm:px-6"
-      style={{ backgroundImage: "url('/fotito.png')" }}
+      style={{ backgroundImage: "url('/fotos/mgAuto.jpeg')" }}
     >
       {/* Overlay oscuro para mejorar contraste */}
       <div className="absolute inset-0 bg-black opacity-50 z-0" />

@@ -13,10 +13,8 @@ export async function getRepuestos(params: {
 }) {
   const { filters, page, pageSize } = params;
 
-  // 1. Calculamos el skip
   const skip = (page - 1) * pageSize;
 
-  // 2. Construimos el 'where'
   const whereClause = {
     model: filters.model
       ? { contains: filters.model }
@@ -29,9 +27,8 @@ export async function getRepuestos(params: {
       : undefined,
   };
 
-  // 3. Usamos la transacción (como en los otros paginados)
   const [total, data] = await prisma.$transaction([
-    prisma.part.count({ where: whereClause }), // Asumiendo que tu modelo es 'part'
+    prisma.part.count({ where: whereClause }),
     prisma.part.findMany({
       where: whereClause,
       include: {
@@ -46,14 +43,10 @@ export async function getRepuestos(params: {
     }),
   ]);
 
-  // 4. Devolvemos el objeto con datos y total
   return { data, total };
 }
 
-
-
 export async function getTalleres() {
-  // 1️⃣ Traer todos los talleres y la empresa "Eximar MG" en una sola consulta
   const allCompanies = await prisma.company.findMany({
     where: {
       OR: [
@@ -63,7 +56,6 @@ export async function getTalleres() {
     orderBy: { name: "asc" }
   });
 
-  // 2️⃣ Traer todos los usuarios (para mapear el manager)
   const allUsers = await prisma.user.findMany({
     select: {
       username: true,
@@ -71,31 +63,81 @@ export async function getTalleres() {
     }
   });
 
-  // 3️⃣ Crear un mapa para búsqueda rápida de managers
   const userMap = new Map();
   allUsers.forEach(user => {
-    // Usamos el username como clave para la búsqueda
     userMap.set(user.username, user.email);
   });
 
-  // 4️⃣ Mapear las compañías y agregar el campo 'managerEmail'
   const resultWithEmail = allCompanies.map(company => {
     let managerEmail = null;
 
     if (company.manager) {
-      // Buscar el email usando el manager como clave en el mapa
       const email = userMap.get(company.manager);
       if (email) {
         managerEmail = email;
       }
     }
 
-    // Retornar la compañía con el nuevo campo calculado
     return {
       ...company,
-      managerEmail: managerEmail, // Será el email del usuario o null
+      managerEmail: managerEmail,
     };
   });
 
   return resultWithEmail;
+}
+
+// --- TIPOS DE DATOS PARA EL REPORTE ---
+interface DeleteResult {
+    success: boolean;
+    message: string;
+    deletedCount?: number;
+}
+// ---------------------------------------
+
+/**
+ * Borra todos los repuestos asociados a una empresa específica.
+ * @param companyId El ID de la empresa cuyos repuestos serán borrados.
+ * @returns {DeleteResult} El resultado de la operación.
+ */
+export async function borrarRepuestosEmpresa(companyId: number): Promise<DeleteResult> {
+    // VALIDACIÓN DE ENTRADA
+    if (!companyId || isNaN(companyId) || companyId <= 0) {
+        return { success: false, message: "ID de empresa inválido." };
+    }
+    
+    try {
+        // OBTENER NOMBRE DE LA EMPRESA (para el mensaje de éxito)
+        const company = await prisma.company.findUnique({
+            where: { id: companyId },
+            select: { name: true }
+        });
+
+        if (!company) {
+             return { success: false, message: `No se encontró la empresa con ID ${companyId}.` };
+        }
+
+        // EJECUTAR LA ACCIÓN DE BORRADO
+        const deleteResult = await prisma.part.deleteMany({
+            where: {
+                companyId: companyId,
+            },
+        });
+
+        const deletedCount = deleteResult.count;
+        
+        // RESPUESTA DE ÉXITO
+        return { 
+            success: true, 
+            message: `✅ Borrado exitoso. Se eliminaron **${deletedCount}** repuestos pertenecientes a la empresa **${company.name}**.`,
+            deletedCount: deletedCount, 
+        };
+
+    } catch (error) {
+        console.error(`Error al borrar repuestos de la empresa ${companyId}:`, error);
+        return { 
+            success: false, 
+            message: "No se pueden eliminar los repuestos, debido a que pertenecen a alguna orden." 
+        };
+    }
 }

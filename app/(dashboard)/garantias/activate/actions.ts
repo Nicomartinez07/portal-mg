@@ -34,6 +34,7 @@ export async function activateWarranty(data: unknown): Promise<{
       clientDirection,
       clientProvince,
       clientLocality,
+      licensePlate,
     } = parsed.data;
 
     // ✅ 1. Verificar si ya existe garantía para ese VIN
@@ -53,7 +54,7 @@ export async function activateWarranty(data: unknown): Promise<{
     if (!vehicle) {
       return {
         success: false,
-        errors: { vin: "El vehículo no existe en la base de datos." },
+        errors: { vin: "No se encontro un vehiculo con ese VIN." },
       };
     }
 
@@ -88,6 +89,12 @@ export async function activateWarranty(data: unknown): Promise<{
       };
     }
 
+    await prisma.vehicle.update({
+      where: { vin: vin },
+      data: {
+        licensePlate: licensePlate, // Guardamos la patente en el vehículo
+      },
+    });
 
     // ✅ 5. Crear la Warranty vinculada a Vehicle, Customer y Company
     const newWarranty = await prisma.warranty.create({

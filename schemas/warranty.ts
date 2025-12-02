@@ -6,6 +6,8 @@ export const activateWarrantySchema = z.object({
   vin: z
     .string()
     .min(1, "Campo requerido."),
+
+  licensePlate: z.string().min(1, "Campo requerido."),
   user: z.string().min(1, "Campo requerido."),
   clientName: z.string().min(1, "Campo requerido."),
   clientSurname: z.string().min(1, "Campo requerido."),
@@ -14,7 +16,6 @@ export const activateWarrantySchema = z.object({
   clientDirection: z.string().min(1, "Campo requerido."),
   clientProvince: z.string().min(1, "Campo requerido."),
   clientLocality: z.string().min(1, "Campo requerido."),
-  companyId: z.coerce.number().min(1, "La compañía es obligatoria."),
 });
 
 export type WarrantyActivationInput = z.infer<typeof activateWarrantySchema>;

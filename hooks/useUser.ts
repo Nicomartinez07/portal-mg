@@ -6,6 +6,7 @@ interface User {
   userId: number;
   companyId: number;
   email: string;
+  role: string; // ✅ Agregado
 }
 
 export function useUser() {
@@ -20,7 +21,7 @@ export function useUser() {
         
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData);
+          setUser(userData); // ✅ Ya incluye el role que viene del JWT
         } else if (response.status === 401) {
           setError('No autenticado');
           setUser(null);

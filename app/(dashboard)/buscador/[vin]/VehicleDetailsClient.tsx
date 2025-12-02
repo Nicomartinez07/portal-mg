@@ -9,7 +9,7 @@ import ServiceModal from "@/components/orders/modals/ServiceModal";
 import HistoryModal from "@/components/orders/modals//HistoryModal"; 
 import type { Order } from "@/app/types"; 
 
-// --- ÍCONOS AUXILIARES (ListIcon, ToolIcon)... sin cambios ---
+// --- ÍCONOS AUXILIARES ---
 const ListIcon = () => (
   <div className="w-4 h-4 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs z-10 relative">
     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -33,21 +33,9 @@ interface VehicleDetailsClientProps {
 
 export function VehicleDetailsClient({ vehicleData }: VehicleDetailsClientProps) {
   const router = useRouter(); 
-
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
   const { warranty, serviceOrders, claimOrders, ...vehicle } = vehicleData;
-
-  const closeModal = () => {
-    setModalOpen(null);
-    // No reseteamos selectedOrder aquí, para que el modal de historial 
-    // pueda cerrarse y volver al modal de reclamo.
-    // Lo reseteamos solo al cerrar el modal principal.
-    if (modalOpen === 'SERVICE' || modalOpen === 'CLAIM') {
-      setSelectedOrder(null);
-    }
-  };
 
   // Función especial para cerrar el modal de historial
   const closeHistoryModal = () => {
@@ -63,18 +51,14 @@ export function VehicleDetailsClient({ vehicleData }: VehicleDetailsClientProps)
   // --- 2. MODIFICAR HANDLE ---
   // Esta función ahora abre el modal de HISTORIAL
   const handleShowHistory = (order: Order) => {
-    // console.log("Mostrando historial para la orden:", order.id); // Ya no
-    setSelectedOrder(order); // La orden ya debería estar seleccionada, pero por si acaso
-    setModalOpen('HISTORY'); // <-- ABRIMOS EL MODAL DE HISTORIAL
+    setSelectedOrder(order);
+    setModalOpen('HISTORY'); 
   };
 
-  
   const handleOpenModal = (type: ModalType, order: Order) => {
     setSelectedOrder(order);
     setModalOpen(type);
   };
-
-
   return (
     <>
       <h1 className="text-2xl font-bold mb-6">Detalles del Vehículo</h1>
@@ -206,11 +190,9 @@ export function VehicleDetailsClient({ vehicleData }: VehicleDetailsClientProps)
       </div>
 
       {/* --- RENDERIZADO CONDICIONAL DE MODALES --- */}
-
       {modalOpen === 'SERVICE' && selectedOrder && (
         <ServiceModal 
             order={selectedOrder} 
-            // Usamos 'closeModal' general
             onClose={() => {
               setModalOpen(null);
               setSelectedOrder(null);
@@ -222,12 +204,11 @@ export function VehicleDetailsClient({ vehicleData }: VehicleDetailsClientProps)
       {modalOpen === 'CLAIM' && selectedOrder && (
         <ClaimModal 
             order={selectedOrder} 
-            // Usamos 'closeModal' general
             onClose={() => {
               setModalOpen(null);
               setSelectedOrder(null);
             }} 
-            onShowHistory={handleShowHistory} // <-- Sigue llamando a la función correcta
+            onShowHistory={handleShowHistory} 
             onOrderUpdated={handleOrderUpdated}
         />
       )}

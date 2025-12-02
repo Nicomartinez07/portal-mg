@@ -23,7 +23,6 @@ import {
   User,
   Star,
 } from "lucide-react";
-
 import {
   Sidebar,
   SidebarContent,
@@ -39,8 +38,7 @@ import {
   SidebarInset,
   useSidebar,
 } from "@/components/ui/sidebar";
-
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, MenuButton, Transition } from "@headlessui/react";
 
 // Configuración de las rutas de navegación
 const navigationItems = [
@@ -154,23 +152,47 @@ function AppSidebar({
   onOpenInsertClaimModal: () => void;
   onOpenInsertServiceModal: () => void;
   role: string;
-  // NOTA: Ya no recibimos 'onNavigate'
 }) {
   const router = useRouter();
-
-  const { setOpen } = useSidebar();
-  const phonePX = 500;
-
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
   const handleNavigationClick = () => {
-    if (setOpen && window.innerWidth <= phonePX) {
-      setOpen(false);
+    // Abre la consola (F12 > Console) y mira qué imprime al hacer clic
+    console.log("--------------------------------");
+    console.log("Ancho actual (px):", window.innerWidth);
+    console.log("¿Detecta móvil (isMobile)?", isMobile); // Si usaste el hook
+    console.log("Límite configurado:", 768); // O el número que hayas puesto (phonePX)
+    console.log("--------------------------------");
+    // Si es móvil, cerramos el sidebar. Si es PC, no hacemos nada.
+    if (isMobile) {
+      setOpenMobile(false);
     }
   };
-  // Filtrar items según rol
-  const allowedItems = roleAccess[role?.toUpperCase()] || ["Inicio"];
 
+  // LÓGICA PARA ROLES MÚLTIPLES
+  // 1. Convertir el string de roles a un array de roles en mayúsculas
+  const userRoles = role
+    ? role.toUpperCase().split(",").map((r) => r.trim())
+    : [];
+
+  // 2. Acumular todos los permisos únicos
+  let combinedAllowedItems: string[] = [];
+  const allItems: string[] = [];
+
+  // Recorrer todos los roles que tiene el usuario
+  userRoles.forEach((r) => {
+    // Solo si el rol existe en roleAccess
+    if (roleAccess[r]) {
+      // Agregamos todos los permisos de ese rol
+      allItems.push(...roleAccess[r]);
+    }
+  });
+  combinedAllowedItems = [...new Set(allItems)];
+
+  if (combinedAllowedItems.length === 0) {
+      combinedAllowedItems = ["Inicio"];
+  }
   const filteredItems = navigationItems.filter((item) =>
-    allowedItems.includes(item.name)
+    combinedAllowedItems.includes(item.name)
   );
 
   const handleLogout = async () => {
@@ -188,10 +210,7 @@ function AppSidebar({
             className="h-10 w-auto"
           />
         </div>
-
-
       </SidebarHeader>
-
       <SidebarContent className="bg-[#424f63]">
         <SidebarGroup>
           <SidebarGroupContent>
@@ -207,9 +226,13 @@ function AppSidebar({
                         className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                       >
                         <button
-                          onClick={onOpenVehicleModal}
+                          onClick={() => {
+                            onOpenVehicleModal();    // 1. Abrir modal
+                            handleNavigationClick(); // 2. Cerrar sidebar si es mobile
+                          }}
                           className="flex items-center gap-3 w-full text-left"
                         >
+                          
                           <Icon
                             className={`w-5 h-5 ${item.color || "text-white"}`}
                             fill={item.fill ? "currentColor" : "none"}
@@ -229,7 +252,7 @@ function AppSidebar({
                         className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                       >
                         <button
-                          onClick={onOpenWarrantyModal}
+                          onClick={() => { onOpenWarrantyModal(); handleNavigationClick(); }}
                           className="flex items-center gap-3 w-full text-left"
                         >
                           <Icon
@@ -251,7 +274,7 @@ function AppSidebar({
                         className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                       >
                         <button
-                          onClick={onOpenInsertPreAuthorizationModal}
+                          onClick={() => { onOpenInsertPreAuthorizationModal(); handleNavigationClick(); }}
                           className="flex items-center gap-3 w-full text-left"
                         >
                           <Icon
@@ -273,7 +296,7 @@ function AppSidebar({
                         className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                       >
                         <button
-                          onClick={onOpenInsertClaimModal}
+                          onClick={() => { onOpenInsertClaimModal(); handleNavigationClick(); }}
                           className="flex items-center gap-3 w-full text-left"
                         >
                           <Icon
@@ -295,7 +318,7 @@ function AppSidebar({
                         className="text-white border-b border-slate-600 rounded-none h-12 justify-start hover:bg-slate-600"
                       >
                         <button
-                          onClick={onOpenInsertServiceModal}
+                          onClick={() => { onOpenInsertServiceModal(); handleNavigationClick(); }}
                           className="flex items-center gap-3 w-full text-left"
                         >
                           <Icon
@@ -321,7 +344,7 @@ function AppSidebar({
                           href={item.href}
                           target={item.external ? "_blank" : "_self"}
                           download={item.download}
-                          onClick={handleNavigationClick} // <-- 4. APLICAMOS
+                          onClick={handleNavigationClick} 
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="w-5 h-5" />
@@ -352,8 +375,6 @@ function AppSidebar({
                   </SidebarMenuItem>
                 );
               })}
-
-
               {/* --- Botón de Salir (Sin cambios) --- */}
               <SidebarMenuButton
                 asChild
@@ -435,8 +456,6 @@ export default function DashboardLayout({
       router.push(`/buscador/${vin.trim()}`);
     }
   };
-
-  // --- Renderizado del Layout ---
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full">
@@ -445,9 +464,7 @@ export default function DashboardLayout({
           role={role}
           onOpenVehicleModal={() => setOpenVehicleModal(true)}
           onOpenWarrantyModal={() => setOpenWarrantyModal(true)}
-          onOpenInsertPreAuthorizationModal={() =>
-            setOpenInsertPreAuthorizationModal(true)
-          }
+          onOpenInsertPreAuthorizationModal={() => setOpenInsertPreAuthorizationModal(true)}
           onOpenInsertClaimModal={() => setOpenInsertClaimModal(true)}
           onOpenInsertServiceModal={() => setOpenInsertServiceModal(true)}
         />
@@ -474,10 +491,10 @@ export default function DashboardLayout({
 
             {/* Usuario desplegable */}
             <Menu as="div" className="relative ml-4">
-              <Menu.Button className="flex items-center gap-2 text-gray-600 focus:outline-none">
+              <MenuButton className="flex items-center gap-2 text-gray-600 focus:outline-none">
                 <User className="w-5 h-5" />
                 <span className="hidden sm:inline">{username}</span>
-              </Menu.Button>
+              </MenuButton>
 
               <Transition
                 as={Fragment}

@@ -28,28 +28,34 @@ export default function UsuariosPage() {
     }
   };
 
-  // 📌 Handler para subir archivo al backend
   const handleUpload = async () => {
-    if (!selectedFile) {
-      alert("Por favor selecciona un archivo primero");
-      return;
-    }
+  if (!selectedFile) {
+    alert("Por favor selecciona un archivo primero");
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+  const formData = new FormData();
+  formData.append("file", selectedFile);
 
+  try {
     const res = await fetch("/api/upload-tarifario", {
       method: "POST",
       body: formData,
     });
 
+    const data = await res.json(); 
+
     if (res.ok) {
       alert("Tarifario actualizado ✅");
     } else {
-      alert("Error al subir el tarifario ❌");
-      console.log(res.status)
+      alert(`Error: ${data.error || "Error desconocido"}`);
     }
-  };
+  } catch (error) {
+    alert("Error de conexión con el servidor ❌");
+    console.error(error);
+  }
+};
+
 
   const loadUsers = async () => {
     setLoading(true);
