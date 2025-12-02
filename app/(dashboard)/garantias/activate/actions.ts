@@ -37,6 +37,14 @@ export async function activateWarranty(data: unknown): Promise<{
       licensePlate,
     } = parsed.data;
 
+    // ✅ Validar que companyId no sea undefined
+    if (!companyId) {
+      return {
+        success: false,
+        errors: { companyId: "El ID de la compañía es requerido." },
+      };
+    }
+
     // ✅ 1. Verificar si ya existe garantía para ese VIN
     const existingWarranty = await prisma.warranty.findUnique({
       where: { vehicleVin: vin },

@@ -8,6 +8,7 @@ export const activateWarrantySchema = z.object({
     .min(1, "Campo requerido."),
 
   licensePlate: z.string().min(1, "Campo requerido."),
+  companyId: z.int().optional(),
   user: z.string().min(1, "Campo requerido."),
   clientName: z.string().min(1, "Campo requerido."),
   clientSurname: z.string().min(1, "Campo requerido."),
